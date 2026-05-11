@@ -8,7 +8,11 @@
  */
 
 import { describe, expect, it, vi } from 'vitest';
-import { getLatestSubTableRowRecord, buildRowPathFromFieldIndex } from '../SubTableColumnModel';
+import {
+  getLatestSubTableRowRecord,
+  buildRowPathFromFieldIndex,
+  createSubTableRowItemContextPropertyOptions,
+} from '../SubTableColumnModel';
 
 describe('SubTableColumnModel row record helpers', () => {
   it('builds the row path from fieldIndex entries', () => {
@@ -38,5 +42,37 @@ describe('SubTableColumnModel row record helpers', () => {
     const fallback = { uid: 'stale-role', __is_new__: false };
 
     expect(getLatestSubTableRowRecord(form, ['roles:0'], fallback)).toBe(fallback);
+  });
+
+  it('builds item meta for the current sub-table row attributes', async () => {
+    const collection = {
+      fields: [
+        {
+          name: 'companyName',
+          title: 'Company name',
+          type: 'string',
+          interface: 'input',
+          uiSchema: { 'x-component': 'Input' },
+          filterable: true,
+          isAssociationField: () => false,
+        },
+      ],
+    };
+    const options = createSubTableRowItemContextPropertyOptions({
+      t: (key) => key,
+      title: 'Current item',
+      collectionAccessor: () => collection,
+      rowValueAccessor: () => ({ companyName: 'NocoBase' }),
+    });
+
+    const meta = await (options.meta as any)();
+    const properties = meta.properties;
+    const valueMeta = properties.value;
+    const valueProperties = await valueMeta.properties();
+
+    expect(meta.title).toBe('Current item');
+    expect(properties.index.type).toBe('number');
+    expect(valueMeta.title).toBe('Attributes');
+    expect(valueProperties.companyName.title).toBe('Company name');
   });
 });

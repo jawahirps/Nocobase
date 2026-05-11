@@ -34,6 +34,7 @@ import { SubTableFieldModel } from '.';
 import { FieldModel } from '../../../base/FieldModel';
 import { FieldDeletePlaceholder, CustomWidth } from '../../../blocks/table/TableColumnModel';
 import { buildDynamicNamePath } from '../../../blocks/form/dynamicNamePath';
+import { buildCurrentItemTitle, createAssociationItemChainContextPropertyOptions } from '../itemChain';
 import { getSubTableRowIdentity } from './rowIdentity';
 
 export const SUB_TABLE_COLUMN_FIELD_COMPONENT_CONTEXT = 'subTableColumn';
@@ -202,6 +203,39 @@ export function getLatestSubTableRowRecord(form: any, fieldIndex: unknown, fallb
   return typeof latestRecord === 'undefined' ? fallbackRecord : latestRecord;
 }
 
+export function createSubTableRowItemContextPropertyOptions(options: {
+  t: (key: string) => string;
+  title: string;
+  collectionAccessor: () => any;
+  rowValueAccessor: () => any;
+  parentCollectionAccessor?: () => any;
+  parentItemAccessor?: () => any;
+  parentItemMetaAccessor?: () => any;
+  parentItemResolverAccessor?: () => ((subPath: string) => boolean) | undefined;
+  showParentIndex?: boolean;
+}) {
+  return createAssociationItemChainContextPropertyOptions({
+    t: options.t,
+    title: options.title,
+    showIndex: true,
+    showParentIndex: options.showParentIndex,
+    collectionAccessor: options.collectionAccessor,
+    propertiesAccessor: (ctx) => ctx?.item?.value,
+    resolverPropertiesAccessor: options.rowValueAccessor,
+    parentCollectionAccessor: options.parentCollectionAccessor,
+    parentAccessors: {
+      parentPropertiesAccessor: () => options.parentItemAccessor?.()?.value,
+      parentItemMetaAccessor: options.parentItemMetaAccessor,
+      parentItemResolverAccessor: options.parentItemResolverAccessor,
+    },
+  });
+}
+
+function omitContextPropertyValueAndGetter(options: any) {
+  const { value: _value, get: _get, ...rest } = options || {};
+  return rest;
+}
+
 function shouldCommitImmediately(value: any) {
   if (Array.isArray(value)) {
     return true;
@@ -306,13 +340,16 @@ const MemoCell: React.FC<CellProps> = React.memo(
       >
         <SubTableRowRuleBinder model={rowFork} />
         {parent.mapSubModels('field', (action: FieldModel) => {
+          parent.ensureItemContextForFieldModel(action);
           const fieldPath = action.context.fieldPath.split('.');
           const namePath = fieldPath.pop();
 
           const fork: any = action.createFork({}, `${id}`);
           fork.context.defineProperty('currentObject', { get: () => record });
           if (rowFork) {
+            const itemOptions = omitContextPropertyValueAndGetter(rowFork.context.getPropertyOptions?.('item'));
             fork.context.defineProperty('item', {
+              ...itemOptions,
               get: () => rowFork.context.item,
               cache: false,
             });
@@ -483,8 +520,39 @@ export class SubTableColumnModel<
     this.emitter.on('onSubModelAdded', (subModel: FieldModel) => {
       if (this.collectionField) {
         subModel.setProps(this.collectionField.getComponentProps());
+        this.ensureItemContextForFieldModel(subModel);
       }
     });
+  }
+
+  defineItemContextForFieldModel(subModel: FieldModel) {
+    const parentItemOptions = this.context?.getPropertyOptions?.('item') || {};
+    subModel.context.defineProperty('item', {
+      get: () => this.context.item,
+      ...createSubTableRowItemContextPropertyOptions({
+        t: this.context.t,
+        title: buildCurrentItemTitle(
+          this.context.t,
+          (this.parent as any)?.context?.collectionField,
+          (this.parent as any)?.props?.name,
+        ),
+        collectionAccessor: () => this.collection,
+        rowValueAccessor: () => this.context.item?.value,
+        parentCollectionAccessor: () => (this.parent as any)?.context?.collectionField?.collection,
+        parentItemAccessor: () => this.context.item,
+        parentItemMetaAccessor: () => parentItemOptions?.meta,
+        parentItemResolverAccessor: () => parentItemOptions?.resolveOnServer,
+        showParentIndex: Array.isArray(this.context.fieldIndex) && this.context.fieldIndex.length > 0,
+      }),
+    });
+  }
+
+  ensureItemContextForFieldModel(subModel: FieldModel) {
+    if ((subModel as any).__subTableRowItemContextDefinedFor === this.uid) {
+      return;
+    }
+    this.defineItemContextForFieldModel(subModel);
+    (subModel as any).__subTableRowItemContextDefinedFor = this.uid;
   }
 
   async afterAddAsSubModel() {
@@ -614,16 +682,20 @@ export class SubTableColumnModel<
             .filter(Boolean)
             .pop();
         const rowIndex = Number(rowIdx);
+        const parentItemCtx = (parentItem ?? this.context?.item) as any;
         if (associationKey && Number.isFinite(rowIndex)) {
           fork.context.defineProperty('fieldIndex', {
             value: [...baseArr, `${associationKey}:${rowIndex}`],
           });
         }
+        const getRowRecord = () => {
+          const form = (fork.context as any)?.form || (this.context?.blockModel as any)?.context?.form;
+          return getLatestSubTableRowRecord(form, fork.context.fieldIndex, record);
+        };
+        const parentItemOptions = this.context?.getPropertyOptions?.('item') || {};
         fork.context.defineProperty('item', {
           get: () => {
-            const form = (fork.context as any)?.form || (this.context?.blockModel as any)?.context?.form;
-            const rowRecord = getLatestSubTableRowRecord(form, fork.context.fieldIndex, record);
-            const parentItemCtx = (parentItem ?? this.context?.item) as any;
+            const rowRecord = getRowRecord();
             const isNew = rowRecord?.__is_new__;
             const isStored = rowRecord?.__is_stored__;
             const list = (this.parent as any)?.props?.value;
@@ -637,7 +709,21 @@ export class SubTableColumnModel<
               parentItem: parentItemCtx,
             };
           },
-          cache: false,
+          ...createSubTableRowItemContextPropertyOptions({
+            t: this.context.t,
+            title: buildCurrentItemTitle(
+              this.context.t,
+              (this.parent as any)?.context?.collectionField,
+              (this.parent as any)?.props?.name,
+            ),
+            collectionAccessor: () => this.collection,
+            rowValueAccessor: getRowRecord,
+            parentCollectionAccessor: () => (this.parent as any)?.context?.collectionField?.collection,
+            parentItemAccessor: () => parentItemCtx,
+            parentItemMetaAccessor: () => parentItemOptions?.meta,
+            parentItemResolverAccessor: () => parentItemOptions?.resolveOnServer,
+            showParentIndex: Array.isArray(baseArr) && baseArr.length > 0,
+          }),
         });
         return fork;
       })();

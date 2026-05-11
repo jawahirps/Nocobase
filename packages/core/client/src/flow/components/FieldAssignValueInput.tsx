@@ -21,12 +21,11 @@ import {
   isCtxDateExpression,
   parseCtxDateExpression,
   serializeCtxDateValue,
-  type CollectionField,
-  type MetaTreeNode,
   useFlowContext,
   EditableItemModel,
   FlowModelContext,
 } from '@nocobase/flow-engine';
+import type { CollectionField, MetaTreeNode } from '@nocobase/flow-engine';
 import { ensureOptionsFromUiSchemaEnumIfAbsent } from '../internal/utils/enumOptionsUtils';
 import {
   CUSTOM_FIELD_TARGET_PATH_PREFIX,
@@ -39,7 +38,8 @@ import { RunJSValueEditor } from './RunJSValueEditor';
 import { resolveOperatorComponent } from '../internal/utils/operatorSchemaHelper';
 import { InputFieldModel } from '../models/fields/InputFieldModel';
 import { normalizeFilterValueByOperator } from '../models/blocks/filter-form/valueNormalization';
-import { FieldAssignExactDatePicker, type ExactDatePickerMode } from './FieldAssignExactDatePicker';
+import { FieldAssignExactDatePicker } from './FieldAssignExactDatePicker';
+import type { ExactDatePickerMode } from './FieldAssignExactDatePicker';
 
 const DATE_FIELD_INTERFACES = new Set(['date', 'datetime', 'datetimeNoTz', 'createdAt', 'updatedAt', 'unixTimestamp']);
 
@@ -406,22 +406,33 @@ function attachBaseItemAsParent(extraItem: MetaTreeNode, baseItem: MetaTreeNode 
     title: mappedBaseItem.title?.replace('Current item', 'Parent item') || 'Parent item',
   };
   const rewrite = (node: MetaTreeNode): MetaTreeNode => {
-    const children = Array.isArray(node.children) ? node.children : [];
-    const hasParent = children.some((child) => child?.name === 'parentItem');
-    if (!hasParent) {
+    const mergeChildren = (children: MetaTreeNode[]) => {
+      const hasParent = children.some((child) => child?.name === 'parentItem');
+      if (!hasParent) {
+        return [...children, mappedBase];
+      }
+
+      return children.map((child) => {
+        if (child?.name !== 'parentItem') return child;
+        return rewrite(child);
+      });
+    };
+
+    if (typeof node.children === 'function') {
+      const loadChildren = node.children;
       return {
         ...node,
-        children: [...children, mappedBase],
+        children: async () => {
+          const children = await loadChildren();
+          return mergeChildren(Array.isArray(children) ? children : []);
+        },
       };
     }
 
-    const nextChildren = children.map((child) => {
-      if (child?.name !== 'parentItem') return child;
-      return rewrite(child);
-    });
+    const children = Array.isArray(node.children) ? node.children : [];
     return {
       ...node,
-      children: nextChildren,
+      children: mergeChildren(children),
     };
   };
 

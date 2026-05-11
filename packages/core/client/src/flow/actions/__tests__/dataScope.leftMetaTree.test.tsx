@@ -18,7 +18,8 @@ import {
   FlowViewContextProvider,
 } from '@nocobase/flow-engine';
 import type { MetaTreeNode } from '@nocobase/flow-engine';
-import { dataScope, mergeDataScopeRightMetaTree } from '../dataScope';
+import { dataScope } from '../dataScope';
+import { mergeDataScopeRightMetaTree } from '../dataScopeMetaTree';
 import { Application } from '../../../application/Application';
 import { CollectionFieldInterface } from '../../../data-source/collection-field-interface/CollectionFieldInterface';
 

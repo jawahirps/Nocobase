@@ -18,30 +18,14 @@ import type { MetaTreeNode } from '@nocobase/flow-engine';
 import { isEmptyFilter } from '@nocobase/utils/client';
 import React from 'react';
 import { FilterGroup, VariableFilterItem } from '../components/filter';
-import { mergeItemMetaTreeForAssignValue } from '../components/FieldAssignValueInput';
 import { FieldModel } from '../models/base/FieldModel';
 import { normalizeDataScopeFilter } from './dataScopeFilter';
+import { mergeDataScopeRightMetaTree } from './dataScopeMetaTree';
 
 async function resolveMetaTree(raw: MetaTreeNode[] | (() => MetaTreeNode[] | Promise<MetaTreeNode[]>) | undefined) {
   if (!raw) return [];
   const nodes = Array.isArray(raw) ? raw : await raw();
   return Array.isArray(nodes) ? nodes : [];
-}
-
-export function mergeDataScopeRightMetaTree(baseTree: MetaTreeNode[], overrideTree: MetaTreeNode[]) {
-  if (!overrideTree.length) return baseTree;
-  const merged = [...baseTree];
-  const overrideItem = overrideTree.find((node) => node?.name === 'item');
-  overrideTree.forEach((node) => {
-    if (node?.name === 'item') return;
-    const index = merged.findIndex((item) => item?.name === node?.name);
-    if (index >= 0) {
-      merged[index] = node;
-    } else {
-      merged.push(node);
-    }
-  });
-  return overrideItem ? mergeItemMetaTreeForAssignValue(merged, [overrideItem]) : merged;
 }
 
 export const dataScope = defineAction({

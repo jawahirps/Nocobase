@@ -236,6 +236,10 @@ function omitContextPropertyValueAndGetter(options: any) {
   return rest;
 }
 
+function getContextItemResolver(options: any) {
+  return typeof options?.resolveOnServer === 'function' ? options.resolveOnServer : undefined;
+}
+
 function shouldCommitImmediately(value: any) {
   if (Array.isArray(value)) {
     return true;
@@ -541,7 +545,7 @@ export class SubTableColumnModel<
         parentCollectionAccessor: () => (this.parent as any)?.context?.collectionField?.collection,
         parentItemAccessor: () => this.context.item,
         parentItemMetaAccessor: () => parentItemOptions?.meta,
-        parentItemResolverAccessor: () => parentItemOptions?.resolveOnServer,
+        parentItemResolverAccessor: () => getContextItemResolver(parentItemOptions),
         showParentIndex: Array.isArray(this.context.fieldIndex) && this.context.fieldIndex.length > 0,
       }),
     });
@@ -721,7 +725,7 @@ export class SubTableColumnModel<
             parentCollectionAccessor: () => (this.parent as any)?.context?.collectionField?.collection,
             parentItemAccessor: () => parentItemCtx,
             parentItemMetaAccessor: () => parentItemOptions?.meta,
-            parentItemResolverAccessor: () => parentItemOptions?.resolveOnServer,
+            parentItemResolverAccessor: () => getContextItemResolver(parentItemOptions),
             showParentIndex: Array.isArray(baseArr) && baseArr.length > 0,
           }),
         });

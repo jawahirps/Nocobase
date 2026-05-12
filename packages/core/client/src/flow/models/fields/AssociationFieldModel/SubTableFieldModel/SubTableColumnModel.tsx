@@ -179,9 +179,18 @@ const handleModelName = (modelName) => {
   return modelName;
 };
 
-const MemoFieldRenderer = React.memo(FieldModelRenderer, (prev, next) => {
-  return prev.value === next.value && prev.model === next.model;
-});
+export function shouldReuseSubTableFieldRenderer(prev: any, next: any): boolean {
+  return (
+    prev.value === next.value &&
+    prev.model === next.model &&
+    prev.disabled === next.disabled &&
+    prev.hidden === next.hidden &&
+    prev.hiddenModel === next.hiddenModel &&
+    prev.readOnly === next.readOnly
+  );
+}
+
+const MemoFieldRenderer = React.memo(FieldModelRenderer, shouldReuseSubTableFieldRenderer);
 
 export function buildRowPathFromFieldIndex(fieldIndex: unknown): Array<string | number> | null {
   if (!Array.isArray(fieldIndex) || !fieldIndex.length) return null;
@@ -216,6 +225,12 @@ function shouldCommitImmediately(value: any) {
     return true;
   }
   return false;
+}
+
+export function getSubTableCellDisabled(props: { rowProps?: any; parentProps?: any; isNew?: boolean }): boolean {
+  const { rowProps, parentProps, isNew } = props;
+  const mergedProps = rowProps || parentProps || {};
+  return !!(mergedProps.disabled || (!isNew && mergedProps.aclDisabled) || (isNew && mergedProps.aclCreateDisabled));
 }
 
 const FieldModelRendererOptimize = React.memo((props: any) => {
@@ -269,9 +284,15 @@ interface CellProps {
   commitOnChange?: boolean;
 }
 
-const MemoCell: React.FC<CellProps> = React.memo(
+const MemoCell = observer<CellProps>(
   ({ value, record, rowIdx, id, parent, parentFieldIndex, rowFork, width, commitOnChange }) => {
     const isNew = record?.__is_new__;
+    const rowProps = rowFork?.props || parent.props;
+    const cellDisabled = getSubTableCellDisabled({
+      rowProps,
+      parentProps: parent.props,
+      isNew,
+    });
     return (
       <div
         style={{
@@ -337,25 +358,21 @@ const MemoCell: React.FC<CellProps> = React.memo(
             });
           }
 
-          if (parent.props.readPretty) {
+          if (rowProps.readPretty) {
             fork.setProps({ value });
             return <React.Fragment key={id}>{fork.render()}</React.Fragment>;
           }
 
-          if (parent.props.aclViewDisabled && !isNew) return null;
+          if (rowProps.aclViewDisabled && !isNew) return null;
 
           return (
             <FormItem
-              {...parent.props}
+              {...rowProps}
               key={id}
               name={buildDynamicNamePath([...fieldPath, rowIdx, namePath], parentFieldIndex)}
               style={{ marginBottom: 0 }}
               showLabel={false}
-              disabled={
-                parent.props.disabled ||
-                (!isNew && parent.props.aclDisabled) ||
-                (isNew && parent.props.aclCreateDisabled)
-              }
+              disabled={cellDisabled}
             >
               {fork.constructor.isLargeField ? (
                 <LargeFieldEdit
@@ -365,11 +382,7 @@ const MemoCell: React.FC<CellProps> = React.memo(
                     index: id,
                   }}
                   defaultValue={value}
-                  disabled={
-                    parent.props.disabled ||
-                    (!isNew && parent.props.aclDisabled) ||
-                    (isNew && parent.props.aclCreateDisabled)
-                  }
+                  disabled={cellDisabled}
                 />
               ) : (
                 <FieldModelRendererOptimize
@@ -382,16 +395,6 @@ const MemoCell: React.FC<CellProps> = React.memo(
           );
         })}
       </div>
-    );
-  },
-  (prev, next) => {
-    return (
-      prev.value === next.value &&
-      prev.id === next.id &&
-      prev.memoKey === next.memoKey &&
-      prev.width === next.width &&
-      prev.commitOnChange === next.commitOnChange &&
-      prev.rowIdx === next.rowIdx
     );
   },
 );

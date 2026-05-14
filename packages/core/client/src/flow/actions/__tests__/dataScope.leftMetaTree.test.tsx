@@ -10,34 +10,54 @@
 import React from 'react';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
-import { FlowEngine, FlowModel, FlowSettingsContextProvider } from '@nocobase/flow-engine';
+import {
+  FlowContext,
+  FlowEngine,
+  FlowModel,
+  FlowSettingsContextProvider,
+  FlowViewContextProvider,
+} from '@nocobase/flow-engine';
+import type { MetaTreeNode } from '@nocobase/flow-engine';
 import { dataScope } from '../dataScope';
+import { mergeDataScopeRightMetaTree } from '../dataScopeMetaTree';
 import { Application } from '../../../application/Application';
 import { CollectionFieldInterface } from '../../../data-source/collection-field-interface/CollectionFieldInterface';
 
 // Mock VariableInput used inside VariableFilterItem
 vi.mock('@nocobase/flow-engine', async () => {
   const actual = await vi.importActual<any>('@nocobase/flow-engine');
-  const MockVariableInput = ({ onChange }: any) => (
-    <button
-      type="button"
-      data-testid="variable-input"
-      onClick={() =>
-        onChange?.(
-          (globalThis as any).__TEST_PATH__ || 'title',
-          (globalThis as any).__TEST_META__ || {
-            interface: 'input',
-            uiSchema: { 'x-component': 'Input', 'x-component-props': { placeholder: 'Enter value' } },
-            paths: ['collection', 'title'],
-          },
-        )
-      }
-    >
-      mock-variable-input
-    </button>
-  );
+  const MockVariableInput = ({ onChange, metaTree }: any) => {
+    const index = ((globalThis as any).__TEST_VARIABLE_INPUT_INDEX__ ||= 0);
+    (globalThis as any).__TEST_VARIABLE_INPUT_INDEX__ = index + 1;
+    (globalThis as any).__TEST_META_TREES__ ||= [];
+    (globalThis as any).__TEST_META_TREES__[index] = metaTree;
+    return (
+      <button
+        type="button"
+        data-testid="variable-input"
+        onClick={() =>
+          onChange?.(
+            (globalThis as any).__TEST_PATH__ || 'title',
+            (globalThis as any).__TEST_META__ || {
+              interface: 'input',
+              uiSchema: { 'x-component': 'Input', 'x-component-props': { placeholder: 'Enter value' } },
+              paths: ['collection', 'title'],
+            },
+          )
+        }
+      >
+        mock-variable-input
+      </button>
+    );
+  };
   return { ...actual, VariableInput: MockVariableInput };
 });
+
+async function resolveMetaTree(metaTree: any): Promise<MetaTreeNode[]> {
+  if (!metaTree) return [];
+  const result = typeof metaTree === 'function' ? await metaTree() : metaTree;
+  return Array.isArray(result) ? result : [];
+}
 
 function createContextWithCollection() {
   const engine = new FlowEngine();
@@ -74,14 +94,19 @@ describe('dataScope action with leftMetaTree', () => {
     document.body.innerHTML = '';
     (globalThis as any).__TEST_PATH__ = undefined;
     (globalThis as any).__TEST_META__ = undefined;
+    (globalThis as any).__TEST_META_TREES__ = [];
+    (globalThis as any).__TEST_VARIABLE_INPUT_INDEX__ = 0;
   });
 
-  function renderAction(value: any, model: any) {
+  function renderAction(value: any, model: any, viewContext?: FlowContext) {
     const Comp: any = (dataScope as any).uiSchema.filter['x-component'];
-    return render(
+    const element = (
       <FlowSettingsContextProvider value={model.context}>
         <Comp value={value} />
-      </FlowSettingsContextProvider>,
+      </FlowSettingsContextProvider>
+    );
+    return render(
+      viewContext ? <FlowViewContextProvider context={viewContext}>{element}</FlowViewContextProvider> : element,
     );
   }
 
@@ -189,5 +214,137 @@ describe('dataScope action with leftMetaTree', () => {
     renderAction(value, model);
     fireEvent.click(screen.getAllByTestId('variable-input')[0]);
     expect(value.items[0].path).toBe('title');
+  });
+
+  it('merges right-side meta tree while preserving the base item as parentItem', async () => {
+    const merged = mergeDataScopeRightMetaTree(
+      [
+        { name: 'viewOnly', title: 'View only', type: 'string', paths: ['viewOnly'] },
+        {
+          name: 'item',
+          title: 'Current item',
+          type: 'object',
+          paths: ['item'],
+          children: async () => [
+            {
+              name: 'value',
+              title: 'Attributes',
+              type: 'object',
+              paths: ['item', 'value'],
+              children: [
+                { name: 'parentName', title: 'Parent name', type: 'string', paths: ['item', 'value', 'parentName'] },
+              ],
+            },
+          ],
+        },
+      ],
+      [
+        {
+          name: 'item',
+          title: 'Current item',
+          type: 'object',
+          paths: ['item'],
+          children: async () => [
+            {
+              name: 'value',
+              title: 'Attributes',
+              type: 'object',
+              paths: ['item', 'value'],
+              children: [
+                { name: 'companyName', title: 'Company name', type: 'string', paths: ['item', 'value', 'companyName'] },
+              ],
+            },
+          ],
+        },
+        { name: 'modelOnly', title: 'Model only', type: 'string', paths: ['modelOnly'] },
+      ],
+    );
+
+    expect(merged.map((node) => node.name)).toEqual(expect.arrayContaining(['viewOnly', 'item', 'modelOnly']));
+    const itemNode = merged.find((node) => node.name === 'item');
+    const itemChildren = await resolveMetaTree(itemNode?.children);
+    expect(itemChildren.map((node) => node.name)).toEqual(expect.arrayContaining(['value', 'parentItem']));
+
+    const valueNode = itemChildren.find((node) => node.name === 'value');
+    const valueChildren = await resolveMetaTree(valueNode?.children);
+    expect(valueChildren.map((node) => node.name)).toContain('companyName');
+
+    const parentItemNode = itemChildren.find((node) => node.name === 'parentItem');
+    expect(parentItemNode?.paths).toEqual(['item', 'parentItem']);
+    const parentItemChildren = await resolveMetaTree(parentItemNode?.children);
+    const parentValueNode = parentItemChildren.find((node) => node.name === 'value');
+    const parentValueChildren = await resolveMetaTree(parentValueNode?.children);
+    expect(parentValueChildren.map((node) => node.name)).toContain('parentName');
+  });
+
+  it('uses both view and model context meta trees for right-side variables', async () => {
+    const { model } = createContextWithCollection();
+    const viewContext = new FlowContext();
+    viewContext.defineProperty('viewOnly', {
+      value: 'from-view',
+      meta: { type: 'string', title: 'View only' },
+    });
+    viewContext.defineProperty('item', {
+      value: { value: { parentName: 'Parent' } },
+      meta: {
+        type: 'object',
+        title: 'Current item',
+        properties: {
+          value: {
+            type: 'object',
+            title: 'Attributes',
+            properties: {
+              parentName: {
+                type: 'string',
+                title: 'Parent name',
+                interface: 'input',
+                uiSchema: { 'x-component': 'Input' },
+              },
+            },
+          },
+        },
+      },
+    });
+    model.context.defineProperty('item', {
+      value: { value: { companyName: 'NocoBase' } },
+      meta: {
+        type: 'object',
+        title: 'Current item',
+        properties: {
+          value: {
+            type: 'object',
+            title: 'Attributes',
+            properties: {
+              companyName: {
+                type: 'string',
+                title: 'Company name',
+                interface: 'input',
+                uiSchema: { 'x-component': 'Input' },
+              },
+            },
+          },
+        },
+      },
+    });
+
+    const value = { logic: '$and', items: [{ path: '', operator: '$eq', value: '' }] };
+    renderAction(value, model, viewContext);
+
+    const rightMetaTree = (globalThis as any).__TEST_META_TREES__?.[1];
+    const rightNodes = await resolveMetaTree(rightMetaTree);
+
+    expect(rightNodes.map((node) => node.name)).toEqual(
+      expect.arrayContaining(['constant', 'null', 'viewOnly', 'item']),
+    );
+    const itemNode = rightNodes.find((node) => node.name === 'item');
+    const itemChildren = await resolveMetaTree(itemNode?.children);
+    const valueNode = itemChildren.find((node) => node.name === 'value');
+    const valueChildren = await resolveMetaTree(valueNode?.children);
+    expect(valueChildren.map((node) => node.name)).toContain('companyName');
+    const parentItemNode = itemChildren.find((node) => node.name === 'parentItem');
+    const parentItemChildren = await resolveMetaTree(parentItemNode?.children);
+    const parentValueNode = parentItemChildren.find((node) => node.name === 'value');
+    const parentValueChildren = await resolveMetaTree(parentValueNode?.children);
+    expect(parentValueChildren.map((node) => node.name)).toContain('parentName');
   });
 });

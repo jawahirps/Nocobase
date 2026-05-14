@@ -7,12 +7,26 @@
  * For more information, please refer to: https://www.nocobase.com/agreement.
  */
 
-import { defineAction, MultiRecordResource, tExpr, useFlowSettingsContext } from '@nocobase/flow-engine';
+import {
+  defineAction,
+  MultiRecordResource,
+  tExpr,
+  useFlowSettingsContext,
+  useFlowViewContext,
+} from '@nocobase/flow-engine';
+import type { MetaTreeNode } from '@nocobase/flow-engine';
 import { isEmptyFilter } from '@nocobase/utils/client';
 import React from 'react';
 import { FilterGroup, VariableFilterItem } from '../components/filter';
 import { FieldModel } from '../models/base/FieldModel';
 import { normalizeDataScopeFilter } from './dataScopeFilter';
+import { mergeDataScopeRightMetaTree } from './dataScopeMetaTree';
+
+async function resolveMetaTree(raw: MetaTreeNode[] | (() => MetaTreeNode[] | Promise<MetaTreeNode[]>) | undefined) {
+  if (!raw) return [];
+  const nodes = Array.isArray(raw) ? raw : await raw();
+  return Array.isArray(nodes) ? nodes : [];
+}
 
 export const dataScope = defineAction({
   name: 'dataScope',
@@ -29,10 +43,18 @@ export const dataScope = defineAction({
       'x-decorator': 'FormItem',
       'x-component': function Component(props) {
         const flowContext = useFlowSettingsContext<FieldModel>();
+        const viewContext = useFlowViewContext();
+        const rightMetaTree = async () => {
+          const base = await resolveMetaTree(viewContext?.getPropertyMetaTree?.());
+          const override = await resolveMetaTree(flowContext.model?.context?.getPropertyMetaTree?.());
+          return mergeDataScopeRightMetaTree(base, override);
+        };
         return (
           <FilterGroup
             value={props.value}
-            FilterItem={(p) => <VariableFilterItem {...p} model={flowContext.model} rightAsVariable />}
+            FilterItem={(p) => (
+              <VariableFilterItem {...p} model={flowContext.model} rightAsVariable rightMetaTree={rightMetaTree} />
+            )}
           />
         );
       },

@@ -10,8 +10,10 @@
 import { describe, expect, it, vi } from 'vitest';
 import {
   getLatestSubTableRowRecord,
+  getSubTablePendingRowValues,
   buildRowPathFromFieldIndex,
   createSubTableRowItemContextPropertyOptions,
+  setSubTablePendingRowFieldValue,
 } from '../SubTableColumnModel';
 
 describe('SubTableColumnModel row record helpers', () => {
@@ -42,6 +44,36 @@ describe('SubTableColumnModel row record helpers', () => {
     const fallback = { uid: 'stale-role', __is_new__: false };
 
     expect(getLatestSubTableRowRecord(form, ['roles:0'], fallback)).toBe(fallback);
+  });
+
+  it('merges pending row field values over the form row value', () => {
+    const host = {};
+    const rowKey = 'row:roles:0';
+    const form = {
+      getFieldValue: vi.fn(() => ({ uid: 'role-uid-1', companyName: 'Old name', status: 'active' })),
+    };
+
+    setSubTablePendingRowFieldValue(host, rowKey, 'companyName', 'New name');
+
+    expect(getLatestSubTableRowRecord(form, ['roles:0'], {}, getSubTablePendingRowValues(host, rowKey))).toEqual({
+      uid: 'role-uid-1',
+      companyName: 'New name',
+      status: 'active',
+    });
+  });
+
+  it('keeps pending undefined values so clearing a field overrides stale row data', () => {
+    const host = {};
+    const rowKey = 'row:roles:0';
+    const form = {
+      getFieldValue: vi.fn(() => ({ uid: 'role-uid-1', companyName: 'Old name' })),
+    };
+
+    setSubTablePendingRowFieldValue(host, rowKey, 'companyName', undefined);
+
+    const record = getLatestSubTableRowRecord(form, ['roles:0'], {}, getSubTablePendingRowValues(host, rowKey));
+    expect(record).toHaveProperty('companyName', undefined);
+    expect(record.uid).toBe('role-uid-1');
   });
 
   it('builds item meta for the current sub-table row attributes', async () => {

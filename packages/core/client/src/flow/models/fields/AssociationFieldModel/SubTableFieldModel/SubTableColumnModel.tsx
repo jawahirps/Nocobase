@@ -84,7 +84,15 @@ export function FieldWithoutPermissionPlaceholder({ targetModel }) {
   );
 }
 
-const LargeFieldEdit = observer(({ model, params: { fieldPath, index }, defaultValue, disabled, ...others }: any) => {
+const LargeFieldEdit = observer((props: any) => {
+  const {
+    model,
+    params: { fieldPath, index },
+    defaultValue,
+    disabled,
+    onLatestValueChange,
+    ...others
+  } = props;
   const flowEngine = useFlowEngine();
   const ref = useRef(null);
   const field = model.subModels.readPrettyField as FieldModel;
@@ -96,13 +104,21 @@ const LargeFieldEdit = observer(({ model, params: { fieldPath, index }, defaultV
   const FieldModelRendererCom = (props) => {
     const { model, onChange, ...rest } = props;
 
-    const handleChange = useMemo(
+    const commitChange = useMemo(
       () =>
         debounce((val) => {
           if (props.onChange) props.onChange(val);
           if (onChange) onChange(val);
         }, 200),
       [props.onChange, onChange],
+    );
+
+    const handleChange = React.useCallback(
+      (val) => {
+        onLatestValueChange?.(val);
+        commitChange(val);
+      },
+      [commitChange, onLatestValueChange],
     );
 
     return <FieldModelRenderer model={model} {...rest} onChange={handleChange} />;
@@ -184,6 +200,38 @@ const MemoFieldRenderer = React.memo(FieldModelRenderer, (prev, next) => {
   return prev.value === next.value && prev.model === next.model;
 });
 
+type SubTableRowPendingValues = Record<string, any>;
+
+const subTablePendingRowValues = new WeakMap<object, Map<string, SubTableRowPendingValues>>();
+
+function getSubTablePendingValueHost(host: unknown): object | null {
+  return host && (typeof host === 'object' || typeof host === 'function') ? (host as object) : null;
+}
+
+export function setSubTablePendingRowFieldValue(host: unknown, rowKey: unknown, fieldName: unknown, value: any) {
+  const target = getSubTablePendingValueHost(host);
+  const rowKeyStr = typeof rowKey === 'string' && rowKey ? rowKey : null;
+  const fieldNameStr = typeof fieldName === 'string' && fieldName ? fieldName : null;
+  if (!target || !rowKeyStr || !fieldNameStr) return;
+
+  let rows = subTablePendingRowValues.get(target);
+  if (!rows) {
+    rows = new Map();
+    subTablePendingRowValues.set(target, rows);
+  }
+
+  const rowValues = rows.get(rowKeyStr) || {};
+  rowValues[fieldNameStr] = value;
+  rows.set(rowKeyStr, rowValues);
+}
+
+export function getSubTablePendingRowValues(host: unknown, rowKey: unknown): SubTableRowPendingValues | undefined {
+  const target = getSubTablePendingValueHost(host);
+  const rowKeyStr = typeof rowKey === 'string' && rowKey ? rowKey : null;
+  if (!target || !rowKeyStr) return undefined;
+  return subTablePendingRowValues.get(target)?.get(rowKeyStr);
+}
+
 export function buildRowPathFromFieldIndex(fieldIndex: unknown): Array<string | number> | null {
   if (!Array.isArray(fieldIndex) || !fieldIndex.length) return null;
   const out: Array<string | number> = [];
@@ -197,10 +245,29 @@ export function buildRowPathFromFieldIndex(fieldIndex: unknown): Array<string | 
   return out.length ? out : null;
 }
 
-export function getLatestSubTableRowRecord(form: any, fieldIndex: unknown, fallbackRecord: any): any {
+function mergeSubTableRowPendingValues(record: any, pendingValues?: SubTableRowPendingValues): any {
+  if (!pendingValues || !Object.keys(pendingValues).length) return record;
+  if (record && typeof record === 'object' && !Array.isArray(record)) {
+    return {
+      ...record,
+      ...pendingValues,
+    };
+  }
+  return {
+    ...pendingValues,
+  };
+}
+
+export function getLatestSubTableRowRecord(
+  form: any,
+  fieldIndex: unknown,
+  fallbackRecord: any,
+  pendingValues?: SubTableRowPendingValues,
+): any {
   const latestRowPath = buildRowPathFromFieldIndex(fieldIndex);
   const latestRecord = latestRowPath ? form?.getFieldValue?.(latestRowPath) : undefined;
-  return typeof latestRecord === 'undefined' ? fallbackRecord : latestRecord;
+  const record = typeof latestRecord === 'undefined' ? fallbackRecord : latestRecord;
+  return mergeSubTableRowPendingValues(record, pendingValues);
 }
 
 export function createSubTableRowItemContextPropertyOptions(options: {
@@ -257,26 +324,29 @@ function shouldCommitImmediately(value: any) {
 }
 
 const FieldModelRendererOptimize = React.memo((props: any) => {
-  const { model, onChange, value, commitOnChange, ...rest } = props;
+  const { model, onChange, value, commitOnChange, onLatestValueChange, ...rest } = props;
   const pendingValueRef = React.useRef<any>(props?.value);
 
   useEffect(() => {
     pendingValueRef.current = value;
-  }, [value]);
+    onLatestValueChange?.(value);
+  }, [onLatestValueChange, value]);
 
   const handleChange = React.useCallback(
     (value: any) => {
       pendingValueRef.current = value;
+      onLatestValueChange?.(value);
       if (commitOnChange || shouldCommitImmediately(value)) {
         onChange?.(value);
       }
     },
-    [commitOnChange, onChange],
+    [commitOnChange, onChange, onLatestValueChange],
   );
 
   const handleCommit = React.useCallback(() => {
+    onLatestValueChange?.(pendingValueRef.current);
     onChange?.(pendingValueRef.current);
-  }, [onChange]);
+  }, [onChange, onLatestValueChange]);
 
   return (
     <div onBlur={handleCommit}>
@@ -286,6 +356,7 @@ const FieldModelRendererOptimize = React.memo((props: any) => {
         model={model}
         onChange={handleChange}
         onChangeComplete={() => {
+          onLatestValueChange?.(pendingValueRef.current);
           onChange?.(pendingValueRef.current);
         }}
       />
@@ -308,7 +379,7 @@ interface CellProps {
 }
 
 const MemoCell: React.FC<CellProps> = React.memo(
-  ({ value, record, rowIdx, id, parent, parentFieldIndex, rowFork, width, commitOnChange }) => {
+  ({ value, record, rowIdx, id, parent, parentFieldIndex, rowFork, memoKey, width, commitOnChange }) => {
     const isNew = record?.__is_new__;
     return (
       <div
@@ -347,6 +418,10 @@ const MemoCell: React.FC<CellProps> = React.memo(
           parent.ensureItemContextForFieldModel(action);
           const fieldPath = action.context.fieldPath.split('.');
           const namePath = fieldPath.pop();
+          const subTableFieldModel = (parent as any).parent;
+          const updatePendingRowValue = (nextValue: any) => {
+            setSubTablePendingRowFieldValue(subTableFieldModel, memoKey, namePath, nextValue);
+          };
 
           const fork: any = action.createFork({}, `${id}`);
           fork.context.defineProperty('currentObject', { get: () => record });
@@ -406,6 +481,7 @@ const MemoCell: React.FC<CellProps> = React.memo(
                     index: id,
                   }}
                   defaultValue={value}
+                  onLatestValueChange={updatePendingRowValue}
                   disabled={
                     parent.props.disabled ||
                     (!isNew && parent.props.aclDisabled) ||
@@ -417,6 +493,7 @@ const MemoCell: React.FC<CellProps> = React.memo(
                   model={fork}
                   id={[(parent as any).context.fieldPath, rowIdx]}
                   commitOnChange={commitOnChange}
+                  onLatestValueChange={updatePendingRowValue}
                 />
               )}
             </FormItem>
@@ -694,7 +771,12 @@ export class SubTableColumnModel<
         }
         const getRowRecord = () => {
           const form = (fork.context as any)?.form || (this.context?.blockModel as any)?.context?.form;
-          return getLatestSubTableRowRecord(form, fork.context.fieldIndex, record);
+          return getLatestSubTableRowRecord(
+            form,
+            fork.context.fieldIndex,
+            record,
+            getSubTablePendingRowValues(this.parent, rowForkKey),
+          );
         };
         const parentItemOptions = this.context?.getPropertyOptions?.('item') || {};
         fork.context.defineProperty('item', {

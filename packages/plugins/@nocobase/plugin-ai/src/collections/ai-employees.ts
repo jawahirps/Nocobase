@@ -9,6 +9,7 @@
 
 export default {
   name: 'aiEmployees',
+  tags: 'system',
   fields: [
     {
       name: 'username',

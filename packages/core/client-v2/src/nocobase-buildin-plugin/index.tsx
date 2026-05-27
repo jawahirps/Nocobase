@@ -15,7 +15,7 @@ import type { Application } from '../Application';
 import { getCurrentV2RedirectPath, getDefaultV2AdminRedirectPath } from '../authRedirect';
 import { AppNotFound } from '../components';
 import { PluginFlowEngine } from '../flow';
-import { AdminLayoutMenuItemModel, AdminLayoutModel } from '../flow/admin-shell/admin-layout';
+import { ADMIN_LAYOUT_MODEL_UID, AdminLayoutMenuItemModel, AdminLayoutModel } from '../flow/admin-shell/admin-layout';
 import { useApp } from '../hooks/useApp';
 import { Plugin } from '../Plugin';
 import { AdminSettingsLayoutModel } from '../settings-center';
@@ -56,6 +56,15 @@ function isAdminRuntimeRoute(pathname: string, basename?: string) {
   return normalizedPathname === '/admin' || normalizedPathname.startsWith('/admin/');
 }
 
+function hasAuthCheckRoute(app: Application, pathname: string) {
+  const matchedRoutes = app.router.matchRoutes(pathname) || [];
+  return matchedRoutes.some((match) => match?.route?.authCheck === true);
+}
+
+function shouldCheckRuntimeRoute(app: Application, pathname: string) {
+  return isAdminRuntimeRoute(pathname, app.router.getBasename()) || hasAuthCheckRoute(app, pathname);
+}
+
 export const CurrentUserContext = createContext<CurrentUserState | null>(null);
 CurrentUserContext.displayName = 'CurrentUserContext';
 
@@ -87,7 +96,7 @@ export function useCurrentRoles(): CurrentRoleOption[] {
 }
 
 const DataSourceBootstrapProvider: FC = ({ children }) => {
-  const app = useApp();
+  const app = useApp<Application>();
   const location = useLocation();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
@@ -98,7 +107,7 @@ const DataSourceBootstrapProvider: FC = ({ children }) => {
     const basename = app.router.getBasename();
     const isSkippedAuthCheckRoute =
       isBuiltinAuthRoute(location.pathname, basename) || app.router.isSkippedAuthCheckRoute(location.pathname);
-    const shouldBootstrap = isAdminRuntimeRoute(location.pathname, basename);
+    const shouldBootstrap = shouldCheckRuntimeRoute(app, location.pathname);
 
     if (isSkippedAuthCheckRoute || !shouldBootstrap) {
       setLoading(false);
@@ -146,7 +155,7 @@ const DataSourceBootstrapProvider: FC = ({ children }) => {
 };
 
 const CurrentUserProvider: FC = ({ children }) => {
-  const app = useApp();
+  const app = useApp<Application>();
   const location = useLocation();
   const navigate = useNavigate();
   const [state, setState] = useState<CurrentUserState>({ loading: true });
@@ -160,7 +169,7 @@ const CurrentUserProvider: FC = ({ children }) => {
     const isSkippedAuthCheckRoute =
       isBuiltinAuthRoute(pathnameRef.current, app.router.getBasename()) ||
       app.router.isSkippedAuthCheckRoute(pathnameRef.current);
-    const shouldCheckCurrentUser = isAdminRuntimeRoute(pathnameRef.current, app.router.getBasename());
+    const shouldCheckCurrentUser = shouldCheckRuntimeRoute(app, pathnameRef.current);
 
     if (isSkippedAuthCheckRoute || !shouldCheckCurrentUser) {
       // 认证页等免鉴权路由不应再执行 `/auth:check`，否则未登录时会重复鉴权并触发重定向抖动。
@@ -240,7 +249,7 @@ const CurrentUserProvider: FC = ({ children }) => {
 };
 
 const RootRedirect: FC = () => {
-  const app = useApp();
+  const app = useApp<Application>();
   const hasToken = !!app?.apiClient?.auth?.token;
   const targetPath = getDefaultV2AdminRedirectPath(app);
 
@@ -272,6 +281,12 @@ export class NocoBaseBuildInPlugin extends Plugin<any, Application> {
       AdminLayoutModel,
       AdminLayoutMenuItemModel,
       AdminSettingsLayoutModel,
+    });
+    this.app.layoutManager.registerLayout({
+      routeName: 'admin',
+      routePath: '/admin',
+      uid: ADMIN_LAYOUT_MODEL_UID,
+      layoutModelClass: 'AdminLayoutModel',
     });
 
     this.app.pluginSettingsManager.addMenuItem({
@@ -324,10 +339,6 @@ export class NocoBaseBuildInPlugin extends Plugin<any, Application> {
       Component: AppNotFound,
     });
 
-    this.router.add('admin', {
-      path: '/admin',
-      componentLoader: () => import('../flow/components/AdminLayout'),
-    });
     this.router.add('admin.settings', {
       path: '/admin/settings',
       componentLoader: () => import('../settings-center/AdminSettingsLayout'),
@@ -335,23 +346,6 @@ export class NocoBaseBuildInPlugin extends Plugin<any, Application> {
     this.router.add('admin.settings.route-empty', {
       path: '*',
       Component: Outlet,
-    });
-    this.router.add('admin.page', {
-      path: '/admin/:name',
-      componentLoader: () => import('../flow/components/FlowRoute'),
-    });
-
-    this.router.add('admin.page.tab', {
-      path: '/admin/:name/tab/:tabUid',
-      componentLoader: () => import('../flow/components/FlowRoute'),
-    });
-    this.router.add('admin.page.view', {
-      path: '/admin/:name/view/*',
-      componentLoader: () => import('../flow/components/FlowRoute'),
-    });
-    this.router.add('admin.page.tab.view', {
-      path: '/admin/:name/tab/:tabUid/view/*',
-      componentLoader: () => import('../flow/components/FlowRoute'),
     });
   }
 

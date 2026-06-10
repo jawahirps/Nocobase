@@ -27,8 +27,23 @@ export default class extends Migration {
       return;
     }
 
-    await repository.create({
-      values: sleekDark,
+    await this.db.sequelize.transaction(async (t) => {
+      await repository.update({
+        values: {
+          default: false,
+        },
+        filter: {
+          default: true,
+        },
+        transaction: t,
+      });
+      await repository.create({
+        values: {
+          ...sleekDark,
+          default: true,
+        },
+        transaction: t,
+      });
     });
   }
 

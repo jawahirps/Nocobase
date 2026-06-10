@@ -44,7 +44,7 @@ export const compact: Omit<ThemeItem, 'id'> = {
   optional: true,
   isBuiltIn: true,
   uid: 'compact',
-  default: process.env.__E2E__ ? false : true,
+  default: false,
 };
 
 /** 暗黑模式 + 鲜亮紫色强调色 */
@@ -73,7 +73,7 @@ export const sleekDark: Omit<ThemeItem, 'id'> = {
   optional: true,
   isBuiltIn: true,
   uid: 'sleek_dark',
-  default: false,
+  default: process.env.__E2E__ ? false : true,
 };
 
 /** 同时包含 `紧凑` 和 `暗黑` 两种模式 */

@@ -76,6 +76,38 @@ export const sleekDark: Omit<ThemeItem, 'id'> = {
   default: process.env.__E2E__ ? false : true,
 };
 
+/** 明亮多彩模式：鲜艳的洋红主色 + 着色的导航栏和侧边栏 */
+export const vibrant: Omit<ThemeItem, 'id'> = {
+  config: {
+    name: 'Vibrant',
+    token: {
+      colorPrimary: '#eb2f96',
+      colorInfo: '#eb2f96',
+      borderRadius: 10,
+      colorBgHeader: '#520339',
+      colorPrimaryHeader: '#520339',
+      colorTextHeaderMenu: '#ffd6e7',
+      colorTextHeaderMenuHover: '#ffffff',
+      colorTextHeaderMenuActive: '#ffffff',
+      colorBgHeaderMenuHover: '#ffffff26',
+      colorBgHeaderMenuActive: '#ffffff33',
+      colorBgSider: '#fff0f6',
+      colorTextSiderMenu: '#9e1068',
+      colorTextSiderMenuHover: '#c41d7f',
+      colorTextSiderMenuActive: '#c41d7f',
+      colorBgSiderMenuHover: '#ffd6e7',
+      colorBgSiderMenuActive: '#ffd6e7',
+      colorSettings: '#eb2f96',
+      colorBgSettingsHover: 'rgba(235, 47, 150, 0.06)',
+      colorBorderSettingsHover: 'rgba(235, 47, 150, 0.3)',
+    },
+  },
+  optional: true,
+  isBuiltIn: true,
+  uid: 'vibrant',
+  default: false,
+};
+
 /** 同时包含 `紧凑` 和 `暗黑` 两种模式 */
 export const compactDark: Omit<ThemeItem, 'id'> = {
   config: {

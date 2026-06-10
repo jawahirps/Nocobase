@@ -8,7 +8,7 @@
  */
 
 import { Migration } from '@nocobase/server';
-import { sleekDark } from '../builtinThemes';
+import { sleekDark, vibrant } from '../builtinThemes';
 
 export default class extends Migration {
   appVersion = '<2.0.58';
@@ -18,33 +18,42 @@ export default class extends Migration {
       return;
     }
 
-    const count = await repository.count({
+    const sleekDarkCount = await repository.count({
       filter: {
         uid: sleekDark.uid,
       },
     });
-    if (count > 0) {
-      return;
+    if (sleekDarkCount === 0) {
+      await this.db.sequelize.transaction(async (t) => {
+        await repository.update({
+          values: {
+            default: false,
+          },
+          filter: {
+            default: true,
+          },
+          transaction: t,
+        });
+        await repository.create({
+          values: {
+            ...sleekDark,
+            default: true,
+          },
+          transaction: t,
+        });
+      });
     }
 
-    await this.db.sequelize.transaction(async (t) => {
-      await repository.update({
-        values: {
-          default: false,
-        },
-        filter: {
-          default: true,
-        },
-        transaction: t,
-      });
-      await repository.create({
-        values: {
-          ...sleekDark,
-          default: true,
-        },
-        transaction: t,
-      });
+    const vibrantCount = await repository.count({
+      filter: {
+        uid: vibrant.uid,
+      },
     });
+    if (vibrantCount === 0) {
+      await repository.create({
+        values: vibrant,
+      });
+    }
   }
 
   async down() {}

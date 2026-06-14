@@ -1,0 +1,22 @@
+{
+  "API Key": "API Key",
+  "Base URL": "Base URL",
+  "Model": "Model",
+  "Options": "Options",
+  "Temperature": "Temperature",
+  "Temperature description": "Controls randomness. Lower values make the model more deterministic.",
+  "Top P": "Top P",
+  "Top P description": "Controls diversity via nucleus sampling.",
+  "Max completion tokens": "Max completion tokens",
+  "Max completion tokens description": "Maximum number of tokens to generate. -1 for no limit.",
+  "Frequency penalty": "Frequency penalty",
+  "Frequency penalty description": "Penalizes tokens based on their frequency in the text so far.",
+  "Presence penalty": "Presence penalty",
+  "Presence penalty description": "Penalizes tokens based on whether they appear in the text so far.",
+  "Response format": "Response format",
+  "Response format description": "The format of the response output.",
+  "Timeout (ms)": "Timeout (ms)",
+  "Max retries": "Max retries",
+  "Text": "Text",
+  "JSON": "JSON"
+}

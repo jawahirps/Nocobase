@@ -1,0 +1,22 @@
+{
+  "API Key": "API 密钥",
+  "Base URL": "基础 URL",
+  "Model": "模型",
+  "Options": "选项",
+  "Temperature": "温度",
+  "Temperature description": "控制随机性，较低的值使模型更加确定性。",
+  "Top P": "Top P",
+  "Top P description": "通过核采样控制多样性。",
+  "Max completion tokens": "最大补全令牌数",
+  "Max completion tokens description": "生成的最大令牌数。-1 表示无限制。",
+  "Frequency penalty": "频率惩罚",
+  "Frequency penalty description": "根据令牌在文本中出现的频率进行惩罚。",
+  "Presence penalty": "存在惩罚",
+  "Presence penalty description": "根据令牌是否出现在文本中进行惩罚。",
+  "Response format": "响应格式",
+  "Response format description": "响应输出的格式。",
+  "Timeout (ms)": "超时时间（毫秒）",
+  "Max retries": "最大重试次数",
+  "Text": "文本",
+  "JSON": "JSON"
+}

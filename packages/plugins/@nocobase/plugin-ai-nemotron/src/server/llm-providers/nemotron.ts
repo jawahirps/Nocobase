@@ -1,5 +1,5 @@
 import { ChatOpenAI } from '@langchain/openai';
-import { LLMProvider, LLMProviderMeta, SupportedModel } from '@nocobase/plugin-ai';
+import { LLMProvider, LLMProviderMeta } from '@nocobase/plugin-ai';
 
 export class NemotronProvider extends LLMProvider {
   declare chatModel: ChatOpenAI;
@@ -62,14 +62,5 @@ export class NemotronProvider extends LLMProvider {
 
 export const nemotronProviderOptions: LLMProviderMeta = {
   title: 'NVIDIA Nemotron',
-  supportedModel: [SupportedModel.LLM],
-  models: {
-    [SupportedModel.LLM]: [
-      'nvidia/llama-3.1-nemotron-ultra-253b-v1',
-      'nvidia/llama-3.3-nemotron-super-49b-v1',
-      'nvidia/llama-3.1-nemotron-70b-instruct',
-      'nvidia/nemotron-mini-4b-instruct',
-    ],
-  },
   provider: NemotronProvider,
 };

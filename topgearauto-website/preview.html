@@ -3,443 +3,341 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta
-      name="description"
-      content="TopGear Auto — premium pre-owned vehicles, expert service and financing you can trust."
-    />
+    <meta name="description" content="TopGear Auto — premium pre-owned vehicles, expert service and financing." />
     <title>TopGear Auto | Premium Pre-Owned Vehicles &amp; Service</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
-      rel="stylesheet"
-    />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
     <style>
-      :root {
-        --bg: #0b0d10;
-        --bg-soft: #12151a;
-        --card: #171b21;
-        --border: rgba(255, 255, 255, 0.08);
-        --text: #f4f6f8;
-        --text-muted: #9aa3ad;
-        --accent: #e63946;
-        --accent-soft: rgba(230, 57, 70, 0.12);
-        --radius: 16px;
-      }
-      * { margin: 0; padding: 0; box-sizing: border-box; }
-      html { scroll-behavior: smooth; }
-      body {
-        font-family: 'Inter', system-ui, -apple-system, sans-serif;
-        background: var(--bg); color: var(--text); line-height: 1.6;
-        -webkit-font-smoothing: antialiased;
-      }
-      a { color: inherit; text-decoration: none; }
-      img { max-width: 100%; display: block; }
-      .container { width: min(1140px, 92%); margin: 0 auto; }
-      .section { padding: 96px 0; }
-      .section-label {
-        display: inline-block; color: var(--accent); font-size: 0.8rem; font-weight: 700;
-        letter-spacing: 0.18em; text-transform: uppercase; margin-bottom: 12px;
-      }
-      .section-title {
-        font-size: clamp(1.8rem, 4vw, 2.6rem); font-weight: 800;
-        letter-spacing: -0.02em; margin-bottom: 16px;
-      }
-      .section-subtitle { color: var(--text-muted); max-width: 560px; margin-bottom: 48px; }
-      .btn {
-        display: inline-flex; align-items: center; gap: 8px; padding: 14px 28px;
-        border-radius: 999px; font-weight: 600; font-size: 0.95rem; border: 1px solid transparent;
-        cursor: pointer; transition: background 0.2s ease, border-color 0.2s ease;
-      }
-      .btn-primary { background: var(--accent); color: #fff; }
-      .btn-primary:hover { background: #d62839; }
-      .btn-ghost { border-color: var(--border); color: var(--text); background: transparent; }
-      .btn-ghost:hover { border-color: rgba(255, 255, 255, 0.3); }
-      .btn:focus-visible, a:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
-
-      .navbar {
-        position: fixed; inset: 0 0 auto 0; z-index: 50; backdrop-filter: blur(14px);
-        background: rgba(11, 13, 16, 0.72); border-bottom: 1px solid var(--border);
-      }
-      .navbar-inner { display: flex; align-items: center; justify-content: space-between; height: 72px; }
-      .brand { font-size: 1.2rem; font-weight: 800; letter-spacing: -0.01em; }
-      .brand span { color: var(--accent); }
-      .nav-links { display: flex; align-items: center; gap: 32px; list-style: none; }
-      .nav-links a { font-size: 0.92rem; color: var(--text-muted); transition: color 0.2s ease; }
-      .nav-links a:hover { color: var(--text); }
-      .nav-cta { padding: 10px 22px; }
-      @media (max-width: 760px) { .nav-links { display: none; } }
-
-      .hero {
-        position: relative; min-height: 100vh; display: flex; align-items: center; overflow: hidden;
-        background:
-          radial-gradient(1100px 500px at 80% -10%, rgba(230, 57, 70, 0.18), transparent 60%),
-          radial-gradient(800px 400px at 10% 110%, rgba(69, 123, 157, 0.16), transparent 60%),
-          var(--bg);
-      }
-      .hero-grid {
-        display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 48px;
-        align-items: center; padding-top: 72px;
-      }
-      .hero h1 {
-        font-size: clamp(2.4rem, 6vw, 4rem); font-weight: 800; line-height: 1.1;
-        letter-spacing: -0.03em; margin-bottom: 20px;
-      }
-      .hero h1 em { font-style: normal; color: var(--accent); }
-      .hero p { color: var(--text-muted); font-size: 1.05rem; max-width: 480px; margin-bottom: 32px; }
-      .hero-actions { display: flex; flex-wrap: wrap; gap: 16px; }
-      .hero-visual {
-        position: relative; border-radius: var(--radius); overflow: hidden;
-        border: 1px solid var(--border); aspect-ratio: 4 / 3;
-      }
-      .hero-visual img { width: 100%; height: 100%; object-fit: cover; }
-      .hero-badge {
-        position: absolute; bottom: 20px; left: 20px; background: rgba(11, 13, 16, 0.85);
-        backdrop-filter: blur(8px); border: 1px solid var(--border); border-radius: 12px;
-        padding: 12px 18px; font-size: 0.85rem;
-      }
-      .hero-badge strong { display: block; font-size: 1.1rem; }
-      @media (max-width: 860px) {
-        .hero-grid { grid-template-columns: 1fr; padding-top: 110px; padding-bottom: 60px; }
-      }
-
-      .stats { border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); background: var(--bg-soft); }
-      .stats-grid {
-        display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px;
-        padding: 48px 0; text-align: center;
-      }
-      .stat-value { font-size: 2.2rem; font-weight: 800; color: var(--accent); }
-      .stat-label { color: var(--text-muted); font-size: 0.9rem; }
-      @media (max-width: 760px) { .stats-grid { grid-template-columns: repeat(2, 1fr); } }
-
-      .cars-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
-      .car-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
-      .car-card img { width: 100%; aspect-ratio: 16 / 10; object-fit: cover; }
-      .car-card-body { padding: 20px; }
-      .car-card h3 { font-size: 1.05rem; font-weight: 700; margin-bottom: 4px; }
-      .car-meta { color: var(--text-muted); font-size: 0.85rem; margin-bottom: 14px; }
-      .car-price-row { display: flex; align-items: center; justify-content: space-between; }
-      .car-price { font-size: 1.15rem; font-weight: 800; }
-      .car-link { color: var(--accent); font-size: 0.88rem; font-weight: 600; }
-      @media (max-width: 860px) { .cars-grid { grid-template-columns: 1fr; } }
-
-      .services-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
-      .service-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 28px; }
-      .service-icon {
-        display: inline-flex; align-items: center; justify-content: center; width: 48px; height: 48px;
-        border-radius: 12px; background: var(--accent-soft); font-size: 1.4rem; margin-bottom: 18px;
-      }
-      .service-card h3 { font-size: 1.05rem; font-weight: 700; margin-bottom: 8px; }
-      .service-card p { color: var(--text-muted); font-size: 0.92rem; }
-      @media (max-width: 860px) { .services-grid { grid-template-columns: 1fr; } }
-
-      .testimonials-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
-      .testimonial-card {
-        background: var(--card); border: 1px solid var(--border); border-radius: var(--radius);
-        padding: 28px; display: flex; flex-direction: column; gap: 16px;
-      }
-      .testimonial-card blockquote { color: var(--text-muted); font-size: 0.95rem; }
-      .testimonial-author { display: flex; flex-direction: column; }
-      .testimonial-author strong { font-size: 0.95rem; }
-      .testimonial-author span { color: var(--text-muted); font-size: 0.82rem; }
-      .testimonial-stars { color: #f4b400; letter-spacing: 2px; }
-      @media (max-width: 860px) { .testimonials-grid { grid-template-columns: 1fr; } }
-
-      .cta-panel {
-        background: linear-gradient(135deg, rgba(230, 57, 70, 0.18), rgba(69, 123, 157, 0.14)), var(--card);
-        border: 1px solid var(--border); border-radius: 24px;
-        padding: clamp(40px, 6vw, 72px); text-align: center;
-      }
-      .cta-panel h2 { font-size: clamp(1.7rem, 4vw, 2.4rem); font-weight: 800; letter-spacing: -0.02em; margin-bottom: 12px; }
-      .cta-panel p { color: var(--text-muted); max-width: 520px; margin: 0 auto 32px; }
-
-      .footer { border-top: 1px solid var(--border); padding: 48px 0; color: var(--text-muted); font-size: 0.88rem; }
-      .footer-inner { display: flex; flex-wrap: wrap; gap: 24px; align-items: center; justify-content: space-between; }
-      .footer-links { display: flex; gap: 24px; list-style: none; }
-      .footer-links a:hover { color: var(--text); }
+      :root{--bg:#050507;--bg-elevated:#0c0e14;--surface:rgba(255,255,255,.04);--surface-hover:rgba(255,255,255,.07);--glass:rgba(255,255,255,.06);--glass-border:rgba(255,255,255,.1);--text:#eef0f4;--text-secondary:#7d8590;--accent:#ff3d3d;--accent-glow:rgba(255,61,61,.25);--accent-2:#3d7dff;--gradient-hero:linear-gradient(135deg,#ff3d3d 0%,#ff6b35 50%,#3d7dff 100%);--radius-sm:10px;--radius:16px;--radius-lg:24px;--radius-xl:32px}
+      *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+      html{scroll-behavior:smooth;scroll-padding-top:80px}
+      body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--text);line-height:1.65;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+      a{color:inherit;text-decoration:none}img{max-width:100%;display:block}
+      .container{width:min(1200px,90%);margin:0 auto}.section{position:relative;padding:120px 0}
+      .section-eyebrow{display:inline-flex;align-items:center;gap:8px;color:var(--accent);font-size:.78rem;font-weight:700;letter-spacing:.2em;text-transform:uppercase;margin-bottom:16px}
+      .section-eyebrow::before{content:'';width:24px;height:2px;background:var(--accent);border-radius:1px}
+      .section-heading{font-size:clamp(2rem,4.5vw,3rem);font-weight:800;line-height:1.15;letter-spacing:-.035em;margin-bottom:16px}
+      .gradient-text{background:var(--gradient-hero);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+      .section-desc{color:var(--text-secondary);font-size:1.05rem;max-width:520px;margin-bottom:56px}
+      .btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;padding:15px 30px;border-radius:999px;font-weight:600;font-size:.92rem;border:none;cursor:pointer;transition:all .25s;white-space:nowrap;font-family:inherit}
+      .btn-primary{background:var(--accent);color:#fff;box-shadow:0 0 24px var(--accent-glow)}
+      .btn-primary:hover{background:#e63535;box-shadow:0 0 40px var(--accent-glow);transform:translateY(-1px)}
+      .btn-secondary{background:var(--surface);color:var(--text);border:1px solid var(--glass-border);backdrop-filter:blur(12px)}
+      .btn-secondary:hover{background:var(--surface-hover)}
+      /* Navbar */
+      .navbar{position:fixed;inset:0 0 auto 0;z-index:100;transition:background .3s,border-color .3s}
+      .navbar.scrolled{background:rgba(5,5,7,.82);backdrop-filter:blur(20px);border-bottom:1px solid var(--glass-border)}
+      .navbar-inner{display:flex;align-items:center;justify-content:space-between;height:76px}
+      .logo{display:flex;align-items:center;gap:10px;font-size:1.25rem;font-weight:800;letter-spacing:-.02em}
+      .logo-mark{display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:10px;background:var(--accent);color:#fff;font-weight:900;font-size:.95rem}
+      .nav-links{display:flex;align-items:center;gap:36px;list-style:none}
+      .nav-links a{font-size:.88rem;font-weight:500;color:var(--text-secondary);transition:color .2s}
+      .nav-links a:hover{color:var(--text)}.nav-cta{padding:10px 24px!important;font-size:.85rem!important}
+      @media(max-width:860px){.nav-links{display:none}}
+      /* Hero */
+      .hero{position:relative;min-height:100vh;display:flex;align-items:center;overflow:hidden}
+      .hero-bg{position:absolute;inset:0;z-index:0}
+      .orb{position:absolute;border-radius:50%;filter:blur(120px)}
+      .orb-1{width:600px;height:600px;background:var(--accent);top:-15%;right:-5%;opacity:.18}
+      .orb-2{width:500px;height:500px;background:var(--accent-2);bottom:-20%;left:-10%;opacity:.12}
+      .orb-3{width:300px;height:300px;background:#ff6b35;top:40%;left:30%;opacity:.08}
+      .hero-content{position:relative;z-index:1;display:grid;grid-template-columns:1fr 1fr;gap:64px;align-items:center;padding-top:76px}
+      .hero-text h1{font-size:clamp(2.8rem,6.5vw,4.5rem);font-weight:800;line-height:1.05;letter-spacing:-.04em;margin-bottom:24px}
+      .hero-text p{color:var(--text-secondary);font-size:1.12rem;max-width:440px;margin-bottom:36px;line-height:1.7}
+      .hero-actions{display:flex;flex-wrap:wrap;gap:14px;margin-bottom:48px}
+      .hero-trust{display:flex;align-items:center;gap:16px;padding-top:8px}
+      .trust-avatars{display:flex}
+      .trust-avatars span{display:inline-flex;align-items:center;justify-content:center;width:38px;height:38px;border-radius:50%;background:var(--surface);border:2px solid var(--bg);font-size:.85rem;margin-right:-10px}
+      .trust-text{font-size:.85rem;color:var(--text-secondary)}
+      .trust-text strong{color:var(--text);font-weight:700}
+      .hero-visual{position:relative}
+      .hero-image-wrapper{position:relative;border-radius:var(--radius-lg);overflow:hidden;border:1px solid var(--glass-border);aspect-ratio:4/3}
+      .hero-image-wrapper img{width:100%;height:100%;object-fit:cover}
+      .hero-image-wrapper::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,transparent 50%,rgba(5,5,7,.6));pointer-events:none}
+      .hero-floating-card{position:absolute;background:rgba(12,14,20,.85);backdrop-filter:blur(16px);border:1px solid var(--glass-border);border-radius:var(--radius);padding:16px 22px}
+      .floating-rating{bottom:-16px;left:24px;display:flex;align-items:center;gap:12px}
+      .floating-rating .stars{color:#facc15;font-size:1rem;letter-spacing:1px}
+      .rating-info{font-size:.82rem;color:var(--text-secondary)}.rating-info strong{color:var(--text);font-size:1.05rem;display:block}
+      .floating-price{top:24px;right:-20px}.floating-price .label{font-size:.72rem;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.1em}
+      .floating-price .value{font-size:1.3rem;font-weight:800;color:var(--accent)}
+      @media(max-width:860px){.hero-content{grid-template-columns:1fr;padding-top:120px;padding-bottom:80px}.floating-price{display:none}}
+      /* Stats */
+      .stats-bar{border-top:1px solid var(--glass-border);border-bottom:1px solid var(--glass-border);background:var(--bg-elevated)}
+      .stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:32px;padding:56px 0}
+      .stat-item{text-align:center;position:relative}
+      .stat-item:not(:last-child)::after{content:'';position:absolute;right:0;top:15%;height:70%;width:1px;background:var(--glass-border)}
+      .stat-number{font-size:2.8rem;font-weight:800;letter-spacing:-.03em;background:var(--gradient-hero);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+      .stat-label{color:var(--text-secondary);font-size:.88rem;margin-top:4px}
+      @media(max-width:760px){.stats-grid{grid-template-columns:repeat(2,1fr)}.stat-item::after{display:none}}
+      /* Cars */
+      .cars-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px}
+      .car-card{background:var(--glass);backdrop-filter:blur(12px);border:1px solid var(--glass-border);border-radius:var(--radius-lg);overflow:hidden;transition:border-color .3s,transform .3s}
+      .car-card:hover{border-color:rgba(255,61,61,.3);transform:translateY(-8px)}
+      .car-card-image{position:relative;overflow:hidden}
+      .car-card-image img{width:100%;aspect-ratio:16/10;object-fit:cover;transition:transform .5s}
+      .car-card:hover .car-card-image img{transform:scale(1.05)}
+      .car-badge{position:absolute;top:14px;left:14px;background:rgba(5,5,7,.75);backdrop-filter:blur(8px);border:1px solid var(--glass-border);border-radius:999px;padding:6px 14px;font-size:.75rem;font-weight:600;color:var(--accent)}
+      .car-card-body{padding:24px}.car-card-body h3{font-size:1.1rem;font-weight:700;margin-bottom:6px}
+      .car-specs{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:18px}
+      .car-specs span{background:var(--surface);border-radius:6px;padding:4px 10px;font-size:.78rem;color:var(--text-secondary)}
+      .car-footer{display:flex;align-items:center;justify-content:space-between}
+      .car-price{font-size:1.3rem;font-weight:800}
+      .car-cta{display:inline-flex;align-items:center;gap:4px;color:var(--accent);font-size:.85rem;font-weight:600}
+      @media(max-width:860px){.cars-grid{grid-template-columns:1fr}}
+      /* Services */
+      .services-section{background:radial-gradient(600px 400px at 10% 80%,rgba(61,125,255,.06),transparent),radial-gradient(600px 400px at 90% 20%,rgba(255,61,61,.05),transparent)}
+      .services-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+      .service-card{background:var(--glass);backdrop-filter:blur(8px);border:1px solid var(--glass-border);border-radius:var(--radius);padding:32px 28px;transition:border-color .3s,background .3s,transform .3s}
+      .service-card:hover{border-color:rgba(255,255,255,.18);background:var(--surface-hover);transform:translateY(-6px)}
+      .service-icon-wrap{width:52px;height:52px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:1.5rem;margin-bottom:20px}
+      .service-icon-wrap.red{background:rgba(255,61,61,.12)}.service-icon-wrap.blue{background:rgba(61,125,255,.12)}
+      .service-icon-wrap.orange{background:rgba(255,107,53,.12)}.service-icon-wrap.green{background:rgba(34,197,94,.12)}
+      .service-icon-wrap.purple{background:rgba(168,85,247,.12)}.service-icon-wrap.teal{background:rgba(20,184,166,.12)}
+      .service-card h3{font-size:1.05rem;font-weight:700;margin-bottom:8px}
+      .service-card p{color:var(--text-secondary);font-size:.9rem;line-height:1.65}
+      @media(max-width:860px){.services-grid{grid-template-columns:1fr}}
+      /* Testimonials */
+      .testimonials-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px}
+      .testimonial-card{background:var(--glass);backdrop-filter:blur(8px);border:1px solid var(--glass-border);border-radius:var(--radius);padding:32px 28px;display:flex;flex-direction:column;gap:20px}
+      .testimonial-stars{color:#facc15;font-size:.95rem;letter-spacing:3px}
+      .testimonial-card blockquote{color:var(--text-secondary);font-size:.95rem;line-height:1.7;flex:1}
+      .testimonial-footer{display:flex;align-items:center;gap:12px}
+      .testimonial-avatar{width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1rem;font-weight:700;flex-shrink:0}
+      .testimonial-avatar.m{background:rgba(255,61,61,.15);color:var(--accent)}
+      .testimonial-avatar.p{background:rgba(61,125,255,.15);color:var(--accent-2)}
+      .testimonial-avatar.d{background:rgba(34,197,94,.15);color:#22c55e}
+      .testimonial-meta strong{display:block;font-size:.9rem}.testimonial-meta span{color:var(--text-secondary);font-size:.8rem}
+      @media(max-width:860px){.testimonials-grid{grid-template-columns:1fr}}
+      /* CTA */
+      .cta-section{position:relative;overflow:hidden}
+      .cta-box{position:relative;border-radius:var(--radius-xl);padding:clamp(48px,8vw,80px) clamp(32px,6vw,64px);text-align:center;overflow:hidden;border:1px solid var(--glass-border)}
+      .cta-box::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(255,61,61,.12),rgba(61,125,255,.1));z-index:0}
+      .cta-box>*{position:relative;z-index:1}
+      .cta-box h2{font-size:clamp(1.8rem,4.5vw,2.8rem);font-weight:800;letter-spacing:-.03em;margin-bottom:14px}
+      .cta-box p{color:var(--text-secondary);max-width:480px;margin:0 auto 36px;font-size:1.05rem}
+      .cta-actions{display:flex;flex-wrap:wrap;gap:14px;justify-content:center}
+      /* Footer */
+      .footer{border-top:1px solid var(--glass-border);padding:40px 0;color:var(--text-secondary);font-size:.85rem}
+      .footer-inner{display:flex;flex-wrap:wrap;gap:24px;align-items:center;justify-content:space-between}
+      .footer-links{display:flex;gap:28px;list-style:none}.footer-links a:hover{color:var(--text)}
+      /* Scroll animation helper */
+      .reveal{opacity:0;transform:translateY(32px);transition:opacity .65s cubic-bezier(.25,.46,.45,.94),transform .65s cubic-bezier(.25,.46,.45,.94)}
+      .reveal.visible{opacity:1;transform:none}
+      .reveal-delay-1{transition-delay:.1s}.reveal-delay-2{transition-delay:.2s}.reveal-delay-3{transition-delay:.3s}
     </style>
   </head>
   <body>
-    <div id="root"></div>
+    <!-- Navbar -->
+    <header class="navbar scrolled" id="navbar">
+      <div class="container navbar-inner">
+        <a href="#top" class="logo" aria-label="TopGear Auto home">
+          <span class="logo-mark">TG</span>TopGear Auto
+        </a>
+        <nav aria-label="Main navigation">
+          <ul class="nav-links">
+            <li><a href="#inventory">Inventory</a></li>
+            <li><a href="#services">Services</a></li>
+            <li><a href="#reviews">Reviews</a></li>
+            <li><a href="#contact">Contact</a></li>
+            <li><a href="#contact" class="btn btn-primary nav-cta">Get Started</a></li>
+          </ul>
+        </nav>
+      </div>
+    </header>
 
-    <script type="module">
-      import React, { useEffect, useRef, useState } from 'https://esm.sh/react@18.3.1';
-      import { createRoot } from 'https://esm.sh/react-dom@18.3.1/client';
-      import { motion, useInView, animate } from 'https://esm.sh/framer-motion@11.18.2?deps=react@18.3.1,react-dom@18.3.1';
-      import htm from 'https://esm.sh/htm@3.1.1';
-
-      const html = htm.bind(React.createElement);
-
-      const fadeUp = {
-        hidden: { opacity: 0, y: 32 },
-        visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: 'easeOut' } },
-      };
-      const staggerContainer = { hidden: {}, visible: { transition: { staggerChildren: 0.12 } } };
-      const scaleIn = {
-        hidden: { opacity: 0, scale: 0.94 },
-        visible: { opacity: 1, scale: 1, transition: { duration: 0.6, ease: 'easeOut' } },
-      };
-      const viewportOnce = { once: true, amount: 0.25 };
-
-      const navLinks = [
-        { label: 'Inventory', href: '#inventory' },
-        { label: 'Services', href: '#services' },
-        { label: 'Reviews', href: '#reviews' },
-        { label: 'Contact', href: '#contact' },
-      ];
-
-      function Navbar() {
-        return html`
-          <${motion.header} class="navbar" initial=${{ y: -80, opacity: 0 }}
-            animate=${{ y: 0, opacity: 1 }} transition=${{ duration: 0.5, ease: 'easeOut' }}>
-            <div class="container navbar-inner">
-              <a href="#top" class="brand" aria-label="TopGear Auto home">TopGear<span>Auto</span></a>
-              <nav aria-label="Main navigation">
-                <ul class="nav-links">
-                  ${navLinks.map((l) => html`<li key=${l.href}><a href=${l.href}>${l.label}</a></li>`)}
-                  <li><a href="#contact" class="btn btn-primary nav-cta">Book a Test Drive</a></li>
-                </ul>
-              </nav>
+    <main>
+      <!-- Hero -->
+      <section class="hero" id="top">
+        <div class="hero-bg" aria-hidden="true">
+          <div class="orb orb-1"></div>
+          <div class="orb orb-2"></div>
+          <div class="orb orb-3"></div>
+        </div>
+        <div class="container hero-content">
+          <div class="hero-text">
+            <h1 class="reveal">Find Your Perfect<br><span class="gradient-text">Ride Today</span></h1>
+            <p class="reveal reveal-delay-1">Hand-picked premium vehicles. 150-point inspections. Same-day financing. TopGear Auto makes buying your dream car effortless.</p>
+            <div class="hero-actions reveal reveal-delay-2">
+              <a href="#inventory" class="btn btn-primary">Browse Inventory →</a>
+              <a href="#services" class="btn btn-secondary">Our Services</a>
             </div>
-          <//>
-        `;
-      }
-
-      function Hero() {
-        return html`
-          <section class="hero" id="top">
-            <div class="container hero-grid">
-              <${motion.div} variants=${staggerContainer} initial="hidden" animate="visible">
-                <${motion.h1} variants=${fadeUp}>Drive Home in the Car You <em>Deserve</em><//>
-                <${motion.p} variants=${fadeUp}>
-                  TopGear Auto hand-picks premium pre-owned vehicles, backs every sale with a
-                  150-point inspection, and gets you financed in minutes — not days.
-                <//>
-                <${motion.div} class="hero-actions" variants=${fadeUp}>
-                  <a href="#inventory" class="btn btn-primary">Browse Inventory</a>
-                  <a href="#services" class="btn btn-ghost">Our Services</a>
-                <//>
-              <//>
-              <${motion.div} class="hero-visual" initial=${{ opacity: 0, x: 48 }}
-                animate=${{ opacity: 1, x: 0 }} transition=${{ duration: 0.8, ease: 'easeOut', delay: 0.2 }}>
-                <img src="https://images.unsplash.com/photo-1503376780353-7e6692767b70?auto=format&fit=crop&w=1200&q=80"
-                  alt="Sports car on display at TopGear Auto showroom" />
-                <${motion.div} class="hero-badge" initial=${{ opacity: 0, y: 20 }}
-                  animate=${{ opacity: 1, y: 0 }} transition=${{ delay: 0.8, duration: 0.5 }}>
-                  <strong>4.9 / 5</strong>Rated by 2,300+ happy drivers
-                <//>
-              <//>
+            <div class="hero-trust reveal reveal-delay-3">
+              <div class="trust-avatars" aria-hidden="true">
+                <span>JK</span><span>AL</span><span>PS</span><span>MT</span>
+              </div>
+              <div class="trust-text"><strong>2,300+</strong> happy drivers this year</div>
             </div>
-          </section>
-        `;
-      }
-
-      function Counter({ value, suffix }) {
-        const ref = useRef(null);
-        const inView = useInView(ref, { once: true, amount: 0.6 });
-        const [display, setDisplay] = useState(0);
-        useEffect(() => {
-          if (!inView) return;
-          const controls = animate(0, value, {
-            duration: 1.6, ease: 'easeOut', onUpdate: (v) => setDisplay(Math.round(v)),
-          });
-          return () => controls.stop();
-        }, [inView, value]);
-        return html`<span ref=${ref}>${display.toLocaleString()}${suffix}</span>`;
-      }
-
-      const stats = [
-        { value: 15, suffix: '+', label: 'Years in Business' },
-        { value: 8500, suffix: '+', label: 'Cars Sold' },
-        { value: 150, suffix: '-pt', label: 'Inspection on Every Car' },
-        { value: 98, suffix: '%', label: 'Customer Satisfaction' },
-      ];
-
-      function Stats() {
-        return html`
-          <section class="stats" aria-label="TopGear Auto by the numbers">
-            <${motion.div} class="container stats-grid" variants=${staggerContainer}
-              initial="hidden" whileInView="visible" viewport=${viewportOnce}>
-              ${stats.map((s) => html`
-                <${motion.div} key=${s.label} variants=${fadeUp}>
-                  <div class="stat-value"><${Counter} value=${s.value} suffix=${s.suffix} /></div>
-                  <div class="stat-label">${s.label}</div>
-                <//>
-              `)}
-            <//>
-          </section>
-        `;
-      }
-
-      const cars = [
-        { name: '2022 BMW M4 Competition', meta: '12,400 mi · Automatic · Petrol', price: '$72,900',
-          image: 'https://images.unsplash.com/photo-1617531653332-bd46c24f2068?auto=format&fit=crop&w=900&q=80',
-          alt: 'Blue BMW M4 Competition coupe' },
-        { name: '2023 Tesla Model 3 Performance', meta: '8,100 mi · Automatic · Electric', price: '$46,500',
-          image: 'https://images.unsplash.com/photo-1560958089-b8a1929cea89?auto=format&fit=crop&w=900&q=80',
-          alt: 'White Tesla Model 3 parked outdoors' },
-        { name: '2021 Ford Mustang GT', meta: '21,700 mi · Manual · Petrol', price: '$41,200',
-          image: 'https://images.unsplash.com/photo-1584345604476-8ec5e12e42dd?auto=format&fit=crop&w=900&q=80',
-          alt: 'Red Ford Mustang GT on the road' },
-      ];
-
-      function FeaturedCars() {
-        return html`
-          <section class="section" id="inventory">
-            <div class="container">
-              <${motion.div} variants=${staggerContainer} initial="hidden" whileInView="visible" viewport=${viewportOnce}>
-                <${motion.span} class="section-label" variants=${fadeUp}>Featured Inventory<//>
-                <${motion.h2} class="section-title" variants=${fadeUp}>This Week's Top Picks<//>
-                <${motion.p} class="section-subtitle" variants=${fadeUp}>
-                  Every vehicle passes our 150-point inspection and comes with a full history report
-                  and a 7-day money-back guarantee.
-                <//>
-              <//>
-              <${motion.div} class="cars-grid" variants=${staggerContainer} initial="hidden"
-                whileInView="visible" viewport=${viewportOnce}>
-                ${cars.map((c) => html`
-                  <${motion.article} key=${c.name} class="car-card" variants=${fadeUp}
-                    whileHover=${{ y: -8 }} transition=${{ type: 'spring', stiffness: 300, damping: 22 }}>
-                    <img src=${c.image} alt=${c.alt} loading="lazy" />
-                    <div class="car-card-body">
-                      <h3>${c.name}</h3>
-                      <p class="car-meta">${c.meta}</p>
-                      <div class="car-price-row">
-                        <span class="car-price">${c.price}</span>
-                        <a href="#contact" class="car-link" aria-label=${'Enquire about ' + c.name}>Enquire →</a>
-                      </div>
-                    </div>
-                  <//>
-                `)}
-              <//>
+          </div>
+          <div class="hero-visual reveal reveal-delay-1">
+            <div class="hero-image-wrapper">
+              <img src="https://images.unsplash.com/photo-1503376780353-7e6692767b70?auto=format&fit=crop&w=1200&q=80" alt="Sleek sports car at TopGear Auto showroom" loading="eager" />
             </div>
-          </section>
-        `;
-      }
-
-      const services = [
-        { icon: '🚗', title: 'Buy & Sell', description: 'Browse hand-picked pre-owned vehicles or get an instant, fair offer for your current car — paid out the same day.' },
-        { icon: '💳', title: 'Fast Financing', description: 'Get pre-approved online in under 5 minutes. We work with 20+ lenders to find rates that fit your budget.' },
-        { icon: '🔧', title: 'Service & Repair', description: 'Factory-trained technicians, genuine parts and transparent pricing — from oil changes to full engine work.' },
-        { icon: '🛡️', title: 'Extended Warranty', description: 'Drive worry-free with coverage plans up to 5 years, honored at certified shops nationwide.' },
-        { icon: '🔄', title: 'Trade-In Program', description: 'Upgrade without the hassle. Apply your trade-in value directly to any vehicle on our lot.' },
-        { icon: '🚚', title: 'Home Delivery', description: 'Buy online and we deliver to your driveway within 3 days, with a 7-day money-back guarantee.' },
-      ];
-
-      function Services() {
-        return html`
-          <section class="section" id="services">
-            <div class="container">
-              <${motion.div} variants=${staggerContainer} initial="hidden" whileInView="visible" viewport=${viewportOnce}>
-                <${motion.span} class="section-label" variants=${fadeUp}>What We Do<//>
-                <${motion.h2} class="section-title" variants=${fadeUp}>Everything Your Car Needs, Under One Roof<//>
-                <${motion.p} class="section-subtitle" variants=${fadeUp}>
-                  From the day you buy to every mile after — TopGear Auto keeps you moving.
-                <//>
-              <//>
-              <${motion.div} class="services-grid" variants=${staggerContainer} initial="hidden"
-                whileInView="visible" viewport=${viewportOnce}>
-                ${services.map((s) => html`
-                  <${motion.div} key=${s.title} class="service-card" variants=${fadeUp}
-                    whileHover=${{ y: -6, borderColor: 'rgba(230, 57, 70, 0.45)' }}
-                    transition=${{ type: 'spring', stiffness: 300, damping: 22 }}>
-                    <span class="service-icon" aria-hidden="true">${s.icon}</span>
-                    <h3>${s.title}</h3>
-                    <p>${s.description}</p>
-                  <//>
-                `)}
-              <//>
+            <div class="hero-floating-card floating-rating">
+              <div class="stars" aria-label="4.9 stars">★★★★★</div>
+              <div class="rating-info"><strong>4.9 / 5</strong>Google Reviews</div>
             </div>
-          </section>
-        `;
-      }
-
-      const testimonials = [
-        { quote: 'Found my dream M4 here. The whole process — test drive, financing, paperwork — took one afternoon. Unreal.', name: 'Marcus T.', detail: 'Bought a 2022 BMW M4' },
-        { quote: 'They gave me $2,000 more for my trade-in than the dealership across town, and the new car was spotless.', name: 'Priya S.', detail: 'Trade-in customer' },
-        { quote: 'Their service center has looked after both our family cars for three years. Honest quotes, zero surprises.', name: 'Dave & Karen L.', detail: 'Service customers since 2023' },
-      ];
-
-      function Testimonials() {
-        return html`
-          <section class="section" id="reviews">
-            <div class="container">
-              <${motion.div} variants=${staggerContainer} initial="hidden" whileInView="visible" viewport=${viewportOnce}>
-                <${motion.span} class="section-label" variants=${fadeUp}>Reviews<//>
-                <${motion.h2} class="section-title" variants=${fadeUp}>Drivers Who Took the Wheel With Us<//>
-              <//>
-              <${motion.div} class="testimonials-grid" variants=${staggerContainer} initial="hidden"
-                whileInView="visible" viewport=${viewportOnce}>
-                ${testimonials.map((t) => html`
-                  <${motion.figure} key=${t.name} class="testimonial-card" variants=${fadeUp}>
-                    <span class="testimonial-stars" aria-label="5 out of 5 stars">★★★★★</span>
-                    <blockquote>“${t.quote}”</blockquote>
-                    <figcaption class="testimonial-author">
-                      <strong>${t.name}</strong><span>${t.detail}</span>
-                    </figcaption>
-                  <//>
-                `)}
-              <//>
+            <div class="hero-floating-card floating-price">
+              <div class="label">Starting From</div>
+              <div class="value">$19,900</div>
             </div>
-          </section>
-        `;
-      }
+          </div>
+        </div>
+      </section>
 
-      function CallToAction() {
-        return html`
-          <section class="section" id="contact">
-            <div class="container">
-              <${motion.div} class="cta-panel" variants=${scaleIn} initial="hidden"
-                whileInView="visible" viewport=${viewportOnce}>
-                <h2>Ready for Your Next Set of Wheels?</h2>
-                <p>Book a no-pressure test drive or get your free trade-in valuation today. Our team
-                  replies within the hour, seven days a week.</p>
-                <div class="hero-actions" style=${{ justifyContent: 'center' }}>
-                  <a href="tel:+1-555-867-5309" class="btn btn-primary">Call (555) 867-5309</a>
-                  <a href="mailto:sales@topgearauto.com" class="btn btn-ghost">sales@topgearauto.com</a>
-                </div>
-              <//>
+      <!-- Stats -->
+      <section class="stats-bar" aria-label="Key figures">
+        <div class="container stats-grid">
+          <div class="stat-item reveal"><span class="stat-number">15+</span><div class="stat-label">Years Experience</div></div>
+          <div class="stat-item reveal reveal-delay-1"><span class="stat-number">8,500+</span><div class="stat-label">Vehicles Sold</div></div>
+          <div class="stat-item reveal reveal-delay-2"><span class="stat-number">150-pt</span><div class="stat-label">Inspection Standard</div></div>
+          <div class="stat-item reveal reveal-delay-3"><span class="stat-number">98%</span><div class="stat-label">Satisfaction Rate</div></div>
+        </div>
+      </section>
+
+      <!-- Featured Inventory -->
+      <section class="section" id="inventory">
+        <div class="container">
+          <span class="section-eyebrow reveal">Featured Inventory</span>
+          <h2 class="section-heading reveal reveal-delay-1">This Week's <span class="gradient-text">Top Picks</span></h2>
+          <p class="section-desc reveal reveal-delay-2">Every vehicle passes our 150-point inspection and comes with a full history report, warranty coverage, and a 7-day money-back guarantee.</p>
+          <div class="cars-grid">
+            <article class="car-card reveal">
+              <div class="car-card-image">
+                <img src="https://images.unsplash.com/photo-1617531653332-bd46c24f2068?auto=format&fit=crop&w=900&q=80" alt="Blue BMW M4 Competition coupe" loading="lazy" />
+                <span class="car-badge">Just Arrived</span>
+              </div>
+              <div class="car-card-body">
+                <h3>2022 BMW M4 Competition</h3>
+                <div class="car-specs"><span>12.4k mi</span><span>Auto</span><span>Petrol</span></div>
+                <div class="car-footer"><span class="car-price">$72,900</span><a href="#contact" class="car-cta">View Details →</a></div>
+              </div>
+            </article>
+            <article class="car-card reveal reveal-delay-1">
+              <div class="car-card-image">
+                <img src="https://images.unsplash.com/photo-1560958089-b8a1929cea89?auto=format&fit=crop&w=900&q=80" alt="White Tesla Model 3" loading="lazy" />
+                <span class="car-badge">Popular</span>
+              </div>
+              <div class="car-card-body">
+                <h3>2023 Tesla Model 3 Perf.</h3>
+                <div class="car-specs"><span>8.1k mi</span><span>Auto</span><span>Electric</span></div>
+                <div class="car-footer"><span class="car-price">$46,500</span><a href="#contact" class="car-cta">View Details →</a></div>
+              </div>
+            </article>
+            <article class="car-card reveal reveal-delay-2">
+              <div class="car-card-image">
+                <img src="https://images.unsplash.com/photo-1584345604476-8ec5e12e42dd?auto=format&fit=crop&w=900&q=80" alt="Red Ford Mustang GT" loading="lazy" />
+                <span class="car-badge">Best Value</span>
+              </div>
+              <div class="car-card-body">
+                <h3>2021 Ford Mustang GT</h3>
+                <div class="car-specs"><span>21.7k mi</span><span>Manual</span><span>Petrol</span></div>
+                <div class="car-footer"><span class="car-price">$41,200</span><a href="#contact" class="car-cta">View Details →</a></div>
+              </div>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <!-- Services -->
+      <section class="section services-section" id="services">
+        <div class="container">
+          <span class="section-eyebrow reveal">What We Do</span>
+          <h2 class="section-heading reveal reveal-delay-1">Everything Your Car Needs,<br><span class="gradient-text">Under One Roof</span></h2>
+          <p class="section-desc reveal reveal-delay-2">From the day you buy to every mile after — TopGear Auto keeps you moving.</p>
+          <div class="services-grid">
+            <div class="service-card reveal"><div class="service-icon-wrap red" aria-hidden="true">🚗</div><h3>Buy &amp; Sell</h3><p>Browse hand-picked pre-owned vehicles or get an instant, fair offer for your current car — paid out the same day.</p></div>
+            <div class="service-card reveal reveal-delay-1"><div class="service-icon-wrap blue" aria-hidden="true">💳</div><h3>Fast Financing</h3><p>Get pre-approved online in under 5 minutes. We work with 20+ lenders to find rates that fit your budget.</p></div>
+            <div class="service-card reveal reveal-delay-2"><div class="service-icon-wrap orange" aria-hidden="true">🔧</div><h3>Service &amp; Repair</h3><p>Factory-trained technicians, genuine parts, and transparent pricing — from oil changes to full engine work.</p></div>
+            <div class="service-card reveal"><div class="service-icon-wrap green" aria-hidden="true">🛡️</div><h3>Extended Warranty</h3><p>Drive worry-free with coverage plans up to 5 years, honored at certified shops nationwide.</p></div>
+            <div class="service-card reveal reveal-delay-1"><div class="service-icon-wrap purple" aria-hidden="true">🔄</div><h3>Trade-In Program</h3><p>Upgrade without the hassle. Apply your trade-in value directly to any vehicle on our lot.</p></div>
+            <div class="service-card reveal reveal-delay-2"><div class="service-icon-wrap teal" aria-hidden="true">🚚</div><h3>Home Delivery</h3><p>Buy online and we deliver to your driveway within 3 business days, with a 7-day return policy.</p></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Testimonials -->
+      <section class="section" id="reviews">
+        <div class="container">
+          <span class="section-eyebrow reveal">Testimonials</span>
+          <h2 class="section-heading reveal reveal-delay-1">What Our <span class="gradient-text">Drivers Say</span></h2>
+          <p class="section-desc reveal reveal-delay-2">Real stories from real customers — no scripts, no edits.</p>
+          <div class="testimonials-grid">
+            <figure class="testimonial-card reveal">
+              <span class="testimonial-stars" aria-label="5 stars">★★★★★</span>
+              <blockquote>"Found my dream M4 here. The whole process — test drive, financing, paperwork — took one afternoon. Unreal service."</blockquote>
+              <figcaption class="testimonial-footer">
+                <span class="testimonial-avatar m" aria-hidden="true">MT</span>
+                <div class="testimonial-meta"><strong>Marcus T.</strong><span>Bought a 2022 BMW M4</span></div>
+              </figcaption>
+            </figure>
+            <figure class="testimonial-card reveal reveal-delay-1">
+              <span class="testimonial-stars" aria-label="5 stars">★★★★★</span>
+              <blockquote>"They gave me $2,000 more for my trade-in than the dealership across town, and the new car was spotless."</blockquote>
+              <figcaption class="testimonial-footer">
+                <span class="testimonial-avatar p" aria-hidden="true">PS</span>
+                <div class="testimonial-meta"><strong>Priya S.</strong><span>Trade-in customer</span></div>
+              </figcaption>
+            </figure>
+            <figure class="testimonial-card reveal reveal-delay-2">
+              <span class="testimonial-stars" aria-label="5 stars">★★★★★</span>
+              <blockquote>"Their service center has looked after both our family cars for three years. Honest quotes, zero surprises."</blockquote>
+              <figcaption class="testimonial-footer">
+                <span class="testimonial-avatar d" aria-hidden="true">DK</span>
+                <div class="testimonial-meta"><strong>Dave &amp; Karen L.</strong><span>Service customers since 2023</span></div>
+              </figcaption>
+            </figure>
+          </div>
+        </div>
+      </section>
+
+      <!-- CTA -->
+      <section class="section cta-section" id="contact">
+        <div class="container">
+          <div class="cta-box reveal">
+            <h2>Ready for Your Next<br>Set of Wheels?</h2>
+            <p>Book a no-pressure test drive or get your free trade-in valuation today. Our team replies within the hour, seven days a week.</p>
+            <div class="cta-actions">
+              <a href="tel:+1-555-867-5309" class="btn btn-primary">Call (555) 867-5309</a>
+              <a href="mailto:sales@topgearauto.com" class="btn btn-secondary">sales@topgearauto.com</a>
             </div>
-          </section>
-        `;
-      }
+          </div>
+        </div>
+      </section>
+    </main>
 
-      function Footer() {
-        return html`
-          <footer class="footer">
-            <div class="container footer-inner">
-              <span>© ${new Date().getFullYear()} TopGear Auto. All rights reserved.</span>
-              <nav aria-label="Footer navigation">
-                <ul class="footer-links">
-                  <li><a href="#inventory">Inventory</a></li>
-                  <li><a href="#services">Services</a></li>
-                  <li><a href="#reviews">Reviews</a></li>
-                  <li><a href="#contact">Contact</a></li>
-                </ul>
-              </nav>
-            </div>
-          </footer>
-        `;
-      }
+    <footer class="footer">
+      <div class="container footer-inner">
+        <span>&copy; 2026 TopGear Auto. All rights reserved.</span>
+        <nav aria-label="Footer navigation">
+          <ul class="footer-links">
+            <li><a href="#inventory">Inventory</a></li>
+            <li><a href="#services">Services</a></li>
+            <li><a href="#reviews">Reviews</a></li>
+            <li><a href="#contact">Contact</a></li>
+          </ul>
+        </nav>
+      </div>
+    </footer>
 
-      function App() {
-        return html`
-          <${React.Fragment}>
-            <${Navbar} />
-            <main>
-              <${Hero} />
-              <${Stats} />
-              <${FeaturedCars} />
-              <${Services} />
-              <${Testimonials} />
-              <${CallToAction} />
-            </main>
-            <${Footer} />
-          <//>
-        `;
-      }
+    <script>
+      // Scroll-aware navbar
+      const navbar = document.getElementById('navbar');
+      window.addEventListener('scroll', () => {
+        navbar.classList.toggle('scrolled', window.scrollY > 40);
+      }, { passive: true });
 
-      createRoot(document.getElementById('root')).render(html`<${App} />`);
+      // Reveal on scroll
+      const revealEls = document.querySelectorAll('.reveal');
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); observer.unobserve(e.target); } });
+      }, { threshold: 0.15 });
+      revealEls.forEach(el => observer.observe(el));
+
+      // Trigger hero reveals immediately
+      document.querySelectorAll('.hero .reveal, .hero-visual .reveal').forEach(el => {
+        setTimeout(() => el.classList.add('visible'), 100);
+      });
     </script>
   </body>
 </html>

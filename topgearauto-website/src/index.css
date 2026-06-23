@@ -505,6 +505,7 @@ a:focus-visible {
   border-radius: var(--radius-lg);
   overflow: hidden;
   transition: border-color 0.3s;
+  cursor: default;
 }
 
 .car-card:hover {
@@ -545,10 +546,25 @@ a:focus-visible {
   padding: 24px;
 }
 
+.car-year {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--accent);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
 .car-card-body h3 {
-  font-size: 1.1rem;
-  font-weight: 700;
-  margin-bottom: 6px;
+  font-size: 1.15rem;
+  font-weight: 800;
+  margin-bottom: 4px;
+  margin-top: 2px;
+}
+
+.car-tagline {
+  color: var(--text-secondary);
+  font-size: 0.82rem;
+  margin-bottom: 12px;
 }
 
 .car-specs {
@@ -558,7 +574,8 @@ a:focus-visible {
   margin-bottom: 18px;
 }
 
-.car-specs span {
+.car-specs span,
+.car-specs-pill {
   background: var(--surface);
   border-radius: 6px;
   padding: 4px 10px;
@@ -570,24 +587,260 @@ a:focus-visible {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  padding-top: 4px;
+  border-top: 1px solid var(--glass-border);
+  margin-top: 4px;
+}
+
+.car-price-block {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+}
+
+.car-currency {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-secondary);
 }
 
 .car-price {
-  font-size: 1.3rem;
+  font-size: 1.25rem;
   font-weight: 800;
+  color: var(--accent);
 }
 
 .car-cta {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  color: var(--accent);
-  font-size: 0.85rem;
+  gap: 5px;
+  color: var(--text);
+  font-size: 0.82rem;
   font-weight: 600;
+  background: var(--surface);
+  border: 1px solid var(--glass-border);
+  border-radius: 999px;
+  padding: 7px 14px;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s;
+  font-family: inherit;
+}
+
+.car-cta:hover {
+  background: var(--surface-hover);
+  border-color: rgba(255, 255, 255, 0.2);
 }
 
 .car-cta svg {
   transition: transform 0.2s;
+}
+
+.car-card:hover .car-cta svg {
+  transform: translateX(3px);
+}
+
+@media (max-width: 860px) {
+  .cars-grid { grid-template-columns: 1fr; }
+}
+
+/* ===== CAR MODAL ===== */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  overflow-y: auto;
+}
+
+.modal-box {
+  position: relative;
+  background: #0f1117;
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-xl);
+  width: 100%;
+  max-width: 680px;
+  overflow: hidden;
+}
+
+.modal-close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  z-index: 10;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(8px);
+  border: 1px solid var(--glass-border);
+  color: var(--text);
+  font-size: 0.85rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: inherit;
+  transition: background 0.2s;
+}
+
+.modal-close:hover {
+  background: rgba(255, 61, 61, 0.2);
+}
+
+.modal-image {
+  position: relative;
+  overflow: hidden;
+}
+
+.modal-image img {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+}
+
+.modal-image::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, transparent 40%, rgba(15, 17, 23, 0.7));
+  pointer-events: none;
+}
+
+.modal-image .car-badge {
+  top: 16px;
+  left: 16px;
+}
+
+.modal-body {
+  padding: 28px;
+}
+
+.modal-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.modal-year {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--accent);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.modal-title {
+  font-size: 1.6rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  margin: 4px 0 2px;
+}
+
+.modal-tagline {
+  color: var(--text-secondary);
+  font-size: 0.88rem;
+}
+
+.modal-price-block {
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.modal-currency {
+  display: block;
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+  font-weight: 600;
+  text-align: right;
+}
+
+.modal-price {
+  display: block;
+  font-size: 1.7rem;
+  font-weight: 800;
+  color: var(--accent);
+  letter-spacing: -0.02em;
+}
+
+.modal-specs-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.modal-highlight {
+  font-size: 0.82rem;
+  color: #22c55e;
+  font-weight: 600;
+  margin-bottom: 20px;
+}
+
+.modal-features {
+  border-top: 1px solid var(--glass-border);
+  padding-top: 20px;
+  margin-bottom: 24px;
+}
+
+.modal-features-title {
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--text-secondary);
+  margin-bottom: 14px;
+}
+
+.features-list {
+  list-style: none;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px 16px;
+}
+
+.feature-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.88rem;
+  color: var(--text-secondary);
+}
+
+.feature-check {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: rgba(34, 197, 94, 0.12);
+  color: #22c55e;
+  flex-shrink: 0;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.modal-actions .btn {
+  flex: 1;
+  min-width: 140px;
+}
+
+@media (max-width: 600px) {
+  .features-list { grid-template-columns: 1fr; }
+  .modal-header { flex-direction: column; }
+  .modal-price-block { text-align: left; }
+  .modal-currency { text-align: left; }
 }
 
 .car-card:hover .car-cta svg {

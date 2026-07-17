@@ -1,0 +1,805 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>J.A.R.V.I.S. — Stark Industries</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{width:100%;height:100%;overflow:hidden;background:#020B18;}
+
+body{
+  font-family:"Courier New",Courier,monospace;
+  color:#00C8FF;
+  user-select:none;
+}
+
+/* ── canvas bg ── */
+#bgCanvas{position:fixed;inset:0;z-index:0;opacity:.35;}
+
+/* ── layout ── */
+#hud{
+  position:fixed;inset:0;z-index:1;
+  display:grid;
+  grid-template-rows:56px 1fr 44px;
+  grid-template-columns:300px 1fr 300px;
+  gap:0;
+  pointer-events:none;
+}
+
+/* ── scanline overlay ── */
+#scanlines{
+  position:fixed;inset:0;z-index:50;
+  background:repeating-linear-gradient(
+    to bottom,
+    transparent 0px,
+    transparent 3px,
+    rgba(0,200,255,0.015) 3px,
+    rgba(0,200,255,0.015) 4px
+  );
+  pointer-events:none;
+}
+
+/* ── vignette ── */
+#vignette{
+  position:fixed;inset:0;z-index:49;
+  background:radial-gradient(ellipse at center,transparent 50%,rgba(2,11,24,.85) 100%);
+  pointer-events:none;
+}
+
+/* ── top bar ── */
+#topbar{
+  grid-column:1/-1;
+  display:flex;align-items:center;
+  padding:0 24px;
+  border-bottom:1px solid rgba(0,200,255,.2);
+  background:linear-gradient(to bottom,rgba(0,40,80,.6),rgba(0,40,80,.1));
+  gap:16px;
+}
+.top-brand{
+  font-size:22px;font-weight:700;letter-spacing:.35em;
+  color:#00C8FF;text-shadow:0 0 20px #00C8FF,0 0 40px rgba(0,200,255,.5);
+}
+.top-sub{font-size:10px;letter-spacing:.15em;color:rgba(0,200,255,.5);margin-top:3px;}
+.top-sep{flex:1;}
+.top-stat{
+  font-size:10px;letter-spacing:.1em;color:rgba(0,200,255,.6);
+  display:flex;flex-direction:column;align-items:flex-end;gap:2px;
+}
+.top-stat span{color:#00C8FF;}
+#clock{font-size:18px;letter-spacing:.12em;color:#00C8FF;text-shadow:0 0 12px #00C8FF;}
+#date-line{font-size:9px;color:rgba(0,200,255,.5);letter-spacing:.1em;text-align:right;}
+
+/* ── bottom bar ── */
+#bottombar{
+  grid-column:1/-1;
+  display:flex;align-items:center;padding:0 24px;gap:20px;
+  border-top:1px solid rgba(0,200,255,.15);
+  background:linear-gradient(to top,rgba(0,20,50,.7),transparent);
+  font-size:9px;letter-spacing:.12em;color:rgba(0,200,255,.45);
+}
+.b-sep{flex:1;}
+.b-status{display:flex;align-items:center;gap:6px;}
+.b-dot{width:5px;height:5px;border-radius:50%;background:#00FF88;box-shadow:0 0 6px #00FF88;animation:blink 2s infinite;}
+#typewriter{font-size:10px;color:#00FF88;letter-spacing:.08em;}
+
+/* ── left panel ── */
+#left-panel{
+  grid-row:2;grid-column:1;
+  padding:16px 12px 16px 20px;
+  border-right:1px solid rgba(0,200,255,.12);
+  display:flex;flex-direction:column;gap:14px;
+  background:linear-gradient(to right,rgba(0,20,60,.4),transparent);
+}
+
+/* ── right panel ── */
+#right-panel{
+  grid-row:2;grid-column:3;
+  padding:16px 20px 16px 12px;
+  border-left:1px solid rgba(0,200,255,.12);
+  display:flex;flex-direction:column;gap:14px;
+  background:linear-gradient(to left,rgba(0,20,60,.4),transparent);
+}
+
+/* ── center ── */
+#center{
+  grid-row:2;grid-column:2;
+  display:flex;align-items:center;justify-content:center;
+  position:relative;
+}
+#arcCanvas{
+  position:absolute;
+  filter:drop-shadow(0 0 24px rgba(0,200,255,.6));
+}
+#radarCanvas{
+  position:absolute;
+  bottom:20px;right:20px;
+  opacity:.8;
+}
+
+/* ── panel widgets ── */
+.panel-title{
+  font-size:9px;font-weight:700;letter-spacing:.2em;
+  color:rgba(0,200,255,.5);
+  border-bottom:1px solid rgba(0,200,255,.12);
+  padding-bottom:6px;
+  text-transform:uppercase;
+}
+.panel-section{display:flex;flex-direction:column;gap:8px;}
+
+/* bar meters */
+.bar-row{display:flex;flex-direction:column;gap:3px;}
+.bar-label{display:flex;justify-content:space-between;font-size:9px;letter-spacing:.08em;color:rgba(0,200,255,.6);}
+.bar-label span{color:#00C8FF;}
+.bar-track{
+  height:3px;background:rgba(0,200,255,.08);
+  border-radius:2px;overflow:hidden;position:relative;
+}
+.bar-fill{
+  height:100%;border-radius:2px;
+  background:linear-gradient(to right,#0066FF,#00C8FF);
+  box-shadow:0 0 8px rgba(0,200,255,.6);
+  transition:width .8s ease;
+}
+.bar-fill.warn{background:linear-gradient(to right,#FF6B00,#FFA500);}
+.bar-fill.ok{background:linear-gradient(to right,#00AA44,#00FF88);}
+
+/* data rows */
+.data-row{
+  display:flex;justify-content:space-between;align-items:baseline;
+  font-size:9px;letter-spacing:.06em;
+  border-bottom:1px solid rgba(0,200,255,.06);
+  padding-bottom:4px;color:rgba(0,200,255,.55);
+}
+.data-row .val{color:#00C8FF;font-size:11px;}
+.data-row .val.warn{color:#FF6B00;text-shadow:0 0 8px #FF6B00;}
+.data-row .val.ok{color:#00FF88;text-shadow:0 0 8px #00FF88;}
+
+/* waveform */
+#waveCanvas{width:100%;height:40px;opacity:.8;}
+
+/* hex map */
+.hex-grid{
+  display:grid;grid-template-columns:repeat(8,1fr);gap:3px;
+  opacity:.6;
+}
+.hex-cell{
+  aspect-ratio:1;
+  background:rgba(0,200,255,.04);
+  border:1px solid rgba(0,200,255,.1);
+  clip-path:polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%);
+  transition:background .3s;
+}
+.hex-cell.active{background:rgba(0,200,255,.25);border-color:rgba(0,200,255,.5);}
+
+/* threat map */
+.threat-grid{
+  display:grid;grid-template-columns:repeat(5,1fr);gap:2px;
+}
+.threat-cell{
+  height:12px;background:rgba(0,200,255,.05);
+  border:1px solid rgba(0,200,255,.08);
+  transition:background .3s;
+}
+.threat-cell.t1{background:rgba(0,200,255,.15);}
+.threat-cell.t2{background:rgba(255,165,0,.3);}
+.threat-cell.t3{background:rgba(255,50,50,.4);}
+
+/* comm list */
+.comm-item{
+  display:flex;align-items:center;gap:8px;
+  font-size:9px;letter-spacing:.06em;color:rgba(0,200,255,.5);
+  padding:3px 0;border-bottom:1px solid rgba(0,200,255,.05);
+}
+.comm-dot{
+  width:5px;height:5px;border-radius:50%;flex-shrink:0;
+}
+.comm-dot.green{background:#00FF88;box-shadow:0 0 6px #00FF88;}
+.comm-dot.yellow{background:#FFA500;box-shadow:0 0 6px #FFA500;}
+.comm-dot.red{background:#FF4444;box-shadow:0 0 6px #FF4444;}
+
+/* alert flash */
+#alert{
+  position:fixed;top:70px;left:50%;transform:translateX(-50%);
+  background:rgba(255,80,0,.12);border:1px solid rgba(255,120,0,.4);
+  padding:6px 20px;font-size:10px;letter-spacing:.15em;
+  color:#FF8C00;text-shadow:0 0 10px #FF6B00;
+  border-radius:2px;z-index:100;
+  display:none;
+  animation:alertPulse .5s infinite;
+}
+
+/* animations */
+@keyframes blink{0%,100%{opacity:1;}50%{opacity:.3;}}
+@keyframes alertPulse{0%,100%{border-color:rgba(255,120,0,.4);}50%{border-color:rgba(255,120,0,.9);}}
+@keyframes rotate{from{transform:rotate(0deg);}to{transform:rotate(360deg);}}
+@keyframes counterRotate{from{transform:rotate(0deg);}to{transform:rotate(-360deg);}}
+@keyframes flicker{0%,98%,100%{opacity:1;}99%{opacity:.7;}}
+
+/* corner decorations */
+.corner{
+  position:fixed;width:40px;height:40px;z-index:10;pointer-events:none;
+}
+.corner.tl{top:60px;left:0;border-top:2px solid rgba(0,200,255,.4);border-left:2px solid rgba(0,200,255,.4);}
+.corner.tr{top:60px;right:0;border-top:2px solid rgba(0,200,255,.4);border-right:2px solid rgba(0,200,255,.4);}
+.corner.bl{bottom:48px;left:0;border-bottom:2px solid rgba(0,200,255,.4);border-left:2px solid rgba(0,200,255,.4);}
+.corner.br{bottom:48px;right:0;border-bottom:2px solid rgba(0,200,255,.4);border-right:2px solid rgba(0,200,255,.4);}
+
+/* target reticle animation */
+@keyframes reticlePulse{
+  0%,100%{box-shadow:0 0 0 0 rgba(0,200,255,0),inset 0 0 0 0 rgba(0,200,255,0);}
+  50%{box-shadow:0 0 0 8px rgba(0,200,255,.05),inset 0 0 0 4px rgba(0,200,255,.03);}
+}
+</style>
+</head>
+<body>
+
+<canvas id="bgCanvas"></canvas>
+<div id="scanlines"></div>
+<div id="vignette"></div>
+
+<div class="corner tl"></div>
+<div class="corner tr"></div>
+<div class="corner bl"></div>
+<div class="corner br"></div>
+
+<div id="alert">⚠ ANOMALY DETECTED — SECTOR 7-G</div>
+
+<div id="hud">
+
+  <!-- TOP BAR -->
+  <div id="topbar">
+    <div>
+      <div class="top-brand">J.A.R.V.I.S.</div>
+      <div class="top-sub">JUST A RATHER VERY INTELLIGENT SYSTEM · STARK INDUSTRIES</div>
+    </div>
+    <div class="top-sep"></div>
+    <div class="top-stat">
+      <span>SUIT INTEGRITY</span>
+      <span id="integrity">97.4%</span>
+    </div>
+    <div class="top-stat">
+      <span>ARC REACTOR</span>
+      <span id="arcPct">100%</span>
+    </div>
+    <div style="margin-left:16px">
+      <div id="clock">00:00:00</div>
+      <div id="date-line">INITIALIZING...</div>
+    </div>
+  </div>
+
+  <!-- LEFT PANEL -->
+  <div id="left-panel">
+
+    <div class="panel-section">
+      <div class="panel-title">◈ SYSTEM DIAGNOSTICS</div>
+      <div class="bar-row"><div class="bar-label"><span>REPULSOR L</span><span id="repL">94%</span></div><div class="bar-track"><div class="bar-fill ok" id="repLbar" style="width:94%"></div></div></div>
+      <div class="bar-row"><div class="bar-label"><span>REPULSOR R</span><span id="repR">96%</span></div><div class="bar-track"><div class="bar-fill ok" id="repRbar" style="width:96%"></div></div></div>
+      <div class="bar-row"><div class="bar-label"><span>FLIGHT SYS</span><span id="flt">88%</span></div><div class="bar-track"><div class="bar-fill" id="fltbar" style="width:88%"></div></div></div>
+      <div class="bar-row"><div class="bar-label"><span>WEAPONS</span><span id="wpn">72%</span></div><div class="bar-track"><div class="bar-fill warn" id="wpnbar" style="width:72%"></div></div></div>
+      <div class="bar-row"><div class="bar-label"><span>SHIELD GEN</span><span id="shld">83%</span></div><div class="bar-track"><div class="bar-fill" id="shldbar" style="width:83%"></div></div></div>
+    </div>
+
+    <div class="panel-section">
+      <div class="panel-title">◈ VITAL SIGNS — STARK, A.</div>
+      <div class="data-row"><span>HEART RATE</span><span class="val ok" id="hr">72 BPM</span></div>
+      <div class="data-row"><span>BLOOD PRES.</span><span class="val ok">118/76</span></div>
+      <div class="data-row"><span>O₂ SATURAT.</span><span class="val ok">98.2%</span></div>
+      <div class="data-row"><span>TEMP</span><span class="val">37.1 °C</span></div>
+      <div class="data-row"><span>STRESS LVL</span><span class="val warn">ELEVATED</span></div>
+    </div>
+
+    <div class="panel-section">
+      <div class="panel-title">◈ ENVIRONMENTAL SCAN</div>
+      <div class="data-row"><span>ALTITUDE</span><span class="val" id="alt">3,240 m</span></div>
+      <div class="data-row"><span>AIRSPEED</span><span class="val" id="spd">0 km/h</span></div>
+      <div class="data-row"><span>TEMP EXTERN.</span><span class="val">-12.4 °C</span></div>
+      <div class="data-row"><span>WIND</span><span class="val">24 kn NW</span></div>
+      <div class="data-row"><span>PRESSURE</span><span class="val">0.69 atm</span></div>
+    </div>
+
+    <div class="panel-section">
+      <div class="panel-title">◈ NETWORK UPLINKS</div>
+      <div class="comm-item"><div class="comm-dot green"></div>STARK TOWER MAINFRAME</div>
+      <div class="comm-item"><div class="comm-dot green"></div>SHIELD SECURE CHANNEL</div>
+      <div class="comm-item"><div class="comm-dot yellow"></div>AVENGERS COMMS · DEGRADED</div>
+      <div class="comm-item"><div class="comm-dot green"></div>SATELLITE ARRAY DELTA-7</div>
+      <div class="comm-item"><div class="comm-dot red"></div>PEPPER — NO SIGNAL</div>
+    </div>
+
+  </div>
+
+  <!-- CENTER -->
+  <div id="center">
+    <canvas id="arcCanvas"></canvas>
+    <canvas id="radarCanvas" width="130" height="130"></canvas>
+  </div>
+
+  <!-- RIGHT PANEL -->
+  <div id="right-panel">
+
+    <div class="panel-section">
+      <div class="panel-title">◈ THREAT ASSESSMENT</div>
+      <div class="data-row"><span>TARGETS LOCK.</span><span class="val warn" id="targets">3</span></div>
+      <div class="data-row"><span>THREAT LEVEL</span><span class="val warn">MODERATE</span></div>
+      <div class="data-row"><span>RANGE</span><span class="val">1.2 km</span></div>
+      <div class="data-row"><span>TRACKING</span><span class="val ok">ACTIVE</span></div>
+      <div style="margin-top:6px">
+        <div class="threat-grid" id="threatGrid"></div>
+      </div>
+    </div>
+
+    <div class="panel-section">
+      <div class="panel-title">◈ NEURAL INTERFACE</div>
+      <canvas id="waveCanvas" height="40"></canvas>
+      <div class="data-row"><span>SYNC RATE</span><span class="val ok">99.1%</span></div>
+      <div class="data-row"><span>LATENCY</span><span class="val">2.3 ms</span></div>
+      <div class="data-row"><span>BANDWIDTH</span><span class="val">11.4 Tb/s</span></div>
+    </div>
+
+    <div class="panel-section">
+      <div class="panel-title">◈ ACTIVE PROCESSES</div>
+      <div class="hex-grid" id="hexGrid"></div>
+    </div>
+
+    <div class="panel-section">
+      <div class="panel-title">◈ POWER ALLOCATION</div>
+      <div class="bar-row"><div class="bar-label"><span>LOCOMOTION</span><span>42%</span></div><div class="bar-track"><div class="bar-fill" style="width:42%"></div></div></div>
+      <div class="bar-row"><div class="bar-label"><span>OFFENCE</span><span>18%</span></div><div class="bar-track"><div class="bar-fill warn" style="width:18%"></div></div></div>
+      <div class="bar-row"><div class="bar-label"><span>DEFENCE</span><span>25%</span></div><div class="bar-track"><div class="bar-fill" style="width:25%"></div></div></div>
+      <div class="bar-row"><div class="bar-label"><span>COMPUTING</span><span id="cpu">11%</span></div><div class="bar-track"><div class="bar-fill ok" id="cpubar" style="width:11%"></div></div></div>
+      <div class="bar-row"><div class="bar-label"><span>LIFE SUPPORT</span><span>4%</span></div><div class="bar-track"><div class="bar-fill ok" style="width:4%"></div></div></div>
+    </div>
+
+  </div>
+
+  <!-- BOTTOM BAR -->
+  <div id="bottombar">
+    <span>40.7128° N  74.0060° W</span>
+    <span>|</span>
+    <span>MARK L · NANOTECH SUIT</span>
+    <div class="b-sep"></div>
+    <div class="b-status"><div class="b-dot"></div><span id="typewriter"></span></div>
+    <div class="b-sep"></div>
+    <span>STARK INDUSTRIES © 2024</span>
+    <span>|</span>
+    <span>CLASSIFIED · LEVEL 9</span>
+  </div>
+
+</div>
+
+<script>
+'use strict';
+
+// ── clock ──────────────────────────────────────────────────────────────────
+function updateClock(){
+  const now = new Date();
+  const pad = n => String(n).padStart(2,'0');
+  document.getElementById('clock').textContent =
+    `${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+  const days = ['SUN','MON','TUE','WED','THU','FRI','SAT'];
+  const months = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
+  document.getElementById('date-line').textContent =
+    `${days[now.getDay()]} ${now.getDate()} ${months[now.getMonth()]} ${now.getFullYear()} · UTC${now.getTimezoneOffset() <= 0 ? '+' : '-'}${pad(Math.abs(now.getTimezoneOffset()/60))}00`;
+}
+updateClock();
+setInterval(updateClock, 1000);
+
+// ── BG CANVAS: hex grid + particles ───────────────────────────────────────
+const bgC = document.getElementById('bgCanvas');
+const bgX = bgC.getContext('2d');
+let W, H;
+
+function resizeBg(){
+  W = bgC.width = window.innerWidth;
+  H = bgC.height = window.innerHeight;
+}
+resizeBg();
+window.addEventListener('resize', resizeBg);
+
+// hex grid
+function drawHexGrid(){
+  const size = 28, w = size*2, h = Math.sqrt(3)*size;
+  bgX.strokeStyle = 'rgba(0,200,255,0.07)';
+  bgX.lineWidth = .5;
+  for(let col = -1; col < W/w + 1; col++){
+    for(let row = -1; row < H/h + 1; row++){
+      const x = col * w * .75;
+      const y = row * h + (col%2===0 ? 0 : h/2);
+      drawHex(bgX, x, y, size);
+    }
+  }
+}
+
+function drawHex(ctx, cx, cy, r){
+  ctx.beginPath();
+  for(let i=0;i<6;i++){
+    const a = Math.PI/3*i - Math.PI/6;
+    const fn = i===0 ? 'moveTo' : 'lineTo';
+    ctx[fn](cx + r*Math.cos(a), cy + r*Math.sin(a));
+  }
+  ctx.closePath();
+  ctx.stroke();
+}
+
+// particles
+const particles = Array.from({length:80},()=>({
+  x: Math.random()*window.innerWidth,
+  y: Math.random()*window.innerHeight,
+  r: Math.random()*1.5+.3,
+  vx:(Math.random()-.5)*.3,
+  vy:(Math.random()-.5)*.3,
+  a: Math.random()
+}));
+
+function animBg(t){
+  bgX.clearRect(0,0,W,H);
+  drawHexGrid();
+  // particles
+  bgX.fillStyle='rgba(0,200,255,1)';
+  particles.forEach(p=>{
+    p.x += p.vx; p.y += p.vy;
+    if(p.x<0)p.x=W; if(p.x>W)p.x=0;
+    if(p.y<0)p.y=H; if(p.y>H)p.y=0;
+    bgX.globalAlpha = .25+.25*Math.sin(t*.001+p.a*6);
+    bgX.beginPath();
+    bgX.arc(p.x,p.y,p.r,0,Math.PI*2);
+    bgX.fill();
+  });
+  // connection lines
+  bgX.globalAlpha=1;
+  bgX.strokeStyle='rgba(0,200,255,0.04)';
+  bgX.lineWidth=.5;
+  for(let i=0;i<particles.length;i++){
+    for(let j=i+1;j<particles.length;j++){
+      const dx=particles[i].x-particles[j].x, dy=particles[i].y-particles[j].y;
+      const d=Math.sqrt(dx*dx+dy*dy);
+      if(d<120){
+        bgX.globalAlpha=(1-d/120)*0.08;
+        bgX.beginPath();bgX.moveTo(particles[i].x,particles[i].y);
+        bgX.lineTo(particles[j].x,particles[j].y);bgX.stroke();
+      }
+    }
+  }
+  bgX.globalAlpha=1;
+}
+
+// ── ARC REACTOR CANVAS ─────────────────────────────────────────────────────
+const arcC = document.getElementById('arcCanvas');
+const arcX = arcC.getContext('2d');
+const ARC_SIZE = Math.min(window.innerWidth*.38, window.innerHeight*.72, 480);
+arcC.width = arcC.height = ARC_SIZE;
+const CX = ARC_SIZE/2, CY = ARC_SIZE/2;
+
+function drawArc(t){
+  arcX.clearRect(0,0,ARC_SIZE,ARC_SIZE);
+  const pulse = 0.5 + 0.5*Math.sin(t*.0015);
+  const pulse2 = 0.5 + 0.5*Math.sin(t*.002+1);
+
+  // outermost glow ring
+  const grad0 = arcX.createRadialGradient(CX,CY,ARC_SIZE*.42,CX,CY,ARC_SIZE*.5);
+  grad0.addColorStop(0,'rgba(0,200,255,0)');
+  grad0.addColorStop(.5,`rgba(0,200,255,${0.04+0.03*pulse})`);
+  grad0.addColorStop(1,'rgba(0,200,255,0)');
+  arcX.fillStyle=grad0;
+  arcX.beginPath();arcX.arc(CX,CY,ARC_SIZE*.5,0,Math.PI*2);arcX.fill();
+
+  // ring layers
+  const rings = [
+    {r:.46,w:1,a:.15+.05*pulse,dash:[6,18],rot:t*.0004},
+    {r:.43,w:.8,a:.1,dash:[3,9],rot:-t*.0003},
+    {r:.38,w:12,a:.06+.03*pulse2,dash:null,rot:0,grad:true},
+    {r:.34,w:1.5,a:.3+.1*pulse,dash:[12,6],rot:t*.0006},
+    {r:.30,w:8,a:.08+.04*pulse,dash:null,rot:0,grad:true},
+    {r:.25,w:1,a:.2,dash:[4,12],rot:-t*.0008},
+    {r:.20,w:6,a:.12+.05*pulse2,dash:null,rot:0,grad:true},
+    {r:.14,w:1,a:.4+.15*pulse,dash:[3,5],rot:t*.001},
+    {r:.10,w:2,a:.25,dash:null,rot:0},
+  ];
+
+  rings.forEach(ring=>{
+    arcX.save();
+    arcX.translate(CX,CY);
+    if(ring.rot) arcX.rotate(ring.rot);
+    arcX.translate(-CX,-CY);
+    arcX.beginPath();
+    arcX.arc(CX,CY,ring.r*ARC_SIZE,0,Math.PI*2);
+    if(ring.grad){
+      const g = arcX.createLinearGradient(CX-ring.r*ARC_SIZE,CY,CX+ring.r*ARC_SIZE,CY);
+      g.addColorStop(0,`rgba(0,80,200,${ring.a})`);
+      g.addColorStop(.5,`rgba(0,200,255,${ring.a*1.5})`);
+      g.addColorStop(1,`rgba(0,80,200,${ring.a})`);
+      arcX.strokeStyle=g;
+    } else {
+      arcX.strokeStyle=`rgba(0,200,255,${ring.a})`;
+    }
+    arcX.lineWidth=ring.w;
+    if(ring.dash) arcX.setLineDash(ring.dash);
+    else arcX.setLineDash([]);
+    arcX.stroke();
+    arcX.restore();
+  });
+
+  // triangle spokes (rotating)
+  arcX.save();
+  arcX.translate(CX,CY);
+  arcX.rotate(t*.0005);
+  arcX.translate(-CX,-CY);
+  for(let i=0;i<3;i++){
+    arcX.save();
+    arcX.translate(CX,CY);
+    arcX.rotate(i*Math.PI*2/3);
+    arcX.translate(-CX,-CY);
+    arcX.beginPath();
+    arcX.moveTo(CX,CY-ARC_SIZE*.09);
+    arcX.lineTo(CX-ARC_SIZE*.08,CY+ARC_SIZE*.05);
+    arcX.lineTo(CX+ARC_SIZE*.08,CY+ARC_SIZE*.05);
+    arcX.closePath();
+    arcX.strokeStyle=`rgba(0,200,255,${.15+.08*pulse})`;
+    arcX.lineWidth=.8;
+    arcX.stroke();
+    arcX.restore();
+  }
+  arcX.restore();
+
+  // counter-rotating triangle
+  arcX.save();
+  arcX.translate(CX,CY);
+  arcX.rotate(-t*.0008);
+  arcX.translate(-CX,-CY);
+  for(let i=0;i<3;i++){
+    arcX.save();
+    arcX.translate(CX,CY);
+    arcX.rotate(i*Math.PI*2/3+Math.PI/3);
+    arcX.translate(-CX,-CY);
+    arcX.beginPath();
+    arcX.moveTo(CX,CY-ARC_SIZE*.065);
+    arcX.lineTo(CX-ARC_SIZE*.056,CY+ARC_SIZE*.032);
+    arcX.lineTo(CX+ARC_SIZE*.056,CY+ARC_SIZE*.032);
+    arcX.closePath();
+    arcX.strokeStyle=`rgba(0,160,255,${.1+.06*pulse2})`;
+    arcX.lineWidth=.6;
+    arcX.stroke();
+    arcX.restore();
+  }
+  arcX.restore();
+
+  // core glow
+  const coreR = ARC_SIZE*.08;
+  const coreGrad = arcX.createRadialGradient(CX,CY,0,CX,CY,coreR);
+  coreGrad.addColorStop(0,`rgba(180,240,255,${.9+.1*pulse})`);
+  coreGrad.addColorStop(.3,`rgba(0,200,255,${.7+.2*pulse})`);
+  coreGrad.addColorStop(.7,'rgba(0,80,180,.4)');
+  coreGrad.addColorStop(1,'rgba(0,50,120,0)');
+  arcX.fillStyle=coreGrad;
+  arcX.beginPath();arcX.arc(CX,CY,coreR,0,Math.PI*2);arcX.fill();
+
+  // core bloom
+  const bloom = arcX.createRadialGradient(CX,CY,0,CX,CY,ARC_SIZE*.22);
+  bloom.addColorStop(0,`rgba(0,200,255,${.18+.1*pulse})`);
+  bloom.addColorStop(.5,`rgba(0,100,200,${.06+.04*pulse})`);
+  bloom.addColorStop(1,'rgba(0,50,150,0)');
+  arcX.fillStyle=bloom;
+  arcX.beginPath();arcX.arc(CX,CY,ARC_SIZE*.22,0,Math.PI*2);arcX.fill();
+
+  // tick marks on outer ring
+  arcX.save();
+  arcX.translate(CX,CY);
+  for(let i=0;i<72;i++){
+    arcX.rotate(Math.PI*2/72);
+    arcX.beginPath();
+    const len = i%6===0 ? ARC_SIZE*.04 : ARC_SIZE*.015;
+    arcX.moveTo(ARC_SIZE*.46,0);arcX.lineTo(ARC_SIZE*.46+len,0);
+    arcX.strokeStyle=`rgba(0,200,255,${i%6===0?.4:.15})`;
+    arcX.lineWidth = i%6===0 ? 1.5 : .7;
+    arcX.setLineDash([]);arcX.stroke();
+  }
+  arcX.restore();
+}
+
+// ── RADAR CANVAS ───────────────────────────────────────────────────────────
+const radC = document.getElementById('radarCanvas');
+const radX = radC.getContext('2d');
+const RW = radC.width, RH = radC.height;
+const RC = RW/2;
+let radarAngle = 0;
+const radarBlips = Array.from({length:4},()=>({
+  a: Math.random()*Math.PI*2,
+  r: .2+Math.random()*.65,
+  age: 0
+}));
+
+function drawRadar(t){
+  radX.clearRect(0,0,RW,RH);
+  // bg
+  radX.fillStyle='rgba(0,20,40,.8)';
+  radX.beginPath();radX.arc(RC,RC,RC,0,Math.PI*2);radX.fill();
+  radX.strokeStyle='rgba(0,200,255,.15)';
+  radX.lineWidth=1;
+  radX.beginPath();radX.arc(RC,RC,RC,0,Math.PI*2);radX.stroke();
+  // rings
+  [.33,.66,1].forEach(r=>{
+    radX.beginPath();radX.arc(RC,RC,RC*r,0,Math.PI*2);
+    radX.strokeStyle='rgba(0,200,255,.1)';radX.lineWidth=.5;radX.stroke();
+  });
+  // crosshairs
+  radX.strokeStyle='rgba(0,200,255,.08)';radX.lineWidth=.5;
+  radX.beginPath();radX.moveTo(RC,0);radX.lineTo(RC,RH);radX.stroke();
+  radX.beginPath();radX.moveTo(0,RC);radX.lineTo(RW,RC);radX.stroke();
+  // sweep
+  radarAngle += .012;
+  const sweepGrad = radX.createConicalGradient
+    ? radX.createConicalGradient(RC,RC,radarAngle)
+    : null;
+  // fallback: draw sweep line + fade arc
+  for(let a=0;a<Math.PI*.7;a+=.02){
+    const ang = radarAngle - a;
+    const alpha = (1-a/(Math.PI*.7))*.18;
+    radX.beginPath();
+    radX.moveTo(RC,RC);
+    radX.arc(RC,RC,RC-.5,ang,ang+.02);
+    radX.fillStyle=`rgba(0,255,100,${alpha})`;
+    radX.fill();
+  }
+  radX.beginPath();
+  radX.moveTo(RC,RC);
+  radX.lineTo(RC+Math.cos(radarAngle)*(RC-1), RC+Math.sin(radarAngle)*(RC-1));
+  radX.strokeStyle='rgba(0,255,100,.6)';radX.lineWidth=1.5;radX.stroke();
+  // blips
+  radarBlips.forEach(b=>{
+    const sweepDiff = ((radarAngle - b.a) % (Math.PI*2) + Math.PI*2) % (Math.PI*2);
+    if(sweepDiff < .15) b.age = 1;
+    if(b.age > 0){
+      b.age -= .003;
+      const bx = RC + Math.cos(b.a)*b.r*(RC-2);
+      const by = RC + Math.sin(b.a)*b.r*(RC-2);
+      radX.beginPath();
+      radX.arc(bx,by,2.5,0,Math.PI*2);
+      radX.fillStyle=`rgba(255,150,0,${b.age})`;
+      radX.fill();
+      radX.beginPath();
+      radX.arc(bx,by,5,0,Math.PI*2);
+      radX.strokeStyle=`rgba(255,150,0,${b.age*.4})`;
+      radX.lineWidth=1;radX.stroke();
+    }
+  });
+  // label
+  radX.fillStyle='rgba(0,200,255,.3)';
+  radX.font='7px Courier New';
+  radX.textAlign='center';
+  radX.fillText('RADAR',RC,RH-4);
+}
+
+// ── WAVEFORM ───────────────────────────────────────────────────────────────
+const wvC = document.getElementById('waveCanvas');
+const wvX = wvC.getContext('2d');
+wvC.width = wvC.offsetWidth || 260;
+
+function drawWave(t){
+  const wW = wvC.width, wH = wvC.height;
+  wvX.clearRect(0,0,wW,wH);
+  wvX.strokeStyle='rgba(0,200,255,.7)';
+  wvX.lineWidth=1.2;
+  wvX.beginPath();
+  for(let x=0;x<wW;x++){
+    const freq1 = Math.sin((x/wW*8+t*.002)*Math.PI*2);
+    const freq2 = Math.sin((x/wW*3+t*.0013)*Math.PI*2)*.5;
+    const freq3 = Math.sin((x/wW*13+t*.003)*Math.PI*2)*.25;
+    const y = wH/2 + (freq1+freq2+freq3)*(wH*.28);
+    x===0 ? wvX.moveTo(x,y) : wvX.lineTo(x,y);
+  }
+  wvX.stroke();
+}
+
+// ── HEX GRID CELLS ─────────────────────────────────────────────────────────
+const hexGrid = document.getElementById('hexGrid');
+for(let i=0;i<32;i++){
+  const c = document.createElement('div');
+  c.className='hex-cell';
+  hexGrid.appendChild(c);
+}
+function animHexGrid(t){
+  hexGrid.querySelectorAll('.hex-cell').forEach((c,i)=>{
+    const on = Math.sin(t*.0008+i*.7)>.5;
+    c.classList.toggle('active',on);
+  });
+}
+
+// ── THREAT GRID ────────────────────────────────────────────────────────────
+const threatGrid = document.getElementById('threatGrid');
+for(let i=0;i<25;i++){
+  const c=document.createElement('div');
+  c.className='threat-cell';
+  threatGrid.appendChild(c);
+}
+function animThreatGrid(t){
+  threatGrid.querySelectorAll('.threat-cell').forEach((c,i)=>{
+    const v=Math.sin(t*.001+i*.5);
+    c.className='threat-cell'+(v>.7?' t3':v>.3?' t2':v>0?' t1':'');
+  });
+}
+
+// ── LIVE DATA UPDATES ──────────────────────────────────────────────────────
+let lastUpdate = 0;
+function updateData(t){
+  if(t - lastUpdate < 2000) return;
+  lastUpdate = t;
+  // heartrate
+  const hr = 68+Math.floor(Math.random()*10);
+  document.getElementById('hr').textContent = hr+' BPM';
+  // bars flutter slightly
+  const bars = [
+    {id:'repL',bar:'repLbar',min:90,max:99},
+    {id:'repR',bar:'repRbar',min:92,max:99},
+    {id:'flt',bar:'fltbar',min:82,max:94},
+    {id:'wpn',bar:'wpnbar',min:65,max:80},
+    {id:'shld',bar:'shldbar',min:78,max:90},
+    {id:'cpu',bar:'cpubar',min:8,max:22},
+  ];
+  bars.forEach(b=>{
+    const v=b.min+Math.floor(Math.random()*(b.max-b.min));
+    const el=document.getElementById(b.id);
+    const bar=document.getElementById(b.bar);
+    if(el) el.textContent=v+'%';
+    if(bar) bar.style.width=v+'%';
+  });
+}
+
+// ── TYPEWRITER ─────────────────────────────────────────────────────────────
+const messages = [
+  'ALL SYSTEMS NOMINAL — GOOD MORNING, MR. STARK.',
+  'RUNNING ENVIRONMENTAL ANALYSIS...',
+  'SUIT DIAGNOSTICS COMPLETE. 3 WARNINGS.',
+  'TRACKING 3 HOSTILE TARGETS IN SECTOR 7-G.',
+  'REPULSOR CALIBRATION OPTIMAL.',
+  'AVENGERS CHANNEL EXPERIENCING INTERFERENCE.',
+  'ARC REACTOR OPERATING AT PEAK EFFICIENCY.',
+  'WEAPONS SYSTEMS STANDBY — AWAITING AUTHORIZATION.',
+];
+let msgIdx=0, charIdx=0, twDir=1, twPause=0;
+const twEl = document.getElementById('typewriter');
+function tickTypewriter(){
+  if(twPause>0){twPause--;return;}
+  if(twDir===1){
+    charIdx++;
+    twEl.textContent = messages[msgIdx].slice(0,charIdx);
+    if(charIdx>=messages[msgIdx].length){twDir=-1;twPause=90;}
+  } else {
+    charIdx--;
+    twEl.textContent = messages[msgIdx].slice(0,charIdx);
+    if(charIdx<=0){twDir=1;twPause=20;msgIdx=(msgIdx+1)%messages.length;}
+  }
+}
+setInterval(tickTypewriter,45);
+
+// ── RANDOM ALERTS ──────────────────────────────────────────────────────────
+const alertEl = document.getElementById('alert');
+const alertMsgs = [
+  '⚠ ANOMALY DETECTED — SECTOR 7-G',
+  '⚠ ENERGY SPIKE — ARC REACTOR CORE',
+  '⚠ UNAUTHORIZED ACCESS ATTEMPT — FIREWALL ACTIVE',
+  '⚠ INCOMING PROJECTILE — EVASIVE ACTION RECOMMENDED',
+];
+setInterval(()=>{
+  if(Math.random()>.5){
+    alertEl.textContent = alertMsgs[Math.floor(Math.random()*alertMsgs.length)];
+    alertEl.style.display='block';
+    setTimeout(()=>alertEl.style.display='none', 2200);
+  }
+}, 7000);
+
+// ── MAIN LOOP ──────────────────────────────────────────────────────────────
+function loop(t){
+  animBg(t);
+  drawArc(t);
+  drawRadar(t);
+  drawWave(t);
+  animHexGrid(t);
+  animThreatGrid(t);
+  updateData(t);
+  requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>

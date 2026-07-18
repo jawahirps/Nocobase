@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>F.R.I.D.A.Y. — Bix Sync & Liveness Layer</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{width:100%;height:100%;overflow:hidden;background:#000D06;}
+body{font-family:"Courier New",Courier,monospace;color:#00FF88;user-select:none;}
+
+/* FRIDAY uses green/teal as primary vs JARVIS cyan/orange */
+:root{
+  --pri:#00FF88; --pri-dim:rgba(0,255,136,.15); --pri-glow:rgba(0,255,136,.5);
+  --sec:#39FFB0; --sec-dim:rgba(57,255,176,.1);
+  --warn:#FFD700; --warn-dim:rgba(255,215,0,.15);
+  --danger:#FF4466; --danger-dim:rgba(255,68,102,.15);
+  --bg:#000D06; --surface:rgba(0,20,12,.85);
+  --border:rgba(0,255,136,.18);
+  --text-muted:rgba(0,255,136,.45);
+  --text-bright:rgba(220,255,240,.9);
+}
+
+#bgCanvas{position:fixed;inset:0;z-index:0;}
+#scanlines{position:fixed;inset:0;z-index:50;background:repeating-linear-gradient(to bottom,transparent 0,transparent 3px,rgba(0,255,136,.012) 3px,rgba(0,255,136,.012) 4px);pointer-events:none;}
+#vignette{position:fixed;inset:0;z-index:49;background:radial-gradient(ellipse at center,transparent 45%,rgba(0,13,6,.92) 100%);pointer-events:none;}
+.corner{position:fixed;z-index:48;width:36px;height:36px;border-color:var(--pri);border-style:solid;opacity:.4;}
+.corner.tl{top:8px;left:8px;border-width:2px 0 0 2px;}
+.corner.tr{top:8px;right:8px;border-width:2px 2px 0 0;}
+.corner.bl{bottom:8px;left:8px;border-width:0 0 2px 2px;}
+.corner.br{bottom:8px;right:8px;border-width:0 2px 2px 0;}
+
+/* GRID */
+#hud{position:fixed;inset:0;z-index:1;display:grid;grid-template-rows:52px 1fr 42px;grid-template-columns:280px 1fr 280px;pointer-events:none;}
+
+/* TOP BAR */
+#topbar{grid-column:1/-1;grid-row:1;display:flex;align-items:center;justify-content:space-between;padding:0 18px;border-bottom:1px solid var(--border);background:linear-gradient(180deg,rgba(0,255,136,.05) 0,transparent 100%);}
+.fri-brand{font-size:16px;font-weight:700;letter-spacing:.22em;color:var(--text-bright);text-shadow:0 0 18px var(--pri-glow);}
+.fri-brand em{color:var(--pri);font-style:normal;}
+.fri-sub{font-size:9px;color:var(--text-muted);letter-spacing:.14em;margin-top:2px;}
+
+.pulse-dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--pri);animation:pulse 1.4s ease-in-out infinite;margin-right:4px;}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.7)}}
+
+.top-chips{display:flex;gap:10px;}
+.chip{padding:3px 10px;border:1px solid var(--border);border-radius:2px;font-size:9px;letter-spacing:.1em;background:var(--pri-dim);color:var(--pri);}
+.chip.warn{border-color:rgba(255,215,0,.3);background:var(--warn-dim);color:var(--warn);}
+.chip.danger{border-color:rgba(255,68,102,.3);background:var(--danger-dim);color:var(--danger);}
+
+/* PANELS */
+.panel{background:var(--surface);border:1px solid var(--border);padding:12px;overflow:hidden;position:relative;}
+.panel::after{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--pri-glow),transparent);opacity:.5;}
+.pt{font-size:8px;letter-spacing:.18em;color:var(--text-muted);margin-bottom:9px;display:flex;align-items:center;gap:7px;}
+.pt::before{content:'◈';color:var(--pri);}
+.ptbadge{margin-left:auto;padding:1px 5px;border:1px solid var(--border);border-radius:2px;font-size:7.5px;background:var(--pri-dim);}
+
+/* LEFT */
+#left{grid-row:2;grid-column:1;display:flex;flex-direction:column;gap:8px;padding:12px;}
+/* CENTRE */
+#centre{grid-row:2;grid-column:2;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding:12px;gap:10px;position:relative;}
+/* RIGHT */
+#right{grid-row:2;grid-column:3;display:flex;flex-direction:column;gap:8px;padding:12px;}
+/* BOTTOM */
+#bottombar{grid-column:1/-1;grid-row:3;display:flex;align-items:center;justify-content:space-between;padding:0 18px;border-top:1px solid var(--border);background:linear-gradient(0deg,rgba(0,255,136,.04),transparent);font-size:9px;}
+.bix-label{color:rgba(0,255,136,.4);letter-spacing:.16em;font-size:8px;}
+#fri-tw{color:var(--sec);letter-spacing:.07em;flex:1;margin:0 16px;}
+#fri-clock{color:var(--text-bright);letter-spacing:.1em;font-size:12px;}
+
+/* ── LIVENESS GRID ── */
+.live-grid{display:grid;grid-template-columns:1fr 1fr;gap:5px;flex:0 0 auto;}
+.live-card{padding:7px 8px;border:1px solid var(--border);border-radius:2px;position:relative;overflow:hidden;background:rgba(0,255,136,.02);}
+.live-card.ok{border-left:3px solid var(--pri);}
+.live-card.warn{border-left:3px solid var(--warn);}
+.live-card.off{border-left:3px solid var(--danger);}
+.live-name{font-size:9px;color:var(--text-bright);font-weight:700;}
+.live-status{font-size:8px;margin-top:2px;letter-spacing:.08em;}
+.live-status.ok{color:var(--pri);}
+.live-status.warn{color:var(--warn);}
+.live-status.off{color:var(--danger);}
+.live-ping{font-size:8px;color:var(--text-muted);margin-top:1px;}
+.live-bar{position:absolute;bottom:0;left:0;height:2px;background:var(--pri);transition:width 1s ease;}
+
+/* ── SYNC FEED ── */
+.sync-feed{display:flex;flex-direction:column;gap:4px;flex:1;overflow:hidden;}
+.sync-row{display:flex;align-items:flex-start;gap:6px;font-size:9px;padding:4px 6px;border:1px solid rgba(0,255,136,.08);border-radius:2px;animation:fadeIn .4s ease;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:translateY(0)}}
+.sync-time{color:var(--text-muted);min-width:48px;font-size:8px;}
+.sync-tag{padding:0 4px;border-radius:2px;font-size:7px;font-weight:700;flex-shrink:0;}
+.sync-tag.push{background:rgba(0,255,136,.15);color:var(--pri);border:1px solid rgba(0,255,136,.3);}
+.sync-tag.fetch{background:rgba(57,255,176,.12);color:var(--sec);border:1px solid rgba(57,255,176,.3);}
+.sync-tag.build{background:rgba(255,215,0,.12);color:var(--warn);border:1px solid rgba(255,215,0,.3);}
+.sync-tag.artifact{background:rgba(167,139,250,.12);color:#A78BFA;border:1px solid rgba(167,139,250,.3);}
+.sync-tag.mcp{background:rgba(255,68,102,.12);color:var(--danger);border:1px solid rgba(255,68,102,.3);}
+.sync-msg{color:rgba(200,255,230,.75);flex:1;line-height:1.35;}
+
+/* ── BIX SYNC PANEL ── */
+.bix-status{display:flex;flex-direction:column;gap:5px;}
+.bix-row{display:flex;align-items:center;gap:8px;font-size:9px;padding:5px 7px;border:1px solid rgba(0,255,136,.1);border-radius:2px;}
+.bix-key{min-width:90px;color:var(--text-muted);letter-spacing:.08em;}
+.bix-val{flex:1;color:var(--text-bright);}
+.bix-badge{padding:1px 6px;border-radius:10px;font-size:7px;font-weight:700;}
+.bix-badge.synced{background:rgba(0,255,136,.2);color:var(--pri);}
+.bix-badge.pending{background:rgba(255,215,0,.2);color:var(--warn);}
+.bix-badge.offline{background:rgba(255,68,102,.2);color:var(--danger);}
+
+/* ── FETCH HEALTH ── */
+.fetch-table{display:flex;flex-direction:column;gap:3px;}
+.fetch-row{display:flex;align-items:center;gap:6px;font-size:9px;padding:3px 0;border-bottom:1px solid rgba(0,255,136,.06);}
+.fetch-ep{flex:1;color:rgba(200,255,230,.65);}
+.fetch-method{font-size:7px;padding:1px 4px;border-radius:2px;background:rgba(0,255,136,.1);color:var(--pri);border:1px solid rgba(0,255,136,.2);}
+.fetch-ms{min-width:36px;text-align:right;font-size:8px;}
+.fetch-ms.fast{color:var(--pri);}
+.fetch-ms.med{color:var(--warn);}
+.fetch-ms.slow{color:var(--danger);}
+.fetch-status{width:6px;height:6px;border-radius:50%;flex-shrink:0;}
+.fetch-status.ok{background:var(--pri);box-shadow:0 0 6px var(--pri);}
+.fetch-status.warn{background:var(--warn);}
+.fetch-status.off{background:var(--danger);}
+
+/* ── CENTRE: FRIDAY CORE ── */
+#fri-core{position:relative;width:180px;height:180px;flex-shrink:0;}
+#friCanvas{position:absolute;inset:0;}
+.fri-core-label{position:absolute;bottom:-20px;left:50%;transform:translateX(-50%);font-size:7px;letter-spacing:.2em;color:var(--text-muted);}
+
+#wave-wrap{width:100%;height:44px;}
+#friWaveCanvas{display:block;width:100%;height:100%;}
+
+/* ── THROUGHPUT GRAPH ── */
+#throughCanvas{display:block;width:100%;height:60px;}
+
+/* ── RIGHT: ARTIFACT LIVENESS ── */
+.art-list{display:flex;flex-direction:column;gap:5px;flex:1;overflow:hidden;}
+.art-row{display:flex;align-items:center;gap:7px;font-size:9px;padding:5px 7px;border:1px solid rgba(0,255,136,.1);border-radius:2px;}
+.art-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+.art-dot.live{background:var(--pri);box-shadow:0 0 8px var(--pri);animation:pulse 1.4s infinite;}
+.art-dot.cached{background:var(--warn);}
+.art-dot.offline{background:var(--danger);}
+.art-name{flex:1;color:var(--text-bright);}
+.art-tag{font-size:7px;padding:1px 5px;border-radius:2px;border:1px solid;color:inherit;}
+
+/* alert */
+#fri-alert{position:fixed;top:65px;left:50%;transform:translateX(-50%);z-index:100;padding:9px 22px;border:1px solid var(--pri);background:rgba(0,255,136,.08);color:var(--pri);font-size:10px;letter-spacing:.1em;backdrop-filter:blur(8px);display:none;animation:alertIn .35s ease;}
+@keyframes alertIn{from{opacity:0;transform:translateX(-50%) scale(.94)}to{opacity:1;transform:translateX(-50%) scale(1)}}
+</style>
+</head>
+<body>
+<canvas id="bgCanvas"></canvas>
+<div id="scanlines"></div>
+<div id="vignette"></div>
+<div class="corner tl"></div><div class="corner tr"></div>
+<div class="corner bl"></div><div class="corner br"></div>
+<div id="fri-alert"></div>
+
+<div id="hud">
+
+  <!-- TOP BAR -->
+  <div id="topbar">
+    <div>
+      <div class="fri-brand"><span class="pulse-dot"></span>F.R.I.D.A.Y. <em>▸</em> BIX SYNC LAYER</div>
+      <div class="fri-sub">FULLY RESPONSIVE INTELLIGENCE ASSISTANCE FOR YOU · jawahirps@gmail.com</div>
+    </div>
+    <div class="top-chips">
+      <div class="chip"><span class="pulse-dot" style="width:5px;height:5px;margin-right:3px;"></span>SYNC ACTIVE</div>
+      <div class="chip warn">MCP PARTIAL</div>
+      <div class="chip">BRANCH CLEAN</div>
+      <div class="chip">REPO LIVE</div>
+    </div>
+    <div id="fri-clock"></div>
+  </div>
+
+  <!-- LEFT PANEL -->
+  <div id="left">
+
+    <!-- Liveness Grid -->
+    <div class="panel" style="flex:0 0 auto;">
+      <div class="pt">LIVENESS CHECK <span class="ptbadge" id="live-ok-count">8/8 OK</span></div>
+      <div class="live-grid" id="live-grid">
+        <!-- populated by JS -->
+      </div>
+    </div>
+
+    <!-- Sync Event Feed -->
+    <div class="panel" style="flex:1;overflow:hidden;display:flex;flex-direction:column;">
+      <div class="pt">SYNC EVENT FEED <span class="ptbadge" id="sync-count">LIVE</span></div>
+      <div class="sync-feed" id="sync-feed">
+        <!-- populated by JS -->
+      </div>
+    </div>
+
+  </div>
+
+  <!-- CENTRE -->
+  <div id="centre">
+
+    <!-- FRIDAY Core spinner -->
+    <div id="fri-core">
+      <canvas id="friCanvas" width="180" height="180"></canvas>
+      <div class="fri-core-label">FRIDAY · CORE ACTIVE</div>
+    </div>
+
+    <!-- Wave -->
+    <div style="width:92%;"><div class="pt" style="margin-bottom:4px;">NETWORK WAVEFORM</div>
+    <div id="wave-wrap"><canvas id="friWaveCanvas" width="320" height="44"></canvas></div></div>
+
+    <!-- Throughput -->
+    <div class="panel" style="width:92%;flex:0 0 auto;">
+      <div class="pt">THROUGHPUT MONITOR <span class="ptbadge">SIMULATED</span></div>
+      <canvas id="throughCanvas" width="400" height="60"></canvas>
+    </div>
+
+    <!-- Bix Sync Status -->
+    <div class="panel" style="width:92%;flex:0 0 auto;">
+      <div class="pt">BIX INTEGRATION SYNC</div>
+      <div class="bix-status">
+        <div class="bix-row"><span class="bix-key">SESSION ID</span><span class="bix-val" id="bix-session">f95b9463-00ec</span><span class="bix-badge synced">SYNCED</span></div>
+        <div class="bix-row"><span class="bix-key">USER</span><span class="bix-val">jawahirps@gmail.com</span><span class="bix-badge synced">VERIFIED</span></div>
+        <div class="bix-row"><span class="bix-key">REPO SYNC</span><span class="bix-val">jawahirps/Nocobase</span><span class="bix-badge synced">LIVE</span></div>
+        <div class="bix-row"><span class="bix-key">BRANCH</span><span class="bix-val" style="font-size:8px;">claude/ecstatic-wozniak-cmy6rk</span><span class="bix-badge synced">CLEAN</span></div>
+        <div class="bix-row"><span class="bix-key">OBSIDIAN MCP</span><span class="bix-val">localhost:27123</span><span class="bix-badge pending">AWAIT KEY</span></div>
+        <div class="bix-row"><span class="bix-key">LAST PUSH</span><span class="bix-val" id="bix-push-time">--</span><span class="bix-badge synced">OK</span></div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- RIGHT PANEL -->
+  <div id="right">
+
+    <!-- Artifact Liveness -->
+    <div class="panel" style="flex:0 0 auto;">
+      <div class="pt">ARTIFACT LIVENESS <span class="ptbadge">4 DEPLOYED</span></div>
+      <div class="art-list">
+        <div class="art-row"><div class="art-dot live"></div><span class="art-name">obsidian-brain-export.html</span><span class="art-tag" style="color:#00C8FF;border-color:#00C8FF;">LIVE</span></div>
+        <div class="art-row"><div class="art-dot live"></div><span class="art-name">obsidian-brain-claude.html</span><span class="art-tag" style="color:#D97757;border-color:#D97757;">LIVE</span></div>
+        <div class="art-row"><div class="art-dot live"></div><span class="art-name">jarvis-hud.html</span><span class="art-tag" style="color:#00FF88;border-color:#00FF88;">LIVE</span></div>
+        <div class="art-row"><div class="art-dot live"></div><span class="art-name">jarvis-v2.html (session data)</span><span class="art-tag" style="color:#A78BFA;border-color:#A78BFA;">LIVE</span></div>
+        <div class="art-row"><div class="art-dot live" style="animation-delay:.4s;"></div><span class="art-name">friday.html (this)</span><span class="art-tag" style="color:#00FF88;border-color:#00FF88;">ACTIVE</span></div>
+      </div>
+    </div>
+
+    <!-- Fetch Health -->
+    <div class="panel" style="flex:0 0 auto;">
+      <div class="pt">FETCH HEALTH <span class="ptbadge" id="fetch-health-count">—</span></div>
+      <div class="fetch-table" id="fetch-table">
+        <!-- populated by JS -->
+      </div>
+    </div>
+
+    <!-- Chat Request History -->
+    <div class="panel" style="flex:1;overflow:hidden;display:flex;flex-direction:column;">
+      <div class="pt">CHAT REQUEST LOG <span class="ptbadge">THIS SESSION</span></div>
+      <div class="sync-feed">
+        <div class="sync-row"><span class="sync-time">T+0:00</span><span class="sync-tag artifact">INIT</span><span class="sync-msg">create an obsidian brain of my works</span></div>
+        <div class="sync-row"><span class="sync-time">T+0:12</span><span class="sync-tag fetch">EXPORT</span><span class="sync-msg">export as html</span></div>
+        <div class="sync-row"><span class="sync-time">T+0:24</span><span class="sync-tag mcp">MCP</span><span class="sync-msg">claude mcp add obsidian -- npx -y obsidian-mcp …</span></div>
+        <div class="sync-row"><span class="sync-time">T+0:31</span><span class="sync-tag mcp">MCP</span><span class="sync-msg">create obsidian connection</span></div>
+        <div class="sync-row"><span class="sync-time">T+0:45</span><span class="sync-tag artifact">DESIGN</span><span class="sync-msg">redesign brain using claude visual aesthetic</span></div>
+        <div class="sync-row"><span class="sync-time">T+0:52</span><span class="sync-tag push">PUSH</span><span class="sync-msg">push (mid-turn: trigger commit+push)</span></div>
+        <div class="sync-row"><span class="sync-time">T+1:04</span><span class="sync-tag build">BUILD</span><span class="sync-msg">build JARVIS HUD — Iron Man replica</span></div>
+        <div class="sync-row"><span class="sync-time">T+1:22</span><span class="sync-tag artifact">DATA</span><span class="sync-msg">use session apps as JARVIS data layer</span></div>
+        <div class="sync-row"><span class="sync-time">T+1:30</span><span class="sync-tag build">BUILD</span><span class="sync-msg">let bix & sync, fetch liveness → FRIDAY</span></div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- BOTTOM BAR -->
+  <div id="bottombar">
+    <div class="bix-label">BIX · SYNC ENGINE v1.0 · FRIDAY INTELLIGENCE LAYER</div>
+    <div id="fri-tw">> </div>
+    <div style="text-align:right;"><div id="fri-clock2"></div><div style="font-size:8px;color:rgba(0,255,136,.4);letter-spacing:.1em;">CLAUDE CODE · ANTHROPIC</div></div>
+  </div>
+</div>
+
+<script>
+// ── DATA ─────────────────────────────────────────────────────────────────────
+const LIVE_CHECKS = [
+  {name:'GitHub API',      status:'ok', ping:'38ms'},
+  {name:'Repo Push',       status:'ok', ping:'124ms'},
+  {name:'Branch Sync',     status:'ok', ping:'22ms'},
+  {name:'Vault FS',        status:'ok', ping:'4ms'},
+  {name:'Obsidian MCP',    status:'warn',ping:'AWAIT'},
+  {name:'Claude Session',  status:'ok', ping:'LIVE'},
+  {name:'Artifact CDN',    status:'ok', ping:'61ms'},
+  {name:'Nocobase DB',     status:'warn',ping:'N/A'},
+];
+
+const FETCH_ENDPOINTS = [
+  {ep:'github.com/jawahirps', method:'GIT', ms:124, status:'ok'},
+  {ep:'claude.ai/code/artifacts', method:'GET', ms:61, status:'ok'},
+  {ep:'localhost:27123 (obsidian)', method:'REST', ms:null, status:'off'},
+  {ep:'registry.npmjs.org (mcp)', method:'NPX', ms:890, status:'warn'},
+  {ep:'api.anthropic.com', method:'POST', ms:340, status:'ok'},
+];
+
+const SYNC_EVENTS = [
+  {time: null, tag:'push',     msg:'Branch claude/ecstatic-wozniak-cmy6rk pushed → remote'},
+  {time: null, tag:'artifact', msg:'Artifact published: jarvis-hud.html'},
+  {time: null, tag:'fetch',    msg:'Vault notes fetched: 14 files from obsidian-brain/'},
+  {time: null, tag:'push',     msg:'Commit 20f12d1 feat: add Iron Man JARVIS HUD interface'},
+  {time: null, tag:'build',    msg:'FRIDAY core initialized — Bix sync layer active'},
+];
+
+const FRIDAY_MSGS = [
+  "HELLO JAWAHIRPS. F.R.I.D.A.Y. ONLINE. BIX SYNC LAYER ACTIVE.",
+  "LIVENESS CHECK COMPLETE. 6/8 SERVICES NOMINAL.",
+  "OBSIDIAN MCP AWAITING API KEY — PROVIDE TO ENABLE VAULT SYNC.",
+  "GITHUB REPO SYNC CONFIRMED. 4 COMMITS AHEAD OF UPSTREAM BASE.",
+  "ALL ARTIFACTS DEPLOYED AND LIVE ON ARTIFACT GALLERY.",
+  "CHAT SESSION LOG: 9 REQUESTS PROCESSED THIS SESSION.",
+  "JARVIS AND FRIDAY SYNCHRONIZED. DUAL-HUD MODE NOMINAL.",
+  "BIX INTEGRATION LAYER READY. STANDING BY FOR SYNC COMMANDS.",
+];
+
+const FRIDAY_ALERTS = [
+  "◈ SYNC HEARTBEAT CONFIRMED",
+  "▸ ARTIFACT GALLERY UPDATED",
+  "⬡ VAULT FETCH COMPLETE",
+  "◆ BRANCH STATUS: CLEAN",
+  "⚡ BIX SYNC EVENT LOGGED",
+];
+
+// ── CLOCK ─────────────────────────────────────────────────────────────────────
+function updateClock() {
+  const now = new Date();
+  const t = now.toLocaleTimeString('en-US',{hour12:false});
+  document.getElementById('fri-clock').textContent = t;
+  document.getElementById('fri-clock2').textContent = t;
+  document.getElementById('bix-push-time').textContent =
+    now.toLocaleTimeString('en-US',{hour12:false,hour:'2-digit',minute:'2-digit'}) + ' TODAY';
+}
+setInterval(updateClock, 1000);
+updateClock();
+
+// ── TYPEWRITER ──────────────────────────────────────────────────────────────
+let mi=0,ci=0,del=false;
+const tw = document.getElementById('fri-tw');
+function tick(){
+  const m = FRIDAY_MSGS[mi];
+  if(!del){ tw.textContent='> '+m.slice(0,ci++); if(ci>m.length){del=true;setTimeout(tick,2600);return;} }
+  else{ tw.textContent='> '+m.slice(0,ci--); if(ci<0){del=false;ci=0;mi=(mi+1)%FRIDAY_MSGS.length;} }
+  setTimeout(tick,del?24:42);
+}
+tick();
+
+// ── LIVENESS GRID ───────────────────────────────────────────────────────────
+const lg = document.getElementById('live-grid');
+LIVE_CHECKS.forEach(c=>{
+  const d = document.createElement('div');
+  d.className = 'live-card '+c.status;
+  d.innerHTML = `<div class="live-name">${c.name}</div>
+<div class="live-status ${c.status}">${c.status==='ok'?'ONLINE':c.status==='warn'?'PARTIAL':'OFFLINE'}</div>
+<div class="live-ping">${c.ping}</div>
+<div class="live-bar" style="width:${c.status==='ok'?'100':c.status==='warn'?'50':'10'}%"></div>`;
+  lg.appendChild(d);
+});
+const okCount = LIVE_CHECKS.filter(c=>c.status==='ok').length;
+document.getElementById('live-ok-count').textContent = `${okCount}/${LIVE_CHECKS.length} OK`;
+
+// ── FETCH TABLE ─────────────────────────────────────────────────────────────
+const ft = document.getElementById('fetch-table');
+let okFetch=0;
+FETCH_ENDPOINTS.forEach(e=>{
+  const msClass = !e.ms ? 'slow' : e.ms<200?'fast':e.ms<600?'med':'slow';
+  const msText = e.ms ? e.ms+'ms' : 'TIMEOUT';
+  if(e.status==='ok') okFetch++;
+  const r = document.createElement('div');
+  r.className='fetch-row';
+  r.innerHTML=`<div class="fetch-status ${e.status}"></div>
+<span class="fetch-ep">${e.ep}</span>
+<span class="fetch-method">${e.method}</span>
+<span class="fetch-ms ${msClass}">${msText}</span>`;
+  ft.appendChild(r);
+});
+document.getElementById('fetch-health-count').textContent=`${okFetch}/${FETCH_ENDPOINTS.length} UP`;
+
+// ── SYNC FEED (static + live additions) ─────────────────────────────────────
+const sf = document.getElementById('sync-feed');
+function addSyncEvent(tag, msg) {
+  const now = new Date().toLocaleTimeString('en-US',{hour12:false,hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  const row = document.createElement('div');
+  row.className='sync-row';
+  row.innerHTML=`<span class="sync-time">${now}</span><span class="sync-tag ${tag}">${tag.toUpperCase()}</span><span class="sync-msg">${msg}</span>`;
+  sf.insertBefore(row, sf.firstChild);
+  if(sf.children.length > 12) sf.removeChild(sf.lastChild);
+}
+SYNC_EVENTS.forEach(e=>addSyncEvent(e.tag,e.msg));
+// live synthetic events
+const liveSyncPool = [
+  ['fetch','Heartbeat ping to GitHub API — 38ms response'],
+  ['push','Sync check: no new commits since last push'],
+  ['artifact','Artifact gallery polled — 5 artifacts found'],
+  ['fetch','Session token refresh — OK'],
+  ['mcp','Obsidian MCP ping attempt — no response (key missing)'],
+  ['build','FRIDAY self-check — all systems nominal'],
+];
+let lsi=0;
+setInterval(()=>{
+  const e=liveSyncPool[lsi%liveSyncPool.length]; lsi++;
+  addSyncEvent(e[0],e[1]);
+  document.getElementById('sync-count').textContent='LIVE · '+new Date().toLocaleTimeString('en-US',{hour12:false});
+},8000);
+
+// ── ALERT ──────────────────────────────────────────────────────────────────
+const alertEl = document.getElementById('fri-alert');
+function showAlert(){
+  const m=FRIDAY_ALERTS[Math.floor(Date.now()/9000)%FRIDAY_ALERTS.length];
+  alertEl.textContent=m; alertEl.style.display='block';
+  setTimeout(()=>alertEl.style.display='none',2800);
+  setTimeout(showAlert,9000+(Date.now()%3000));
+}
+setTimeout(showAlert,5000);
+
+// ── BG CANVAS ────────────────────────────────────────────────────────────────
+const bg=document.getElementById('bgCanvas');
+const bctx=bg.getContext('2d');
+let W,H,pts=[];
+function resizeBg(){
+  W=bg.width=window.innerWidth; H=bg.height=window.innerHeight;
+  pts=Array.from({length:40},()=>({x:Math.random()*W,y:Math.random()*H,vx:(Math.random()-.5)*.25,vy:(Math.random()-.5)*.25,r:Math.random()*1.2+.4}));
+}
+window.addEventListener('resize',resizeBg); resizeBg();
+
+function animBg(){
+  bctx.clearRect(0,0,W,H);
+  // circuit lines
+  bctx.strokeStyle='rgba(0,255,136,.04)'; bctx.lineWidth=1;
+  for(let x=0;x<W;x+=60){ bctx.beginPath();bctx.moveTo(x,0);bctx.lineTo(x,H);bctx.stroke(); }
+  for(let y=0;y<H;y+=60){ bctx.beginPath();bctx.moveTo(0,y);bctx.lineTo(W,y);bctx.stroke(); }
+  // nodes
+  pts.forEach(p=>{
+    p.x+=p.vx;p.y+=p.vy;
+    if(p.x<0)p.x=W;if(p.x>W)p.x=0;if(p.y<0)p.y=H;if(p.y>H)p.y=0;
+    bctx.beginPath();bctx.arc(p.x,p.y,p.r,0,Math.PI*2);
+    bctx.fillStyle='rgba(0,255,136,.4)';bctx.fill();
+  });
+  pts.forEach((p,i)=>pts.slice(i+1).forEach(q=>{
+    const d=Math.hypot(p.x-q.x,p.y-q.y);
+    if(d<90){bctx.beginPath();bctx.moveTo(p.x,p.y);bctx.lineTo(q.x,q.y);
+      bctx.strokeStyle=`rgba(0,255,136,${.1*(1-d/90)})`;bctx.lineWidth=.5;bctx.stroke();}
+  }));
+}
+
+// ── FRIDAY CORE SPINNER ────────────────────────────────────────────────────
+const fc=document.getElementById('friCanvas');
+const fctx=fc.getContext('2d');
+let fAngle=0;
+
+function drawFriCore(t){
+  fctx.clearRect(0,0,180,180);
+  const cx=90,cy=90;
+  fAngle+=.018;
+
+  // rings
+  [[70,'rgba(0,255,136,.12)',1.5],[56,'rgba(0,255,136,.2)',1],[42,'rgba(57,255,176,.28)',1]].forEach(([r,c,w])=>{
+    fctx.beginPath();fctx.arc(cx,cy,r,0,Math.PI*2);
+    fctx.strokeStyle=c;fctx.lineWidth=w;fctx.stroke();
+  });
+
+  // rotating dashes
+  for(let i=0;i<16;i++){
+    const a=fAngle+i*(Math.PI*2/16);
+    const r0=66,r1=i%4===0?60:63;
+    fctx.beginPath();
+    fctx.moveTo(cx+r0*Math.cos(a),cy+r0*Math.sin(a));
+    fctx.lineTo(cx+r1*Math.cos(a),cy+r1*Math.sin(a));
+    fctx.strokeStyle=i%4===0?'rgba(0,255,136,.7)':'rgba(0,255,136,.25)';
+    fctx.lineWidth=i%4===0?1.5:1;fctx.stroke();
+  }
+
+  // orbit ring of squares (CW)
+  for(let i=0;i<8;i++){
+    const a=fAngle*1.2+i*(Math.PI*2/8);
+    const rx=cx+46*Math.cos(a),ry=cy+46*Math.sin(a);
+    fctx.save();fctx.translate(rx,ry);fctx.rotate(fAngle*2);
+    fctx.strokeStyle='rgba(0,255,136,.45)';fctx.lineWidth=1;
+    fctx.strokeRect(-3,-3,6,6);fctx.restore();
+  }
+
+  // orbit ring of diamonds (CCW)
+  for(let i=0;i<5;i++){
+    const a=-fAngle*.9+i*(Math.PI*2/5);
+    const rx=cx+30*Math.cos(a),ry=cy+30*Math.sin(a);
+    fctx.save();fctx.translate(rx,ry);fctx.rotate(-fAngle*3);
+    fctx.beginPath();fctx.moveTo(0,-5);fctx.lineTo(4,0);fctx.lineTo(0,5);fctx.lineTo(-4,0);fctx.closePath();
+    fctx.strokeStyle='rgba(57,255,176,.5)';fctx.lineWidth=1;fctx.stroke();fctx.restore();
+  }
+
+  // core pulse
+  const pulse=0.65+0.35*Math.sin(t*.0025);
+  const cg=fctx.createRadialGradient(cx,cy,0,cx,cy,18);
+  cg.addColorStop(0,`rgba(255,255,255,${pulse})`);
+  cg.addColorStop(.5,`rgba(0,255,136,${pulse*.7})`);
+  cg.addColorStop(1,'transparent');
+  fctx.beginPath();fctx.arc(cx,cy,18,0,Math.PI*2);fctx.fillStyle=cg;fctx.fill();
+
+  fctx.beginPath();fctx.arc(cx,cy,8,0,Math.PI*2);
+  fctx.fillStyle=`rgba(180,255,220,${pulse*.9})`;fctx.fill();
+
+  // outer glow ring
+  const og=fctx.createRadialGradient(cx,cy,52,cx,cy,78);
+  og.addColorStop(0,`rgba(0,255,136,${.05*pulse})`);og.addColorStop(1,'transparent');
+  fctx.beginPath();fctx.arc(cx,cy,78,0,Math.PI*2);fctx.fillStyle=og;fctx.fill();
+}
+
+// ── WAVE ────────────────────────────────────────────────────────────────────
+const wc=document.getElementById('friWaveCanvas');
+const wctx=wc.getContext('2d');
+function drawWave(t){
+  const W2=wc.width,H2=wc.height;
+  wctx.clearRect(0,0,W2,H2);
+  wctx.beginPath();
+  for(let x=0;x<W2;x++){
+    const p=x/W2;
+    const y=H2/2+Math.sin(p*10+t*.0012)*9+Math.sin(p*5.5-t*.0018)*5+Math.sin(p*22+t*.0022)*2.5;
+    x===0?wctx.moveTo(x,y):wctx.lineTo(x,y);
+  }
+  const g=wctx.createLinearGradient(0,0,W2,0);
+  g.addColorStop(0,'rgba(0,255,136,0)');g.addColorStop(.35,'rgba(0,255,136,.85)');
+  g.addColorStop(.65,'rgba(57,255,176,.85)');g.addColorStop(1,'rgba(0,255,136,0)');
+  wctx.strokeStyle=g;wctx.lineWidth=1.5;wctx.stroke();
+}
+
+// ── THROUGHPUT ──────────────────────────────────────────────────────────────
+const tc=document.getElementById('throughCanvas');
+const tctx=tc.getContext('2d');
+const throughBuf=Array.from({length:80},()=>30+Math.random()*20);
+function drawThrough(t){
+  throughBuf.shift();
+  throughBuf.push(30+20*Math.abs(Math.sin(t*.0008+Math.random()*.4))+10*Math.random());
+  const W2=tc.width,H2=tc.height;
+  tctx.clearRect(0,0,W2,H2);
+  // fill
+  tctx.beginPath();
+  throughBuf.forEach((v,i)=>{
+    const x=i*(W2/throughBuf.length),y=H2-v*(H2/70);
+    i===0?tctx.moveTo(x,y):tctx.lineTo(x,y);
+  });
+  tctx.lineTo(W2,H2);tctx.lineTo(0,H2);tctx.closePath();
+  const ag=tctx.createLinearGradient(0,0,0,H2);
+  ag.addColorStop(0,'rgba(0,255,136,.25)');ag.addColorStop(1,'rgba(0,255,136,.02)');
+  tctx.fillStyle=ag;tctx.fill();
+  // line
+  tctx.beginPath();
+  throughBuf.forEach((v,i)=>{
+    const x=i*(W2/throughBuf.length),y=H2-v*(H2/70);
+    i===0?tctx.moveTo(x,y):tctx.lineTo(x,y);
+  });
+  tctx.strokeStyle='rgba(0,255,136,.8)';tctx.lineWidth=1.2;tctx.stroke();
+  // endpoint dot
+  const last=throughBuf[throughBuf.length-1];
+  tctx.beginPath();tctx.arc(W2-3,H2-last*(H2/70),3,0,Math.PI*2);
+  tctx.fillStyle='#00FF88';tctx.fill();
+}
+
+// ── MAIN LOOP ────────────────────────────────────────────────────────────────
+function loop(t){
+  animBg();
+  drawFriCore(t);
+  drawWave(t);
+  drawThrough(t);
+  requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>

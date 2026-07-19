@@ -187,6 +187,9 @@ body::after {
 </style>
 </head>
 <body>
+
+<!-- CONFIG OVERLAY injected by script above -->
+
 <div class="hud">
 
   <!-- HEADER -->
@@ -337,15 +340,105 @@ body::after {
   </div>
 </div>
 
+<style>
+/* ── CONFIG OVERLAY ───────────────────────────────────────────────── */
+#cfg-overlay {
+  position:fixed; inset:0; z-index:9999; display:flex; align-items:center; justify-content:center;
+  background:rgba(0,0,0,.85); backdrop-filter:blur(4px);
+}
+#cfg-overlay.hidden { display:none; }
+.cfg-box {
+  width:420px; border:1px solid var(--pri); background:#000;
+  padding:28px 28px 22px; position:relative;
+}
+.cfg-box::before {
+  content:''; position:absolute; top:0; left:0; right:0; height:2px;
+  background:linear-gradient(90deg,transparent,var(--pri),var(--sec),transparent);
+}
+.cfg-title { font-size:11px; letter-spacing:3px; color:var(--pri); text-shadow:0 0 10px var(--pri-glow); margin-bottom:20px; }
+.cfg-sub { font-size:8px; letter-spacing:1.5px; color:var(--txt-dim); margin-bottom:16px; line-height:1.6; }
+.cfg-row { margin-bottom:12px; }
+.cfg-label { font-size:8px; letter-spacing:2px; color:var(--sec); margin-bottom:4px; }
+.cfg-input {
+  width:100%; background:#0A1018; border:1px solid var(--border); color:var(--txt);
+  font-family:var(--font); font-size:10px; padding:7px 10px; outline:none; letter-spacing:.5px;
+}
+.cfg-input:focus { border-color:var(--pri); box-shadow:0 0 6px var(--pri-glow); }
+.cfg-input::placeholder { color:var(--txt-faint); }
+.cfg-btn {
+  width:100%; margin-top:16px; padding:9px; background:transparent; border:1px solid var(--pri);
+  color:var(--pri); font-family:var(--font); font-size:9px; letter-spacing:3px; cursor:pointer;
+  transition:all .2s;
+}
+.cfg-btn:hover { background:var(--pri-dim); box-shadow:0 0 10px var(--pri-glow); }
+.cfg-skip { font-size:8px; letter-spacing:1px; color:var(--txt-faint); text-align:center; margin-top:10px; cursor:pointer; }
+.cfg-skip:hover { color:var(--txt-dim); }
+</style>
+
+<!-- CONFIG OVERLAY -->
+<div id="cfg-overlay" class="hidden">
+  <div class="cfg-box">
+    <div class="cfg-title">◈ UPLINK CONFIGURATION</div>
+    <div class="cfg-sub">Enter your Railway deployment URL to connect J.A.R.V.I.S to the live analytika-rcm system. Credentials are stored in localStorage only.</div>
+    <div class="cfg-row">
+      <div class="cfg-label">RAILWAY URL</div>
+      <input class="cfg-input" id="cfg-url" type="text" placeholder="https://xxx.up.railway.app" autocomplete="off" spellcheck="false">
+    </div>
+    <div class="cfg-row">
+      <div class="cfg-label">ADMIN EMAIL</div>
+      <input class="cfg-input" id="cfg-email" type="text" placeholder="admin@ghafbi.ae" autocomplete="off">
+    </div>
+    <div class="cfg-row">
+      <div class="cfg-label">PASSWORD</div>
+      <input class="cfg-input" id="cfg-pass" type="password" placeholder="Admin@123" autocomplete="off">
+    </div>
+    <button class="cfg-btn" onclick="saveConfig()">◈ ESTABLISH UPLINK</button>
+    <div class="cfg-skip" onclick="skipConfig()">CONTINUE IN DEMO MODE</div>
+  </div>
+</div>
+
 <script>
-/* ── CONFIG ─────────────────────────────────────────────────────── */
-const CFG = {
-  APP_URL:   'https://analytika-rcm-production.up.railway.app',  // ← SET YOUR RAILWAY URL
-  RENDER_URL:'https://analytika-rcm.onrender.com',               // ← SET YOUR RENDER URL
-  EMAIL:     '',   // admin email (optional – needed for /api/dashboard/summary)
-  PASSWORD:  '',   // admin password
-  POLL_MS:   60000,
+/* ── CONFIG — loads from localStorage, falls back to defaults ────── */
+const DEFAULTS = {
+  APP_URL:    '',
+  RENDER_URL: 'https://analytika-rcm.onrender.com',
+  EMAIL:      'admin@ghafbi.ae',
+  PASSWORD:   'Admin@123',
+  POLL_MS:    60000,
 };
+const stored = JSON.parse(localStorage.getItem('jarvis_cfg') || '{}');
+const CFG = { ...DEFAULTS, ...stored };
+
+function saveConfig() {
+  CFG.APP_URL  = document.getElementById('cfg-url').value.trim().replace(/\/$/,'');
+  CFG.EMAIL    = document.getElementById('cfg-email').value.trim();
+  CFG.PASSWORD = document.getElementById('cfg-pass').value;
+  localStorage.setItem('jarvis_cfg', JSON.stringify({
+    APP_URL: CFG.APP_URL, RENDER_URL: CFG.RENDER_URL,
+    EMAIL: CFG.EMAIL, PASSWORD: CFG.PASSWORD, POLL_MS: CFG.POLL_MS,
+  }));
+  document.getElementById('cfg-overlay').classList.add('hidden');
+  authOk = false;
+  poll();
+}
+function skipConfig() {
+  document.getElementById('cfg-overlay').classList.add('hidden');
+}
+function showConfig() {
+  document.getElementById('cfg-url').value   = CFG.APP_URL;
+  document.getElementById('cfg-email').value = CFG.EMAIL;
+  document.getElementById('cfg-pass').value  = CFG.PASSWORD;
+  document.getElementById('cfg-overlay').classList.remove('hidden');
+}
+// Show config overlay if no URL saved
+if (!CFG.APP_URL) {
+  document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('cfg-overlay').classList.remove('hidden');
+    document.getElementById('cfg-url').focus();
+  });
+}
+// Press C to open config anytime
+document.addEventListener('keydown', e => { if (e.key === 'c' || e.key === 'C') showConfig(); });
 
 /* ── CLOCK ───────────────────────────────────────────────────────── */
 const months = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];

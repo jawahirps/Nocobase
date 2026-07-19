@@ -1,0 +1,1928 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Nocobase — Knowledge Brain</title>
+<style>
+/* ── tokens ──────────────────────────────────────────────────────────── */
+:root {
+  --bg:         #1A1523;
+  --surface:    #231D2E;
+  --surface2:   #2C253A;
+  --border:     rgba(255,255,255,0.07);
+  --border2:    rgba(255,255,255,0.12);
+  --text:       #ECECF1;
+  --muted:      #8B859E;
+  --accent:     #D97757;
+  --accent-dim: rgba(217,119,87,0.14);
+  --heading:    #F4F3FF;
+  --code-bg:    #130F1C;
+  --code-text:  #ABB2BF;
+  --green:      #6FCF97;
+  --tag-bg:     rgba(217,119,87,0.15);
+  --tag-text:   #E8A080;
+  --wiki-color: #A78BFA;
+  --wiki-bg:    rgba(167,139,250,0.1);
+  --shadow:     0 0 0 1px rgba(255,255,255,0.06), 0 8px 32px rgba(0,0,0,0.45);
+}
+@media (prefers-color-scheme: light) {
+  :root {
+    --bg:         #F7F5FA;
+    --surface:    #FFFFFF;
+    --surface2:   #F0EBF7;
+    --border:     rgba(0,0,0,0.07);
+    --border2:    rgba(0,0,0,0.12);
+    --text:       #1A1523;
+    --muted:      #6B6478;
+    --accent:     #C0602E;
+    --accent-dim: rgba(192,96,46,0.1);
+    --heading:    #100D1A;
+    --code-bg:    #F0EBF7;
+    --code-text:  #3D3453;
+    --green:      #1D7A47;
+    --tag-bg:     rgba(192,96,46,0.1);
+    --tag-text:   #A0451A;
+    --wiki-color: #6D28D9;
+    --wiki-bg:    rgba(109,40,217,0.08);
+    --shadow:     0 0 0 1px rgba(0,0,0,0.06), 0 4px 24px rgba(0,0,0,0.08);
+  }
+}
+:root[data-theme="dark"] {
+  --bg:#1A1523;--surface:#231D2E;--surface2:#2C253A;
+  --border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.12);
+  --text:#ECECF1;--muted:#8B859E;--accent:#D97757;--accent-dim:rgba(217,119,87,0.14);
+  --heading:#F4F3FF;--code-bg:#130F1C;--code-text:#ABB2BF;--green:#6FCF97;
+  --tag-bg:rgba(217,119,87,0.15);--tag-text:#E8A080;
+  --wiki-color:#A78BFA;--wiki-bg:rgba(167,139,250,0.1);
+  --shadow:0 0 0 1px rgba(255,255,255,0.06),0 8px 32px rgba(0,0,0,0.45);
+}
+:root[data-theme="light"] {
+  --bg:#F7F5FA;--surface:#FFFFFF;--surface2:#F0EBF7;
+  --border:rgba(0,0,0,0.07);--border2:rgba(0,0,0,0.12);
+  --text:#1A1523;--muted:#6B6478;--accent:#C0602E;--accent-dim:rgba(192,96,46,0.1);
+  --heading:#100D1A;--code-bg:#F0EBF7;--code-text:#3D3453;--green:#1D7A47;
+  --tag-bg:rgba(192,96,46,0.1);--tag-text:#A0451A;
+  --wiki-color:#6D28D9;--wiki-bg:rgba(109,40,217,0.08);
+  --shadow:0 0 0 1px rgba(0,0,0,0.06),0 4px 24px rgba(0,0,0,0.08);
+}
+
+/* ── reset ───────────────────────────────────────────────────────────── */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden}
+body{
+  display:flex;
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;
+  font-size:15px;line-height:1.7;
+  background:var(--bg);color:var(--text);
+}
+
+/* ── sidebar ─────────────────────────────────────────────────────────── */
+#sidebar{
+  width:256px;min-width:220px;
+  background:var(--surface);
+  border-right:1px solid var(--border);
+  display:flex;flex-direction:column;
+  overflow:hidden;flex-shrink:0;
+}
+.sidebar-header{
+  padding:18px 16px 12px;
+  border-bottom:1px solid var(--border);
+  flex-shrink:0;
+}
+.brand{
+  display:flex;align-items:center;gap:9px;margin-bottom:12px;
+}
+.brand-icon{
+  width:28px;height:28px;border-radius:8px;
+  background:linear-gradient(135deg,#D97757 0%,#C45E32 100%);
+  display:flex;align-items:center;justify-content:center;
+  font-size:14px;flex-shrink:0;
+}
+.brand-name{font-size:14px;font-weight:600;color:var(--heading);letter-spacing:-0.01em;}
+.brand-sub{font-size:11px;color:var(--muted);margin-left:auto;}
+#search{
+  width:100%;
+  background:var(--surface2);
+  border:1px solid var(--border2);
+  border-radius:8px;
+  color:var(--text);
+  padding:7px 10px 7px 32px;
+  font-size:13px;outline:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%238B859E' stroke-width='2'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='m21 21-4.35-4.35'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;
+  background-position:10px center;
+  transition:border-color 0.15s;
+}
+#search:focus{border-color:var(--accent);}
+#search::placeholder{color:var(--muted);}
+#nav-list{flex:1;overflow-y:auto;padding:8px 0 16px;}
+#nav-list ul{list-style:none;padding:0;}
+.nav-group{
+  font-size:10.5px;font-weight:700;
+  text-transform:uppercase;letter-spacing:.1em;
+  color:var(--muted);
+  padding:16px 16px 4px;
+}
+#nav-list li a{
+  display:block;padding:5px 16px;
+  color:var(--text);text-decoration:none;
+  font-size:13.5px;border-radius:0;
+  transition:background 0.1s,color 0.1s;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  border-left:2px solid transparent;
+}
+#nav-list li a:hover{background:var(--accent-dim);color:var(--heading);}
+#nav-list li a.active{
+  background:var(--accent-dim);
+  color:var(--accent);
+  border-left-color:var(--accent);
+  font-weight:500;
+}
+.hidden{display:none!important}
+
+/* ── main ────────────────────────────────────────────────────────────── */
+#main{
+  flex:1;overflow-y:auto;
+  padding:0;
+  display:flex;flex-direction:column;
+  align-items:center;
+}
+#main-inner{
+  width:100%;max-width:780px;
+  padding:40px 32px 80px;
+}
+
+/* ── response shell ──────────────────────────────────────────────────── */
+section{display:none;}
+.response-header{
+  display:flex;align-items:center;gap:10px;
+  margin-bottom:20px;
+  padding-bottom:16px;
+  border-bottom:1px solid var(--border);
+}
+.avatar{
+  width:30px;height:30px;border-radius:50%;flex-shrink:0;
+  background:linear-gradient(135deg,#D97757 0%,#9B59B6 100%);
+}
+.model-label{font-size:13px;font-weight:600;color:var(--muted);letter-spacing:0.01em;}
+
+/* ── typography ──────────────────────────────────────────────────────── */
+.response-body h1{
+  font-size:1.75em;font-weight:700;color:var(--heading);
+  letter-spacing:-0.025em;text-wrap:balance;
+  margin-bottom:20px;line-height:1.25;
+}
+.response-body h2{
+  font-size:1.2em;font-weight:600;color:var(--heading);
+  margin:36px 0 10px;letter-spacing:-0.015em;
+  padding-bottom:6px;border-bottom:1px solid var(--border);
+}
+.response-body h3{
+  font-size:1.02em;font-weight:600;color:var(--accent);
+  margin:24px 0 6px;
+}
+.response-body h4,.response-body h5,.response-body h6{
+  font-size:.95em;font-weight:600;color:var(--muted);margin:18px 0 4px;
+}
+.response-body p{margin:8px 0;max-width:70ch;}
+.response-body hr{border:none;border-top:1px solid var(--border);margin:28px 0;}
+.response-body strong{color:var(--heading);font-weight:600;}
+.response-body em{font-style:italic;color:var(--muted);}
+.response-body blockquote{
+  border-left:3px solid var(--accent);
+  padding:10px 16px;
+  background:var(--accent-dim);
+  border-radius:0 6px 6px 0;
+  margin:14px 0;color:var(--muted);font-style:italic;
+}
+.response-body ul,.response-body ol{
+  padding-left:22px;margin:8px 0;
+}
+.response-body li{margin:4px 0;}
+
+/* ── inline code ─────────────────────────────────────────────────────── */
+.response-body code{
+  background:var(--code-bg);
+  color:#E5C07B;
+  padding:2px 6px;border-radius:4px;
+  font-family:"JetBrains Mono","Fira Code","Cascadia Code",monospace;
+  font-size:.85em;
+}
+
+/* ── code block ──────────────────────────────────────────────────────── */
+.code-block{
+  background:var(--code-bg);
+  border:1px solid var(--border2);
+  border-radius:10px;
+  margin:16px 0;
+  overflow:hidden;
+}
+.code-header{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:8px 14px;
+  border-bottom:1px solid var(--border2);
+  background:rgba(255,255,255,0.02);
+}
+.code-lang{font-size:11.5px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;}
+.copy-btn{
+  font-size:11px;color:var(--muted);background:none;border:none;cursor:pointer;
+  padding:2px 6px;border-radius:4px;transition:color 0.15s,background 0.15s;
+}
+.copy-btn:hover{color:var(--text);background:var(--surface2);}
+.code-block pre{
+  overflow-x:auto;padding:14px 16px;margin:0;
+}
+.code-block code{
+  background:none;padding:0;border-radius:0;
+  font-family:"JetBrains Mono","Fira Code",monospace;
+  font-size:.84em;line-height:1.65;color:var(--code-text);
+}
+
+/* ── table ───────────────────────────────────────────────────────────── */
+.table-wrap{overflow-x:auto;margin:16px 0;border-radius:8px;border:1px solid var(--border2);}
+table{border-collapse:collapse;width:100%;font-size:.9em;}
+th{
+  background:var(--surface2);color:var(--accent);
+  text-align:left;padding:9px 14px;font-weight:600;
+  border-bottom:1px solid var(--border2);font-size:.85em;
+  letter-spacing:.02em;text-transform:uppercase;
+}
+td{padding:8px 14px;border-bottom:1px solid var(--border);vertical-align:top;}
+tr:last-child td{border-bottom:none;}
+tr:hover td{background:rgba(255,255,255,0.02);}
+
+/* ── wiki links ──────────────────────────────────────────────────────── */
+a.wikilink{
+  color:var(--wiki-color);
+  background:var(--wiki-bg);
+  padding:1px 7px;border-radius:4px;
+  text-decoration:none;font-size:.93em;
+  border:1px solid rgba(167,139,250,0.2);
+  transition:background 0.15s;
+}
+a.wikilink:hover{background:rgba(167,139,250,0.2);}
+a{color:var(--accent);text-decoration:none;}
+a:hover{text-decoration:underline;}
+
+/* ── tags ────────────────────────────────────────────────────────────── */
+.tag{
+  background:var(--tag-bg);color:var(--tag-text);
+  padding:1px 7px;border-radius:12px;
+  font-size:.78em;font-weight:600;
+}
+
+/* ── scrollbar ───────────────────────────────────────────────────────── */
+::-webkit-scrollbar{width:5px;height:5px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px;}
+
+/* ── theme toggle ────────────────────────────────────────────────────── */
+#theme-toggle{
+  position:fixed;top:14px;right:16px;z-index:100;
+  background:var(--surface2);border:1px solid var(--border2);
+  color:var(--muted);font-size:14px;
+  padding:5px 9px;border-radius:7px;cursor:pointer;
+  transition:color 0.15s;
+}
+#theme-toggle:hover{color:var(--text);}
+
+/* ── count chip ──────────────────────────────────────────────────────── */
+.note-count{
+  font-size:10px;font-weight:600;
+  background:var(--surface2);color:var(--muted);
+  border:1px solid var(--border2);
+  padding:1px 6px;border-radius:10px;
+  margin-left:auto;
+}
+</style>
+</head>
+<body>
+
+<button id="theme-toggle" onclick="toggleTheme()" title="Toggle theme">◐</button>
+
+<nav id="sidebar">
+  <div class="sidebar-header">
+    <div class="brand">
+      <div class="brand-icon">🧠</div>
+      <span class="brand-name">Knowledge Brain</span>
+      <span class="brand-sub">v2.0.57</span>
+    </div>
+    <input id="search" type="search" placeholder="Search notes…" oninput="filterNotes(this.value)" autocomplete="off">
+  </div>
+  <div id="nav-list">
+    <ul><div class="nav-group">Home</div><ul><li><a href="#home" data-id="home" onclick="showNote('home');return false;">Home</a></li></ul><div class="nav-group">Architecture</div><ul><li><a href="#architecture-overview" data-id="architecture-overview" onclick="showNote('architecture-overview');return false;">Architecture Overview</a></li><li><a href="#client-v1-vs-v2" data-id="client-v1-vs-v2" onclick="showNote('client-v1-vs-v2');return false;">Client v1 vs v2</a></li><li><a href="#tech-stack" data-id="tech-stack" onclick="showNote('tech-stack');return false;">Tech Stack</a></li></ul><div class="nav-group">Core</div><ul><li><a href="#core-packages" data-id="core-packages" onclick="showNote('core-packages');return false;">Core Packages</a></li></ul><div class="nav-group">Plugins</div><ul><li><a href="#plugin-catalog" data-id="plugin-catalog" onclick="showNote('plugin-catalog');return false;">Plugin Catalog</a></li></ul><div class="nav-group">Workflow</div><ul><li><a href="#workflow-engine" data-id="workflow-engine" onclick="showNote('workflow-engine');return false;">Workflow Engine</a></li></ul><div class="nav-group">Dev-Guide</div><ul><li><a href="#code-conventions" data-id="code-conventions" onclick="showNote('code-conventions');return false;">Code Conventions</a></li><li><a href="#database-guide" data-id="database-guide" onclick="showNote('database-guide');return false;">Database Guide</a></li><li><a href="#dev-workflow" data-id="dev-workflow" onclick="showNote('dev-workflow');return false;">Dev Workflow</a></li><li><a href="#internationalization" data-id="internationalization" onclick="showNote('internationalization');return false;">Internationalization</a></li><li><a href="#testing-guide" data-id="testing-guide" onclick="showNote('testing-guide');return false;">Testing Guide</a></li></ul><div class="nav-group">Recent-Work</div><ul><li><a href="#recent-commits" data-id="recent-commits" onclick="showNote('recent-commits');return false;">Recent Commits</a></li><li><a href="#topgearauto-website" data-id="topgearauto-website" onclick="showNote('topgearauto-website');return false;">TopGearAuto Website</a></li></ul></ul>
+  </div>
+</nav>
+
+<main id="main">
+  <div id="main-inner">
+    <section id="home" style="display:block"><div class="response-header"><div class="avatar"></div><span class="model-label">Knowledge Brain</span></div><div class="response-body">
+<h1>🏠 Nocobase — Knowledge Brain</h1>
+<blockquote><strong>Version:</strong> v2.0.57 · <strong>Stack:</strong> Node 20 + React 18 + Koa + Sequelize · <strong>License:</strong> Apache-2.0</blockquote>
+<p>This vault is the living map of the Nocobase codebase and your work on it.</p>
+<hr>
+<h2>🗺️ Map of Content</h2>
+<div class="table-wrap"><table><thead><tr>
+<th>Area</th>
+<th>Note</th>
+</tr></thead><tbody>
+<tr>
+<td>Architecture</td>
+<td><a class="wikilink" href="<span class="tag">#architecture-overview</span>" onclick="showNote('architecture-overview');return false;">Architecture Overview</a></td>
+</tr>
+<tr>
+<td>Client Runtimes</td>
+<td><a class="wikilink" href="<span class="tag">#client-v1-vs-v2</span>" onclick="showNote('client-v1-vs-v2');return false;">Client v1 vs v2</a></td>
+</tr>
+<tr>
+<td>Core Packages</td>
+<td><a class="wikilink" href="<span class="tag">#core-packages</span>" onclick="showNote('core-packages');return false;">Core Packages</a></td>
+</tr>
+<tr>
+<td>Plugin Catalog</td>
+<td><a class="wikilink" href="<span class="tag">#plugin-catalog</span>" onclick="showNote('plugin-catalog');return false;">Plugin Catalog</a></td>
+</tr>
+<tr>
+<td>Workflow System</td>
+<td><a class="wikilink" href="<span class="tag">#workflow-engine</span>" onclick="showNote('workflow-engine');return false;">Workflow Engine</a></td>
+</tr>
+<tr>
+<td>Database &amp; Migrations</td>
+<td><a class="wikilink" href="<span class="tag">#database-guide</span>" onclick="showNote('database-guide');return false;">Database Guide</a></td>
+</tr>
+<tr>
+<td>Dev Workflow</td>
+<td><a class="wikilink" href="<span class="tag">#dev-workflow</span>" onclick="showNote('dev-workflow');return false;">Dev Workflow</a></td>
+</tr>
+<tr>
+<td>Testing</td>
+<td><a class="wikilink" href="<span class="tag">#testing-guide</span>" onclick="showNote('testing-guide');return false;">Testing Guide</a></td>
+</tr>
+<tr>
+<td>i18n</td>
+<td><a class="wikilink" href="<span class="tag">#internationalization</span>" onclick="showNote('internationalization');return false;">Internationalization</a></td>
+</tr>
+<tr>
+<td>Recent Work</td>
+<td><a class="wikilink" href="<span class="tag">#recent-commits</span>" onclick="showNote('recent-commits');return false;">Recent Commits</a></td>
+</tr>
+<tr>
+<td>TopGear Auto Site</td>
+<td><a class="wikilink" href="<span class="tag">#topgearauto-website</span>" onclick="showNote('topgearauto-website');return false;">TopGearAuto Website</a></td>
+</tr>
+<tr>
+<td>Tech Stack</td>
+<td><a class="wikilink" href="<span class="tag">#tech-stack</span>" onclick="showNote('tech-stack');return false;">Tech Stack</a></td>
+</tr>
+<tr>
+<td>Code Conventions</td>
+<td><a class="wikilink" href="<span class="tag">#code-conventions</span>" onclick="showNote('code-conventions');return false;">Code Conventions</a></td>
+</tr>
+</tbody></table></div>
+<hr>
+<h2>🚀 Quick Commands</h2>
+<div class="code-block"><div class="code-header"><span class="code-lang">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div><pre><code># Start dev server
+yarn dev
+
+# Run a single test
+yarn test packages/core/server/src/__tests__/Application.test.ts
+
+# Lint touched files
+yarn eslint --fix packages/path/to/file.ts
+
+# Upgrade &amp; sync DB
+yarn nocobase upgrade</code></pre></div>
+<hr>
+<h2>🔖 Tags</h2>
+<p><code><span class="tag">#architecture</span></code> <code><span class="tag">#plugin</span></code> <code><span class="tag">#workflow</span></code> <code><span class="tag">#client</span></code> <code><span class="tag">#server</span></code> <code><span class="tag">#database</span></code> <code><span class="tag">#testing</span></code> <code><span class="tag">#recent-work</span></code></p>
+</div></section><section id="architecture-overview" style="display:none"><div class="response-header"><div class="avatar"></div><span class="model-label">Knowledge Brain</span></div><div class="response-body">
+<h1>Architecture Overview</h1>
+<p><span class="tag">#architecture</span></p>
+<p>Nocobase is an <strong>open-source, plugin-first, no-code platform</strong> built as a microkernel. Everything lives in plugins — the core just wires them together.</p>
+<h2>High-Level Diagram</h2>
+<div class="code-block"><div class="code-header"><span class="code-lang">text</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div><pre><code>┌──────────────────────────────────────────────────────┐
+│                    Browser / App                      │
+│  ┌─────────────────────────┐  ┌──────────────────┐   │
+│  │  Client v1 (legacy)     │  │  Client v2 (new) │   │
+│  │  @nocobase/client       │  │  @nocobase/client│   │
+│  │  SchemaComponent        │  │  -v2 FlowEngine  │   │
+│  └──────────┬──────────────┘  └────────┬─────────┘   │
+│             │  may import v2 →         │              │
+└─────────────┼────────────────────────-─┼──────────────┘
+              │  REST / WebSocket        │
+┌─────────────▼──────────────────────────▼──────────────┐
+│                 Koa HTTP Server                        │
+│  ┌──────────┐  ┌────────────┐  ┌──────────────────┐  │
+│  │ Resourcer│  │    ACL     │  │  Auth / Session  │  │
+│  └──────────┘  └────────────┘  └──────────────────┘  │
+│  ┌──────────────────────────────────────────────────┐ │
+│  │           Plugin Manager (microkernel)           │ │
+│  │  106+ official plugins loaded at runtime         │ │
+│  └──────────────────────────────────────────────────┘ │
+│  ┌──────────────────────────────────────────────────┐ │
+│  │          Database (Sequelize ORM)                │ │
+│  │  PostgreSQL · MySQL · SQLite · MariaDB           │ │
+│  └──────────────────────────────────────────────────┘ │
+└───────────────────────────────────────────────────────┘</code></pre></div>
+<h2>Key Architectural Principles</h2>
+<ul>
+<li><strong>Everything is a plugin</strong> — even built-in features like users, ACL, and file manager</li>
+<li><strong>Two frontend runtimes</strong> — see <a class="wikilink" href="<span class="tag">#client-v1-vs-v2</span>" onclick="showNote('client-v1-vs-v2');return false;">Client v1 vs v2</a></li>
+<li><strong>Pluggable databases</strong> — swap backends via datasource plugins</li>
+<li><strong>Schema-driven UI</strong> — JSON schema stored in DB renders the frontend</li>
+<li><strong>Workflow as first-class</strong> — <a class="wikilink" href="<span class="tag">#workflow-engine</span>" onclick="showNote('workflow-engine');return false;">Workflow Engine</a> is core, not bolted on</li>
+</ul>
+<h2>Monorepo Layout</h2>
+<div class="code-block"><div class="code-header"><span class="code-lang">text</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div><pre><code>packages/
+├── core/        ← 27 shared infrastructure packages
+├── plugins/
+│   ├── @nocobase/          ← 106 official plugins
+│   └── @nocobase-example/  ← 20 educational examples
+└── presets/     ← compiled preset bundles</code></pre></div>
+<h2>Import Rules (STRICT)</h2>
+<div class="table-wrap"><table><thead><tr>
+<th>Direction</th>
+<th>Allowed?</th>
+</tr></thead><tbody>
+<tr>
+<td>v1 client → v2 client</td>
+<td>✅ Yes</td>
+</tr>
+<tr>
+<td>v2 client → v1 client</td>
+<td>❌ <strong>NEVER</strong></td>
+</tr>
+<tr>
+<td>Plugin → core</td>
+<td>✅ Yes</td>
+</tr>
+<tr>
+<td>Core → plugin</td>
+<td>❌ No</td>
+</tr>
+</tbody></table></div>
+<h2>Related Notes</h2>
+<ul>
+<li><a class="wikilink" href="<span class="tag">#core-packages</span>" onclick="showNote('core-packages');return false;">Core Packages</a></li>
+<li><a class="wikilink" href="<span class="tag">#plugin-catalog</span>" onclick="showNote('plugin-catalog');return false;">Plugin Catalog</a></li>
+<li><a class="wikilink" href="<span class="tag">#client-v1-vs-v2</span>" onclick="showNote('client-v1-vs-v2');return false;">Client v1 vs v2</a></li>
+<li><a class="wikilink" href="<span class="tag">#tech-stack</span>" onclick="showNote('tech-stack');return false;">Tech Stack</a></li>
+</ul>
+</div></section><section id="client-v1-vs-v2" style="display:none"><div class="response-header"><div class="avatar"></div><span class="model-label">Knowledge Brain</span></div><div class="response-body">
+<h1>Client v1 vs v2</h1>
+<p><span class="tag">#architecture</span> <span class="tag">#client</span></p>
+<p>Nocobase ships <strong>two React frontend runtimes</strong> that coexist in the same app.</p>
+<h2>Quick Reference</h2>
+<div class="table-wrap"><table><thead><tr>
+<th></th>
+<th>v1 (Legacy)</th>
+<th>v2 (Modern)</th>
+</tr></thead><tbody>
+<tr>
+<td>Package</td>
+<td><code>@nocobase/client</code></td>
+<td><code>@nocobase/client-v2</code></td>
+</tr>
+<tr>
+<td>Source</td>
+<td><code>src/client/</code></td>
+<td><code>src/client-v2/</code></td>
+</tr>
+<tr>
+<td>Paradigm</td>
+<td><code>SchemaComponent</code> (JSON schema → React)</td>
+<td><code>FlowEngine</code> / <code>FlowModel</code></td>
+</tr>
+<tr>
+<td>Status</td>
+<td>Maintained, no new features</td>
+<td>Active development target</td>
+</tr>
+<tr>
+<td>Import from other</td>
+<td>May import v2</td>
+<td><strong>Must NOT import v1</strong></td>
+</tr>
+</tbody></table></div>
+<h2>v1 — SchemaComponent Runtime</h2>
+<ul>
+<li>UI rendered from <strong>JSON Schema stored in database</strong></li>
+<li>Components registered via <code>SchemaComponent.extend()</code></li>
+<li>Schema editing happens in-browser (drag &amp; drop)</li>
+<li>Most existing plugins use v1</li>
+</ul>
+<h2>v2 — FlowEngine Runtime</h2>
+<ul>
+<li>Declarative <code>FlowModel</code> describes page structure</li>
+<li>More predictable render lifecycle</li>
+<li>Better for complex stateful pages</li>
+<li>New plugin work should target v2 when possible</li>
+</ul>
+<h2>How to Tell Which Runtime a File Uses</h2>
+<div class="code-block"><div class="code-header"><span class="code-lang">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div><pre><code># v1 indicators
+grep -r &quot;SchemaComponent\|@nocobase/client&#x27;&quot; packages/plugins/my-plugin/src/client/
+
+# v2 indicators  
+grep -r &quot;FlowEngine\|FlowModel\|@nocobase/client-v2&quot; packages/plugins/my-plugin/src/client/</code></pre></div>
+<h2>Import Rule (CRITICAL)</h2>
+<div class="code-block"><div class="code-header"><span class="code-lang">ts</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div><pre><code>// ✅ OK — v1 importing from v2
+import { FlowModel } from &#x27;@nocobase/client-v2&#x27;;
+
+// ❌ FORBIDDEN — v2 importing from v1
+import { SchemaComponent } from &#x27;@nocobase/client&#x27;; // in client-v2 code</code></pre></div>
+<h2>Related Notes</h2>
+<ul>
+<li><a class="wikilink" href="<span class="tag">#architecture-overview</span>" onclick="showNote('architecture-overview');return false;">Architecture Overview</a></li>
+<li><a class="wikilink" href="<span class="tag">#core-packages</span>" onclick="showNote('core-packages');return false;">Core Packages</a></li>
+</ul>
+</div></section><section id="tech-stack" style="display:none"><div class="response-header"><div class="avatar"></div><span class="model-label">Knowledge Brain</span></div><div class="response-body">
+<h1>Tech Stack</h1>
+<p><span class="tag">#architecture</span></p>
+<h2>Full Stack at a Glance</h2>
+<div class="table-wrap"><table><thead><tr>
+<th>Layer</th>
+<th>Technology</th>
+<th>Version</th>
+</tr></thead><tbody>
+<tr>
+<td><strong>Runtime</strong></td>
+<td>Node.js</td>
+<td>20.16.0 (Volta pinned)</td>
+</tr>
+<tr>
+<td><strong>Package Manager</strong></td>
+<td>Yarn</td>
+<td>1.22.22</td>
+</tr>
+<tr>
+<td><strong>Monorepo</strong></td>
+<td>Yarn Workspaces + Lerna</td>
+<td>—</td>
+</tr>
+<tr>
+<td><strong>Backend</strong></td>
+<td>Koa</td>
+<td>2.x</td>
+</tr>
+<tr>
+<td><strong>ORM</strong></td>
+<td>Sequelize (via @nocobase/database)</td>
+<td>—</td>
+</tr>
+<tr>
+<td><strong>Frontend (v1)</strong></td>
+<td>React + Formily + SchemaComponent</td>
+<td>React 18.0.0</td>
+</tr>
+<tr>
+<td><strong>Frontend (v2)</strong></td>
+<td>React + FlowEngine/FlowModel</td>
+<td>React 18.0.0</td>
+</tr>
+<tr>
+<td><strong>UI Components</strong></td>
+<td>Ant Design</td>
+<td><strong>5.24.2</strong> (pinned)</td>
+</tr>
+<tr>
+<td><strong>Forms</strong></td>
+<td>@formily/antd-v5</td>
+<td>1.2.3 (pinned)</td>
+</tr>
+<tr>
+<td><strong>Date Library</strong></td>
+<td>Day.js</td>
+<td>1.11.13 (pinned)</td>
+</tr>
+<tr>
+<td><strong>Build</strong></td>
+<td>Custom NocoBase CLI</td>
+<td>—</td>
+</tr>
+<tr>
+<td><strong>Testing (unit)</strong></td>
+<td>Vitest</td>
+<td>1.5.0</td>
+</tr>
+<tr>
+<td><strong>Testing (E2E)</strong></td>
+<td>Playwright</td>
+<td>—</td>
+</tr>
+<tr>
+<td><strong>TypeScript</strong></td>
+<td>—</td>
+<td>5.1.3</td>
+</tr>
+<tr>
+<td><strong>Linting</strong></td>
+<td>ESLint 8.57.1 + Prettier</td>
+<td>—</td>
+</tr>
+<tr>
+<td><strong>Commit Hooks</strong></td>
+<td>lint-staged + commitlint</td>
+<td>—</td>
+</tr>
+<tr>
+<td><strong>i18n</strong></td>
+<td>i18next</td>
+<td>—</td>
+</tr>
+<tr>
+<td><strong>Styling</strong></td>
+<td>@emotion (CSS-in-JS) + Ant Design theming</td>
+<td>—</td>
+</tr>
+<tr>
+<td><strong>Databases</strong></td>
+<td>PostgreSQL · MySQL · SQLite · MariaDB</td>
+<td>—</td>
+</tr>
+</tbody></table></div>
+<h2>Dependency Pins (Resolutions in root package.json)</h2>
+<p>These are pinned globally to prevent version drift:</p>
+<div class="code-block"><div class="code-header"><span class="code-lang">json</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div><pre><code>&quot;resolutions&quot;: {
+  &quot;antd&quot;: &quot;5.24.2&quot;,
+  &quot;react&quot;: &quot;18.0.0&quot;,
+  &quot;react-dom&quot;: &quot;18.0.0&quot;,
+  &quot;@types/react&quot;: &quot;18.3.18&quot;,
+  &quot;dayjs&quot;: &quot;1.11.13&quot;,
+  &quot;@formily/antd-v5&quot;: &quot;1.2.3&quot;
+}</code></pre></div>
+<h2>Docker Images</h2>
+<p>Variants for each supported DB in <code>docker/</code>.</p>
+<h2>CI/CD</h2>
+<p>GitHub Actions in <code>.github/workflows/</code>.</p>
+<h2>Related Notes</h2>
+<ul>
+<li><a class="wikilink" href="<span class="tag">#architecture-overview</span>" onclick="showNote('architecture-overview');return false;">Architecture Overview</a></li>
+<li><a class="wikilink" href="<span class="tag">#core-packages</span>" onclick="showNote('core-packages');return false;">Core Packages</a></li>
+</ul>
+</div></section><section id="core-packages" style="display:none"><div class="response-header"><div class="avatar"></div><span class="model-label">Knowledge Brain</span></div><div class="response-body">
+<h1>Core Packages</h1>
+<p><span class="tag">#architecture</span> <span class="tag">#server</span> <span class="tag">#client</span></p>
+<p>All 27 packages under <code>packages/core/</code> — the shared infrastructure every plugin builds on.</p>
+<h2>Server-Side Core</h2>
+<div class="table-wrap"><table><thead><tr>
+<th>Package</th>
+<th>Path</th>
+<th>Purpose</th>
+</tr></thead><tbody>
+<tr>
+<td><code>@nocobase/server</code></td>
+<td><code>core/server</code></td>
+<td>Main Koa HTTP server, plugin loader</td>
+</tr>
+<tr>
+<td><code>@nocobase/database</code></td>
+<td><code>core/database</code></td>
+<td>Sequelize ORM wrapper, multi-datasource</td>
+</tr>
+<tr>
+<td><code>@nocobase/resourcer</code></td>
+<td><code>core/resourcer</code></td>
+<td>REST resource routing (<code>GET /api/users</code>)</td>
+</tr>
+<tr>
+<td><code>@nocobase/acl</code></td>
+<td><code>core/acl</code></td>
+<td>Field-level access control lists</td>
+</tr>
+<tr>
+<td><code>@nocobase/auth</code></td>
+<td><code>core/auth</code></td>
+<td>Authentication strategies &amp; sessions</td>
+</tr>
+<tr>
+<td><code>@nocobase/actions</code></td>
+<td><code>core/actions</code></td>
+<td>Standard CRUD action handlers</td>
+</tr>
+<tr>
+<td><code>@nocobase/evaluators</code></td>
+<td><code>core/evaluators</code></td>
+<td>Formula/expression evaluation engine</td>
+</tr>
+<tr>
+<td><code>@nocobase/flow-engine</code></td>
+<td><code>core/flow-engine</code></td>
+<td>DAG-based workflow engine</td>
+</tr>
+<tr>
+<td><code>@nocobase/cache</code></td>
+<td><code>core/cache</code></td>
+<td>Caching layer abstractions</td>
+</tr>
+<tr>
+<td><code>@nocobase/lock-manager</code></td>
+<td><code>core/lock-manager</code></td>
+<td>Distributed locking primitives</td>
+</tr>
+<tr>
+<td><code>@nocobase/logger</code></td>
+<td><code>core/logger</code></td>
+<td>Structured logging</td>
+</tr>
+<tr>
+<td><code>@nocobase/telemetry</code></td>
+<td><code>core/telemetry</code></td>
+<td>Usage analytics</td>
+</tr>
+<tr>
+<td><code>@nocobase/snowflake-id</code></td>
+<td><code>core/snowflake-id</code></td>
+<td>Distributed unique ID generation</td>
+</tr>
+<tr>
+<td><code>@nocobase/data-source-manager</code></td>
+<td><code>core/data-source-manager</code></td>
+<td>Multi-DB connection manager</td>
+</tr>
+<tr>
+<td><code>@nocobase/ai</code></td>
+<td><code>core/ai</code></td>
+<td>AI/LLM integration core</td>
+</tr>
+</tbody></table></div>
+<h2>Client-Side Core</h2>
+<div class="table-wrap"><table><thead><tr>
+<th>Package</th>
+<th>Path</th>
+<th>Purpose</th>
+</tr></thead><tbody>
+<tr>
+<td><code>@nocobase/client</code></td>
+<td><code>core/client</code></td>
+<td>v1 React frontend (SchemaComponent)</td>
+</tr>
+<tr>
+<td><code>@nocobase/client-v2</code></td>
+<td><code>core/client-v2</code></td>
+<td>v2 React frontend (FlowEngine/FlowModel)</td>
+</tr>
+<tr>
+<td><code>@nocobase/sdk</code></td>
+<td><code>core/sdk</code></td>
+<td>JS SDK for client-server communication</td>
+</tr>
+</tbody></table></div>
+<h2>Tooling Core</h2>
+<div class="table-wrap"><table><thead><tr>
+<th>Package</th>
+<th>Path</th>
+<th>Purpose</th>
+</tr></thead><tbody>
+<tr>
+<td><code>@nocobase/cli</code></td>
+<td><code>core/cli</code></td>
+<td><code>yarn nocobase</code> CLI commands</td>
+</tr>
+<tr>
+<td><code>@nocobase/build</code></td>
+<td><code>core/build</code></td>
+<td>Build system orchestration</td>
+</tr>
+<tr>
+<td><code>@nocobase/app</code></td>
+<td><code>core/app</code></td>
+<td>Application wrapper/bootstrapper</td>
+</tr>
+<tr>
+<td><code>@nocobase/create-nocobase-app</code></td>
+<td><code>core/create-nocobase-app</code></td>
+<td>Project scaffolding (<code>npx create-nocobase-app</code>)</td>
+</tr>
+<tr>
+<td><code>@nocobase/devtools</code></td>
+<td><code>core/devtools</code></td>
+<td>Dev utilities</td>
+</tr>
+<tr>
+<td><code>@nocobase/test</code></td>
+<td><code>core/test</code></td>
+<td>Shared test infrastructure</td>
+</tr>
+</tbody></table></div>
+<h2>Shared Utilities</h2>
+<div class="table-wrap"><table><thead><tr>
+<th>Package</th>
+<th>Path</th>
+<th>Purpose</th>
+</tr></thead><tbody>
+<tr>
+<td><code>@nocobase/shared</code></td>
+<td><code>core/shared</code></td>
+<td>Shared types &amp; interfaces</td>
+</tr>
+<tr>
+<td><code>@nocobase/utils</code></td>
+<td><code>core/utils</code></td>
+<td>General utility functions</td>
+</tr>
+</tbody></table></div>
+<h2>All at Version</h2>
+<div class="code-block"><div class="code-header"><span class="code-lang">text</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div><pre><code>2.0.57</code></pre></div>
+<h2>Related Notes</h2>
+<ul>
+<li><a class="wikilink" href="<span class="tag">#architecture-overview</span>" onclick="showNote('architecture-overview');return false;">Architecture Overview</a></li>
+<li><a class="wikilink" href="<span class="tag">#plugin-catalog</span>" onclick="showNote('plugin-catalog');return false;">Plugin Catalog</a></li>
+<li><a class="wikilink" href="<span class="tag">#database-guide</span>" onclick="showNote('database-guide');return false;">Database Guide</a></li>
+</ul>
+</div></section><section id="plugin-catalog" style="display:none"><div class="response-header"><div class="avatar"></div><span class="model-label">Knowledge Brain</span></div><div class="response-body">
+<h1>Plugin Catalog</h1>
+<p><span class="tag">#plugin</span></p>
+<p>106 official plugins under <code>packages/plugins/@nocobase/</code>. Each follows the scaffold layout and is versioned at <code>2.0.57</code>.</p>
+<h2>New Plugin Location</h2>
+<div class="code-block"><div class="code-header"><span class="code-lang">text</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div><pre><code>packages/plugins/@nocobase/plugin-&lt;name&gt;/
+├── src/
+│   ├── client/     ← React frontend
+│   └── server/     ← Koa server-side
+│       └── migrations/  ← DB migrations
+├── package.json
+└── tsconfig.json</code></pre></div>
+<hr>
+<h2>Field Plugins</h2>
+<div class="table-wrap"><table><thead><tr>
+<th>Plugin</th>
+<th>Purpose</th>
+</tr></thead><tbody>
+<tr>
+<td><code>plugin-field-china-region</code></td>
+<td>China region selector field</td>
+</tr>
+<tr>
+<td><code>plugin-field-code</code></td>
+<td>Code editor field</td>
+</tr>
+<tr>
+<td><code>plugin-field-formula</code></td>
+<td>Formula computed field</td>
+</tr>
+<tr>
+<td><code>plugin-field-m2m-array</code></td>
+<td>Many-to-many stored as array</td>
+</tr>
+<tr>
+<td><code>plugin-field-markdown-vditor</code></td>
+<td>Markdown editor field (Vditor)</td>
+</tr>
+<tr>
+<td><code>plugin-field-sequence</code></td>
+<td>Auto-sequence/serial field</td>
+</tr>
+<tr>
+<td><code>plugin-field-sort</code></td>
+<td>Drag-to-sort field</td>
+</tr>
+<tr>
+<td><code>plugin-snapshot-field</code></td>
+<td>Point-in-time snapshot of related record</td>
+</tr>
+<tr>
+<td><code>plugin-field-attachment-url</code></td>
+<td>File attachment via URL</td>
+</tr>
+</tbody></table></div>
+<hr>
+<h2>Workflow Plugins</h2>
+<blockquote>See <a class="wikilink" href="<span class="tag">#workflow-engine</span>" onclick="showNote('workflow-engine');return false;">Workflow Engine</a> for the full breakdown.</blockquote>
+<div class="table-wrap"><table><thead><tr>
+<th>Plugin</th>
+<th>Purpose</th>
+</tr></thead><tbody>
+<tr>
+<td><code>plugin-workflow</code></td>
+<td>Core workflow engine</td>
+</tr>
+<tr>
+<td><code>plugin-workflow-action-trigger</code></td>
+<td>Trigger on user action</td>
+</tr>
+<tr>
+<td><code>plugin-workflow-aggregate</code></td>
+<td>Aggregate data node</td>
+</tr>
+<tr>
+<td><code>plugin-workflow-custom-action-trigger</code></td>
+<td>Custom action trigger</td>
+</tr>
+<tr>
+<td><code>plugin-workflow-date-calculation</code></td>
+<td>Date math node</td>
+</tr>
+<tr>
+<td><code>plugin-workflow-delay</code></td>
+<td>Wait/delay node</td>
+</tr>
+<tr>
+<td><code>plugin-workflow-dynamic-calculation</code></td>
+<td>Dynamic expression node</td>
+</tr>
+<tr>
+<td><code>plugin-workflow-javascript</code></td>
+<td>Run JS code node</td>
+</tr>
+<tr>
+<td><code>plugin-workflow-json-query</code></td>
+<td>JSONPath query node</td>
+</tr>
+<tr>
+<td><code>plugin-workflow-loop</code></td>
+<td>Loop node</td>
+</tr>
+<tr>
+<td><code>plugin-workflow-mailer</code></td>
+<td>Send email node</td>
+</tr>
+<tr>
+<td><code>plugin-workflow-manual</code></td>
+<td>Human-in-the-loop node</td>
+</tr>
+<tr>
+<td><code>plugin-workflow-notification</code></td>
+<td>Push notification node</td>
+</tr>
+<tr>
+<td><code>plugin-workflow-parallel</code></td>
+<td>Parallel execution node</td>
+</tr>
+<tr>
+<td><code>plugin-workflow-request</code></td>
+<td>HTTP request node</td>
+</tr>
+<tr>
+<td><code>plugin-workflow-request-interceptor</code></td>
+<td>Intercept &amp; modify requests</td>
+</tr>
+<tr>
+<td><code>plugin-workflow-response-message</code></td>
+<td>Custom API response node</td>
+</tr>
+<tr>
+<td><code>plugin-workflow-sql</code></td>
+<td>Execute SQL node</td>
+</tr>
+<tr>
+<td><code>plugin-workflow-test</code></td>
+<td>Test/mock workflow</td>
+</tr>
+<tr>
+<td><code>plugin-workflow-variable</code></td>
+<td>Variable assignment node</td>
+</tr>
+<tr>
+<td><code>plugin-workflow-cc</code></td>
+<td>CC / notification routing</td>
+</tr>
+<tr>
+<td><code>plugin-workflow-json-variable-mapping</code></td>
+<td>Map JSON to variables</td>
+</tr>
+</tbody></table></div>
+<hr>
+<h2>Block / UI Plugins</h2>
+<div class="table-wrap"><table><thead><tr>
+<th>Plugin</th>
+<th>Purpose</th>
+</tr></thead><tbody>
+<tr>
+<td><code>plugin-block-grid-card</code></td>
+<td>Grid card layout block</td>
+</tr>
+<tr>
+<td><code>plugin-block-iframe</code></td>
+<td>Embed iframe block</td>
+</tr>
+<tr>
+<td><code>plugin-block-list</code></td>
+<td>List view block</td>
+</tr>
+<tr>
+<td><code>plugin-block-markdown</code></td>
+<td>Markdown display block</td>
+</tr>
+<tr>
+<td><code>plugin-block-multi-step-form</code></td>
+<td>Multi-step form block</td>
+</tr>
+<tr>
+<td><code>plugin-block-template</code></td>
+<td>Reusable block templates</td>
+</tr>
+<tr>
+<td><code>plugin-block-tree</code></td>
+<td>Tree view block</td>
+</tr>
+<tr>
+<td><code>plugin-block-workbench</code></td>
+<td>Workbench block</td>
+</tr>
+<tr>
+<td><code>plugin-calendar</code></td>
+<td>Calendar view</td>
+</tr>
+<tr>
+<td><code>plugin-charts</code></td>
+<td>Charts/analytics block</td>
+</tr>
+<tr>
+<td><code>plugin-data-visualization</code></td>
+<td>Data visualization</td>
+</tr>
+<tr>
+<td><code>plugin-data-visualization-echarts</code></td>
+<td>ECharts renderer</td>
+</tr>
+<tr>
+<td><code>plugin-kanban</code></td>
+<td>Kanban board block</td>
+</tr>
+<tr>
+<td><code>plugin-gantt</code></td>
+<td>Gantt chart block</td>
+</tr>
+<tr>
+<td><code>plugin-map</code></td>
+<td>Map view block</td>
+</tr>
+<tr>
+<td><code>plugin-embed</code></td>
+<td>Page embed block</td>
+</tr>
+</tbody></table></div>
+<hr>
+<h2>Data Source Plugins</h2>
+<div class="table-wrap"><table><thead><tr>
+<th>Plugin</th>
+<th>Purpose</th>
+</tr></thead><tbody>
+<tr>
+<td><code>plugin-data-source-main</code></td>
+<td>Default main database</td>
+</tr>
+<tr>
+<td><code>plugin-data-source-manager</code></td>
+<td>Multi-datasource manager UI</td>
+</tr>
+<tr>
+<td><code>plugin-collection-sql</code></td>
+<td>SQL collection (virtual table)</td>
+</tr>
+<tr>
+<td><code>plugin-collection-fdw</code></td>
+<td>Foreign Data Wrapper collection</td>
+</tr>
+<tr>
+<td><code>plugin-collection-tree</code></td>
+<td>Adjacency list tree collection</td>
+</tr>
+</tbody></table></div>
+<hr>
+<h2>Auth / User Plugins</h2>
+<div class="table-wrap"><table><thead><tr>
+<th>Plugin</th>
+<th>Purpose</th>
+</tr></thead><tbody>
+<tr>
+<td><code>plugin-auth</code></td>
+<td>Core auth (local username/password)</td>
+</tr>
+<tr>
+<td><code>plugin-auth-sms</code></td>
+<td>SMS OTP authentication</td>
+</tr>
+<tr>
+<td><code>plugin-users</code></td>
+<td>User management</td>
+</tr>
+<tr>
+<td><code>plugin-departments</code></td>
+<td>Org chart / departments</td>
+</tr>
+<tr>
+<td><code>plugin-verification</code></td>
+<td>Verification codes</td>
+</tr>
+<tr>
+<td><code>plugin-api-keys</code></td>
+<td>API key management</td>
+</tr>
+</tbody></table></div>
+<hr>
+<h2>File Management</h2>
+<div class="table-wrap"><table><thead><tr>
+<th>Plugin</th>
+<th>Purpose</th>
+</tr></thead><tbody>
+<tr>
+<td><code>plugin-file-manager</code></td>
+<td>File upload/storage (S3, local, etc.)</td>
+</tr>
+<tr>
+<td><code>plugin-file-previewer-office</code></td>
+<td>Office document preview</td>
+</tr>
+<tr>
+<td><code>plugin-backup-restore</code></td>
+<td>Database backup &amp; restore</td>
+</tr>
+</tbody></table></div>
+<hr>
+<h2>Action Plugins</h2>
+<div class="table-wrap"><table><thead><tr>
+<th>Plugin</th>
+<th>Purpose</th>
+</tr></thead><tbody>
+<tr>
+<td><code>plugin-action-bulk-edit</code></td>
+<td>Bulk edit selected records</td>
+</tr>
+<tr>
+<td><code>plugin-action-bulk-update</code></td>
+<td>Bulk update via form</td>
+</tr>
+<tr>
+<td><code>plugin-action-custom-request</code></td>
+<td>Custom HTTP action button</td>
+</tr>
+<tr>
+<td><code>plugin-action-duplicate</code></td>
+<td>Duplicate record action</td>
+</tr>
+<tr>
+<td><code>plugin-action-export</code></td>
+<td>Export to Excel/CSV</td>
+</tr>
+<tr>
+<td><code>plugin-action-import</code></td>
+<td>Import from Excel/CSV</td>
+</tr>
+<tr>
+<td><code>plugin-action-print</code></td>
+<td>Print record action</td>
+</tr>
+</tbody></table></div>
+<hr>
+<h2>Notification Plugins</h2>
+<div class="table-wrap"><table><thead><tr>
+<th>Plugin</th>
+<th>Purpose</th>
+</tr></thead><tbody>
+<tr>
+<td><code>plugin-notification-manager</code></td>
+<td>Notification channel manager</td>
+</tr>
+<tr>
+<td><code>plugin-notification-email</code></td>
+<td>Email notifications</td>
+</tr>
+<tr>
+<td><code>plugin-notification-in-app-message</code></td>
+<td>In-app message center</td>
+</tr>
+<tr>
+<td><code>plugin-notifications</code></td>
+<td>General notification framework</td>
+</tr>
+</tbody></table></div>
+<hr>
+<h2>Administrative Plugins</h2>
+<div class="table-wrap"><table><thead><tr>
+<th>Plugin</th>
+<th>Purpose</th>
+</tr></thead><tbody>
+<tr>
+<td><code>plugin-acl</code></td>
+<td>ACL roles &amp; permissions UI</td>
+</tr>
+<tr>
+<td><code>plugin-audit-logs</code></td>
+<td>Audit trail logging</td>
+</tr>
+<tr>
+<td><code>plugin-localization</code></td>
+<td>In-app translation management</td>
+</tr>
+<tr>
+<td><code>plugin-system-settings</code></td>
+<td>System settings UI</td>
+</tr>
+<tr>
+<td><code>plugin-environment-variables</code></td>
+<td>Env var management UI</td>
+</tr>
+<tr>
+<td><code>plugin-theme-editor</code></td>
+<td>Visual theme customization</td>
+</tr>
+<tr>
+<td><code>plugin-ui-schema-storage</code></td>
+<td>JSON schema persistence</td>
+</tr>
+<tr>
+<td><code>plugin-ui-templates</code></td>
+<td>UI template library</td>
+</tr>
+<tr>
+<td><code>plugin-license</code></td>
+<td>License management</td>
+</tr>
+</tbody></table></div>
+<hr>
+<h2>AI Plugins</h2>
+<div class="table-wrap"><table><thead><tr>
+<th>Plugin</th>
+<th>Purpose</th>
+</tr></thead><tbody>
+<tr>
+<td><code>plugin-ai</code></td>
+<td>AI integration UI &amp; tools</td>
+</tr>
+<tr>
+<td><code>plugin-ai-gigachat</code></td>
+<td>GigaChat LLM connector</td>
+</tr>
+</tbody></table></div>
+<hr>
+<h2>Mobile</h2>
+<div class="table-wrap"><table><thead><tr>
+<th>Plugin</th>
+<th>Purpose</th>
+</tr></thead><tbody>
+<tr>
+<td><code>plugin-mobile</code></td>
+<td>Mobile-optimized layout</td>
+</tr>
+<tr>
+<td><code>plugin-mobile-client</code></td>
+<td>Mobile client shell</td>
+</tr>
+</tbody></table></div>
+<hr>
+<h2>Example Plugins (Educational)</h2>
+<p>Located in <code>packages/plugins/@nocobase-example/</code>. 20 examples covering:</p>
+<ul>
+<li>Custom blocks, fields, actions</li>
+<li>ACL middleware</li>
+<li>Resource extensions</li>
+<li>Nested blocks &amp; popups</li>
+</ul>
+<hr>
+<h2>Related Notes</h2>
+<ul>
+<li><a class="wikilink" href="<span class="tag">#architecture-overview</span>" onclick="showNote('architecture-overview');return false;">Architecture Overview</a></li>
+<li><a class="wikilink" href="<span class="tag">#workflow-engine</span>" onclick="showNote('workflow-engine');return false;">Workflow Engine</a></li>
+<li><a class="wikilink" href="<span class="tag">#database-guide</span>" onclick="showNote('database-guide');return false;">Database Guide</a></li>
+</ul>
+</div></section><section id="workflow-engine" style="display:none"><div class="response-header"><div class="avatar"></div><span class="model-label">Knowledge Brain</span></div><div class="response-body">
+<h1>Workflow Engine</h1>
+<p><span class="tag">#workflow</span> <span class="tag">#plugin</span></p>
+<p>The workflow system is a DAG-based automation engine. Workflows are visual, configurable, and extensible via plugins.</p>
+<h2>Architecture</h2>
+<div class="code-block"><div class="code-header"><span class="code-lang">text</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div><pre><code>Trigger → Node → Node → Node → ...
+            ↓ (branch)
+           Node</code></pre></div>
+<ul>
+<li>Each workflow is a <strong>DAG</strong> (Directed Acyclic Graph)</li>
+<li><strong>Triggers</strong> start a workflow (action, schedule, data event)</li>
+<li><strong>Nodes</strong> are processing steps</li>
+<li>Parallel branches supported via <code>plugin-workflow-parallel</code></li>
+</ul>
+<h2>Core Package</h2>
+<div class="code-block"><div class="code-header"><span class="code-lang">text</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div><pre><code>packages/plugins/@nocobase/plugin-workflow/</code></pre></div>
+<h2>Node Types (by plugin)</h2>
+<h3>Triggers</h3>
+<div class="table-wrap"><table><thead><tr>
+<th>Plugin</th>
+<th>Trigger</th>
+</tr></thead><tbody>
+<tr>
+<td><code>plugin-workflow</code></td>
+<td>Collection event (create/update/delete)</td>
+</tr>
+<tr>
+<td><code>plugin-workflow-action-trigger</code></td>
+<td>User clicks action button</td>
+</tr>
+<tr>
+<td><code>plugin-workflow-custom-action-trigger</code></td>
+<td>Custom programmatic trigger</td>
+</tr>
+</tbody></table></div>
+<h3>Data Nodes</h3>
+<div class="table-wrap"><table><thead><tr>
+<th>Plugin</th>
+<th>Node</th>
+</tr></thead><tbody>
+<tr>
+<td><code>plugin-workflow-aggregate</code></td>
+<td>Sum/count/avg a collection</td>
+</tr>
+<tr>
+<td><code>plugin-workflow-json-query</code></td>
+<td>JSONPath query on data</td>
+</tr>
+<tr>
+<td><code>plugin-workflow-json-variable-mapping</code></td>
+<td>Map JSON fields to variables</td>
+</tr>
+<tr>
+<td><code>plugin-workflow-sql</code></td>
+<td>Execute raw SQL</td>
+</tr>
+<tr>
+<td><code>plugin-workflow-variable</code></td>
+<td>Set/get variables</td>
+</tr>
+</tbody></table></div>
+<h3>Logic Nodes</h3>
+<div class="table-wrap"><table><thead><tr>
+<th>Plugin</th>
+<th>Node</th>
+</tr></thead><tbody>
+<tr>
+<td><code>plugin-workflow-loop</code></td>
+<td>Iterate over array</td>
+</tr>
+<tr>
+<td><code>plugin-workflow-parallel</code></td>
+<td>Fork parallel branches</td>
+</tr>
+<tr>
+<td><code>plugin-workflow-delay</code></td>
+<td>Wait N seconds/minutes</td>
+</tr>
+<tr>
+<td><code>plugin-workflow-date-calculation</code></td>
+<td>Date arithmetic</td>
+</tr>
+<tr>
+<td><code>plugin-workflow-dynamic-calculation</code></td>
+<td>Expression evaluation</td>
+</tr>
+</tbody></table></div>
+<h3>Integration Nodes</h3>
+<div class="table-wrap"><table><thead><tr>
+<th>Plugin</th>
+<th>Node</th>
+</tr></thead><tbody>
+<tr>
+<td><code>plugin-workflow-request</code></td>
+<td>HTTP request to external API</td>
+</tr>
+<tr>
+<td><code>plugin-workflow-mailer</code></td>
+<td>Send email</td>
+</tr>
+<tr>
+<td><code>plugin-workflow-notification</code></td>
+<td>Send in-app/push notification</td>
+</tr>
+<tr>
+<td><code>plugin-workflow-javascript</code></td>
+<td>Run custom JavaScript</td>
+</tr>
+</tbody></table></div>
+<h3>Human-in-the-Loop</h3>
+<div class="table-wrap"><table><thead><tr>
+<th>Plugin</th>
+<th>Node</th>
+</tr></thead><tbody>
+<tr>
+<td><code>plugin-workflow-manual</code></td>
+<td>Wait for human approval/input</td>
+</tr>
+<tr>
+<td><code>plugin-workflow-cc</code></td>
+<td>Notify users (CC)</td>
+</tr>
+</tbody></table></div>
+<h3>Response</h3>
+<div class="table-wrap"><table><thead><tr>
+<th>Plugin</th>
+<th>Node</th>
+</tr></thead><tbody>
+<tr>
+<td><code>plugin-workflow-response-message</code></td>
+<td>Return custom API response</td>
+</tr>
+<tr>
+<td><code>plugin-workflow-request-interceptor</code></td>
+<td>Intercept &amp; transform requests</td>
+</tr>
+</tbody></table></div>
+<h2>Creating a Custom Node</h2>
+<div class="code-block"><div class="code-header"><span class="code-lang">ts</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div><pre><code>// packages/plugins/@nocobase/plugin-workflow/src/server/instructions/
+import { Instruction } from &#x27;@nocobase/plugin-workflow&#x27;;
+
+export class MyInstruction extends Instruction {
+  async run(node, input, processor) {
+    const result = await doSomething(node.config, input);
+    return { status: JOB_STATUS.RESOLVED, result };
+  }
+}
+
+// Register in plugin
+workflow.registerInstruction(&#x27;my-node&#x27;, MyInstruction);</code></pre></div>
+<h2>Related Notes</h2>
+<ul>
+<li><a class="wikilink" href="<span class="tag">#plugin-catalog</span>" onclick="showNote('plugin-catalog');return false;">Plugin Catalog</a></li>
+<li><a class="wikilink" href="<span class="tag">#architecture-overview</span>" onclick="showNote('architecture-overview');return false;">Architecture Overview</a></li>
+</ul>
+</div></section><section id="code-conventions" style="display:none"><div class="response-header"><div class="avatar"></div><span class="model-label">Knowledge Brain</span></div><div class="response-body">
+<h1>Code Conventions</h1>
+<p><span class="tag">#dev-guide</span></p>
+<h2>TypeScript</h2>
+<div class="code-block"><div class="code-header"><span class="code-lang">ts</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div><pre><code>// ❌ Avoid any
+function process(data: any) { ... }
+
+// ✅ Use specific types or unknown + guard
+function process(data: unknown) {
+  if (isMyType(data)) { ... }
+}</code></pre></div>
+<p>No <code>as any</code>. Use a named type or a type guard instead.</p>
+<h2>Async Patterns</h2>
+<div class="code-block"><div class="code-header"><span class="code-lang">ts</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div><pre><code>// ❌ fire-and-forget with void
+void someAsyncCall();
+
+// ✅ direct invocation
+someAsyncCall();
+
+// ❌ async IIFE in event handler
+button.onClick = runAsyncTask((async () =&gt; { ... })());
+
+// ✅ named async function
+async function handleClick() { ... }
+button.onClick = handleClick;</code></pre></div>
+<h2>Comments</h2>
+<p>Write <strong>no comments</strong> by default. Only add one when the WHY is non-obvious (a hidden constraint, a workaround for a specific bug, a subtle invariant).</p>
+<div class="code-block"><div class="code-header"><span class="code-lang">ts</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div><pre><code>// ❌ describes WHAT (already obvious from code)
+// Iterate over users and update each one
+users.forEach(user =&gt; updateUser(user));
+
+// ✅ explains WHY (non-obvious constraint)
+// Sequelize bulk update bypasses hooks; use individual updates to fire audit events
+users.forEach(user =&gt; updateUser(user));</code></pre></div>
+<h2>UI Components</h2>
+<p>Use <strong>Ant Design v5</strong>. Follow antd v5 conventions and APIs.</p>
+<div class="code-block"><div class="code-header"><span class="code-lang">tsx</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div><pre><code>import { Button, Table, Form } from &#x27;antd&#x27;;
+// Not: import Button from &#x27;antd/lib/button&#x27;;</code></pre></div>
+<h2>Accessibility</h2>
+<p>All frontend components:</p>
+<ul>
+<li>Add ARIA attributes (<code>aria-label</code>, <code>role</code>, <code>aria-describedby</code>)</li>
+<li>Use semantic HTML (<code>&amp;lt;button&amp;gt;</code> not <code>&amp;lt;div onClick&amp;gt;</code>)</li>
+<li>Ensure keyboard navigation works (Tab, Enter, Escape)</li>
+</ul>
+<h2>No Premature Abstractions</h2>
+<p>Three similar lines &gt; a helper function that saves one line. Don&<span class="tag">#x27</span>;t design for hypothetical future needs.</p>
+<h2>Error Handling</h2>
+<p>Only validate at system boundaries (user input, external APIs). Trust internal code. Don&<span class="tag">#x27</span>;t add fallbacks for scenarios that can&<span class="tag">#x27</span>;t happen.</p>
+<h2>Related Notes</h2>
+<ul>
+<li><a class="wikilink" href="<span class="tag">#dev-workflow</span>" onclick="showNote('dev-workflow');return false;">Dev Workflow</a></li>
+<li><a class="wikilink" href="<span class="tag">#internationalization</span>" onclick="showNote('internationalization');return false;">Internationalization</a></li>
+<li><a class="wikilink" href="<span class="tag">#testing-guide</span>" onclick="showNote('testing-guide');return false;">Testing Guide</a></li>
+</ul>
+</div></section><section id="database-guide" style="display:none"><div class="response-header"><div class="avatar"></div><span class="model-label">Knowledge Brain</span></div><div class="response-body">
+<h1>Database Guide</h1>
+<p><span class="tag">#database</span> <span class="tag">#dev-guide</span></p>
+<h2>Supported Backends</h2>
+<div class="table-wrap"><table><thead><tr>
+<th>Database</th>
+<th>Docker Config</th>
+</tr></thead><tbody>
+<tr>
+<td>PostgreSQL</td>
+<td><code>docker/</code></td>
+</tr>
+<tr>
+<td>MySQL</td>
+<td><code>docker/</code></td>
+</tr>
+<tr>
+<td>SQLite</td>
+<td><code>docker/</code></td>
+</tr>
+<tr>
+<td>MariaDB</td>
+<td><code>docker/</code></td>
+</tr>
+</tbody></table></div>
+<h2>ORM</h2>
+<p>Sequelize via <code>@nocobase/database</code> wrapper. All DB access goes through the resourcer + collection API — raw Sequelize only when necessary.</p>
+<h2>Collections (Tables)</h2>
+<p>Define collections in <code>src/server/collections/</code>:</p>
+<div class="code-block"><div class="code-header"><span class="code-lang">ts</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div><pre><code>// packages/plugins/@nocobase/plugin-my-plugin/src/server/collections/my-table.ts
+import { defineCollection } from &#x27;@nocobase/database&#x27;;
+
+export default defineCollection({
+  name: &#x27;my_table&#x27;,
+  fields: [
+    { type: &#x27;string&#x27;, name: &#x27;title&#x27; },
+    { type: &#x27;integer&#x27;, name: &#x27;count&#x27; },
+    { type: &#x27;belongsTo&#x27;, name: &#x27;user&#x27;, target: &#x27;users&#x27; },
+  ],
+});</code></pre></div>
+<p>New collections and columns <strong>auto-sync</strong> to DB on <code>yarn nocobase upgrade</code>. No migration needed for additions.</p>
+<h2>When to Write a Migration</h2>
+<p>Write a migration for:</p>
+<ul>
+<li>Renaming a column</li>
+<li>Changing a column type</li>
+<li>Dropping a column or table</li>
+<li>Adding an index to an existing table</li>
+<li>Any destructive schema change</li>
+</ul>
+<p><strong>NOT needed for:</strong></p>
+<ul>
+<li>Adding new collections</li>
+<li>Adding new columns (auto-synced)</li>
+<li>Adding new indexes on new tables</li>
+</ul>
+<h2>Migration File</h2>
+<div class="code-block"><div class="code-header"><span class="code-lang">text</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div><pre><code>packages/plugins/@nocobase/plugin-my-plugin/
+└── src/server/migrations/
+    └── 20240601000000-rename-column.ts</code></pre></div>
+<div class="code-block"><div class="code-header"><span class="code-lang">ts</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div><pre><code>import { Migration } from &#x27;@nocobase/server&#x27;;
+import { DataTypes } from &#x27;@nocobase/database&#x27;;
+
+export default class extends Migration {
+  appVersion = &#x27;&lt;=2.0.57&#x27;;
+
+  async up() {
+    const queryInterface = this.db.sequelize.getQueryInterface();
+    await queryInterface.renameColumn(&#x27;my_table&#x27;, &#x27;old_name&#x27;, &#x27;new_name&#x27;);
+  }
+
+  async down() {
+    const queryInterface = this.db.sequelize.getQueryInterface();
+    await queryInterface.renameColumn(&#x27;my_table&#x27;, &#x27;new_name&#x27;, &#x27;old_name&#x27;);
+  }
+}</code></pre></div>
+<p>Import column types from <code>DataTypes</code> — don&<span class="tag">#x27</span>;t reuse type names from neighboring migrations without verifying.</p>
+<h2>Multi-Datasource</h2>
+<p>Multiple DB connections managed by <code>@nocobase/data-source-manager</code>. Access via:</p>
+<div class="code-block"><div class="code-header"><span class="code-lang">ts</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div><pre><code>const db = app.dataSourceManager.dataSources.get(&#x27;mySource&#x27;).collectionManager.db;</code></pre></div>
+<h2>Related Notes</h2>
+<ul>
+<li><a class="wikilink" href="<span class="tag">#core-packages</span>" onclick="showNote('core-packages');return false;">Core Packages</a></li>
+<li><a class="wikilink" href="<span class="tag">#plugin-catalog</span>" onclick="showNote('plugin-catalog');return false;">Plugin Catalog</a></li>
+<li><a class="wikilink" href="<span class="tag">#dev-workflow</span>" onclick="showNote('dev-workflow');return false;">Dev Workflow</a></li>
+</ul>
+</div></section><section id="dev-workflow" style="display:none"><div class="response-header"><div class="avatar"></div><span class="model-label">Knowledge Brain</span></div><div class="response-body">
+<h1>Dev Workflow</h1>
+<p><span class="tag">#dev-guide</span></p>
+<h2>Setup &amp; Start</h2>
+<div class="code-block"><div class="code-header"><span class="code-lang">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div><pre><code># Install dependencies
+yarn install
+
+# Start development (hot reload)
+yarn dev
+
+# Build for production
+yarn build</code></pre></div>
+<h2>Branch Convention</h2>
+<p>Development branch for active work: <code>claude/ecstatic-wozniak-cmy6rk</code></p>
+<div class="code-block"><div class="code-header"><span class="code-lang">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div><pre><code>git checkout claude/ecstatic-wozniak-cmy6rk
+git push -u origin claude/ecstatic-wozniak-cmy6rk</code></pre></div>
+<h2>Commit Convention (Conventional Commits)</h2>
+<div class="code-block"><div class="code-header"><span class="code-lang">text</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div><pre><code>&lt;type&gt;(&lt;scope&gt;): &lt;message&gt;
+
+# Examples:
+fix(plugin-workflow): handle null trigger config
+feat(client-v2): add FlowModel pagination support
+chore: update dependency versions
+docs: update CHANGELOG</code></pre></div>
+<p>Types: <code>feat</code> · <code>fix</code> · <code>chore</code> · <code>docs</code> · <code>refactor</code> · <code>test</code> · <code>perf</code></p>
+<h2>Pre-Commit Checklist</h2>
+<ul>
+<li>[ ] <code>yarn eslint --fix</code> on all touched files</li>
+<li>[ ] No new <code>any</code> types introduced</li>
+<li>[ ] No hardcoded user-facing strings (use <code>t()</code>)</li>
+<li>[ ] DB changes have a migration file</li>
+<li>[ ] Tests pass: <code>yarn test &amp;lt;path&amp;gt;</code></li>
+</ul>
+<h2>Plugin Scaffold</h2>
+<p>New plugin location:</p>
+<div class="code-block"><div class="code-header"><span class="code-lang">text</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div><pre><code>packages/plugins/@nocobase/plugin-&lt;name&gt;/</code></pre></div>
+<p>Reuse the existing scaffold — do <strong>not</strong> invent a new layout.</p>
+<h2>Upgrade &amp; DB Sync</h2>
+<div class="code-block"><div class="code-header"><span class="code-lang">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div><pre><code># Sync new collections/columns to DB (runs migrations too)
+yarn nocobase upgrade</code></pre></div>
+<p>New collections and columns are auto-synced on upgrade. Only manually-altered tables need explicit migration files.</p>
+<h2>ESLint</h2>
+<div class="code-block"><div class="code-header"><span class="code-lang">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div><pre><code># Fix a specific file
+yarn eslint --fix packages/plugins/my-plugin/src/client/index.tsx
+
+# Fix entire plugin
+yarn eslint --fix packages/plugins/@nocobase/plugin-my-plugin/src/</code></pre></div>
+<h2>Related Notes</h2>
+<ul>
+<li><a class="wikilink" href="<span class="tag">#testing-guide</span>" onclick="showNote('testing-guide');return false;">Testing Guide</a></li>
+<li><a class="wikilink" href="<span class="tag">#code-conventions</span>" onclick="showNote('code-conventions');return false;">Code Conventions</a></li>
+<li><a class="wikilink" href="<span class="tag">#database-guide</span>" onclick="showNote('database-guide');return false;">Database Guide</a></li>
+<li><a class="wikilink" href="<span class="tag">#internationalization</span>" onclick="showNote('internationalization');return false;">Internationalization</a></li>
+</ul>
+</div></section><section id="internationalization" style="display:none"><div class="response-header"><div class="avatar"></div><span class="model-label">Knowledge Brain</span></div><div class="response-body">
+<h1>Internationalization (i18n)</h1>
+<p><span class="tag">#i18n</span> <span class="tag">#dev-guide</span></p>
+<p>All user-facing strings must go through the i18n layer. Never hardcode English text in UI components.</p>
+<h2>Client-Side</h2>
+<div class="code-block"><div class="code-header"><span class="code-lang">tsx</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div><pre><code>import { useTranslation } from &#x27;react-i18next&#x27;;
+
+const MyComponent = () =&gt; {
+  const { t } = useTranslation(&#x27;my-plugin&#x27;);
+  return &lt;Button&gt;{t(&#x27;Submit&#x27;)}&lt;/Button&gt;;
+};</code></pre></div>
+<h2>Server-Side</h2>
+<div class="code-block"><div class="code-header"><span class="code-lang">ts</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div><pre><code>import { i18n } from &#x27;@nocobase/server&#x27;;
+const t = i18n.t.bind(i18n);
+throw new Error(t(&#x27;Record not found&#x27;));</code></pre></div>
+<h2>Adding Translation Keys</h2>
+<p>Both <code>en-US</code> and <code>zh-CN</code> are required for every new string.</p>
+<div class="code-block"><div class="code-header"><span class="code-lang">text</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div><pre><code>packages/plugins/@nocobase/plugin-my-plugin/
+└── src/
+    └── locale/
+        ├── en-US.json
+        └── zh-CN.json</code></pre></div>
+<div class="code-block"><div class="code-header"><span class="code-lang">json</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div><pre><code>// en-US.json
+{
+  &quot;Submit&quot;: &quot;Submit&quot;,
+  &quot;Record not found&quot;: &quot;Record not found&quot;
+}
+
+// zh-CN.json
+{
+  &quot;Submit&quot;: &quot;提交&quot;,
+  &quot;Record not found&quot;: &quot;记录未找到&quot;
+}</code></pre></div>
+<h2>Documentation i18n</h2>
+<p>Docs live in <code>docs/docs/</code> with subdirectories per language:</p>
+<p><code>en/</code> · <code>cn/</code> · <code>ja/</code> · <code>fr/</code> · <code>es/</code> · <code>pt/</code> · <code>ko/</code> · <code>ar/</code> · <code>ru/</code> · <code>de/</code></p>
+<h2>Related Notes</h2>
+<ul>
+<li><a class="wikilink" href="<span class="tag">#code-conventions</span>" onclick="showNote('code-conventions');return false;">Code Conventions</a></li>
+<li><a class="wikilink" href="<span class="tag">#dev-workflow</span>" onclick="showNote('dev-workflow');return false;">Dev Workflow</a></li>
+</ul>
+</div></section><section id="testing-guide" style="display:none"><div class="response-header"><div class="avatar"></div><span class="model-label">Knowledge Brain</span></div><div class="response-body">
+<h1>Testing Guide</h1>
+<p><span class="tag">#testing</span> <span class="tag">#dev-guide</span></p>
+<h2>Test Runner</h2>
+<p>Vitest 1.5.0 for unit and integration tests. Playwright for E2E.</p>
+<h2>Run a Single Test File</h2>
+<div class="code-block"><div class="code-header"><span class="code-lang">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div><pre><code># Server test
+yarn test packages/core/server/src/__tests__/Application.test.ts
+
+# Client test (with verbose output)
+yarn test packages/core/flow-engine/src/__tests__/flow-engine.test.ts --run --reporter=verbose</code></pre></div>
+<h2>Run All Tests</h2>
+<div class="code-block"><div class="code-header"><span class="code-lang">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div><pre><code>yarn test            # all (sequential)
+yarn test:server     # server only
+yarn test:client     # client only
+yarn e2e             # Playwright end-to-end</code></pre></div>
+<h2>CRITICAL: Server Test Sequencing</h2>
+<blockquote>Server tests <strong>must run sequentially</strong> — parallel execution causes DB interference.</blockquote>
+<div class="code-block"><div class="code-header"><span class="code-lang">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div><pre><code># ✅ OK — sequential
+yarn test packages/core/server/src/__tests__/
+
+# ❌ DO NOT — parallel flags
+yarn test --parallel packages/core/server/</code></pre></div>
+<h2>Test File Location</h2>
+<p>Co-locate tests next to source:</p>
+<div class="code-block"><div class="code-header"><span class="code-lang">text</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div><pre><code>packages/plugins/@nocobase/plugin-my-plugin/
+└── src/
+    ├── server/
+    │   ├── collections/
+    │   │   └── __tests__/
+    │   │       └── my-collection.test.ts
+    │   └── index.ts
+    └── client/
+        └── __tests__/
+            └── MyComponent.test.tsx</code></pre></div>
+<h2>Naming</h2>
+<ul>
+<li>Unit/integration: <code>&lt;em&gt;.test.ts</code> or <code>&lt;/em&gt;.spec.ts</code></li>
+<li>E2E: <code>*.e2e.ts</code> (Playwright)</li>
+</ul>
+<h2>Test Utilities</h2>
+<p>Shared infrastructure in <code>packages/core/test/</code>:</p>
+<div class="code-block"><div class="code-header"><span class="code-lang">ts</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div><pre><code>import { createMockServer, MockServer } from &#x27;@nocobase/test&#x27;;
+
+let app: MockServer;
+
+beforeEach(async () =&gt; {
+  app = await createMockServer({ plugins: [&#x27;my-plugin&#x27;] });
+});
+
+afterEach(async () =&gt; {
+  await app.destroy();
+});</code></pre></div>
+<h2>Related Notes</h2>
+<ul>
+<li><a class="wikilink" href="<span class="tag">#dev-workflow</span>" onclick="showNote('dev-workflow');return false;">Dev Workflow</a></li>
+<li><a class="wikilink" href="<span class="tag">#code-conventions</span>" onclick="showNote('code-conventions');return false;">Code Conventions</a></li>
+</ul>
+</div></section><section id="recent-commits" style="display:none"><div class="response-header"><div class="avatar"></div><span class="model-label">Knowledge Brain</span></div><div class="response-body">
+<h1>Recent Commits</h1>
+<p><span class="tag">#recent-work</span></p>
+<p>Last 20 commits on the main branch (as of 2026-06-24, v2.0.57).</p>
+<h2>Commit Log</h2>
+<div class="table-wrap"><table><thead><tr>
+<th>Hash</th>
+<th>Scope</th>
+<th>Message</th>
+</tr></thead><tbody>
+<tr>
+<td><code>0cee036</code></td>
+<td>—</td>
+<td>Merge PR <span class="tag">#3</span> from <code>claude/optimistic-ptolemy-jpqf1n</code></td>
+</tr>
+<tr>
+<td><code>8fb74f3</code></td>
+<td>topgearauto-website</td>
+<td><strong>feat</strong>: add TopGear Auto marketing site with Framer Motion → <a class="wikilink" href="<span class="tag">#topgearauto-website</span>" onclick="showNote('topgearauto-website');return false;">TopGearAuto Website</a></td>
+</tr>
+<tr>
+<td><code>95e5e31</code></td>
+<td>plugin-file-manager</td>
+<td>fix: improve PDF preview diagnostics (<span class="tag">#9600</span>)</td>
+</tr>
+<tr>
+<td><code>873ea3e</code></td>
+<td>client</td>
+<td>fix: remove menu hidden setting (<span class="tag">#9595</span>)</td>
+</tr>
+<tr>
+<td><code>037db3d</code></td>
+<td>client</td>
+<td>fix: sync hidden state for subform linkage (<span class="tag">#9594</span>)</td>
+</tr>
+<tr>
+<td><code>391058f</code></td>
+<td>client</td>
+<td>fix: refresh cached route context (<span class="tag">#9583</span>)</td>
+</tr>
+<tr>
+<td><code>1f097b6</code></td>
+<td>—</td>
+<td>fix: issue where subtable in subform could not add a second row (<span class="tag">#9586</span>)</td>
+</tr>
+<tr>
+<td><code>1726f0b</code></td>
+<td>—</td>
+<td>fix: preserve time format for v2 time fields (<span class="tag">#9579</span>)</td>
+</tr>
+<tr>
+<td><code>db6fd3c</code></td>
+<td>client</td>
+<td>fix: increase scan input image upload limit (<span class="tag">#9580</span>)</td>
+</tr>
+<tr>
+<td><code>545a47f</code></td>
+<td>client</td>
+<td>fix: sync mobile date picker popup value (<span class="tag">#9582</span>)</td>
+</tr>
+<tr>
+<td><code>76b680b</code></td>
+<td>user-help</td>
+<td>fix: update documentation links</td>
+</tr>
+<tr>
+<td><code>3e27b4b</code></td>
+<td>plugin-file-manager</td>
+<td>fix: preserve unicode filenames (<span class="tag">#9584</span>)</td>
+</tr>
+<tr>
+<td><code>e03d267</code></td>
+<td>—</td>
+<td>fix: incorrect linkage rule after form submit (<span class="tag">#9445</span>)</td>
+</tr>
+<tr>
+<td><code>684c82f</code></td>
+<td>docs</td>
+<td>docs: update changelogs</td>
+</tr>
+<tr>
+<td><code>e35a273</code></td>
+<td>versions</td>
+<td>chore: publish v2.0.57</td>
+</tr>
+</tbody></table></div>
+<h2>Themes in Recent Work</h2>
+<ul>
+<li><strong>File Manager fixes</strong> — PDF preview diagnostics, unicode filenames preserved</li>
+<li><strong>Client form fixes</strong> — subform linkage, subtable row addition, linkage rule on submit</li>
+<li><strong>Mobile</strong> — date picker sync, image upload limit</li>
+<li><strong>TopGearAuto site</strong> — new marketing website added (Framer Motion)</li>
+<li><strong>v2.0.57 release</strong> — stable release shipped</li>
+</ul>
+<h2>Your Active Branch</h2>
+<div class="code-block"><div class="code-header"><span class="code-lang">text</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div><pre><code>claude/ecstatic-wozniak-cmy6rk</code></pre></div>
+<h2>Related Notes</h2>
+<ul>
+<li><a class="wikilink" href="<span class="tag">#topgearauto-website</span>" onclick="showNote('topgearauto-website');return false;">TopGearAuto Website</a></li>
+<li><a class="wikilink" href="<span class="tag">#dev-workflow</span>" onclick="showNote('dev-workflow');return false;">Dev Workflow</a></li>
+</ul>
+</div></section><section id="topgearauto-website" style="display:none"><div class="response-header"><div class="avatar"></div><span class="model-label">Knowledge Brain</span></div><div class="response-body">
+<h1>TopGearAuto Website</h1>
+<p><span class="tag">#recent-work</span></p>
+<p>A <strong>marketing website</strong> for TopGear Auto, added to the Nocobase monorepo in commit <code>8fb74f3</code>.</p>
+<h2>Location</h2>
+<div class="code-block"><div class="code-header"><span class="code-lang">text</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div><pre><code>topgearauto-website/</code></pre></div>
+<h2>Tech Stack</h2>
+<div class="table-wrap"><table><thead><tr>
+<th>Technology</th>
+<th>Purpose</th>
+</tr></thead><tbody>
+<tr>
+<td>TypeScript</td>
+<td>Language</td>
+</tr>
+<tr>
+<td>Vite</td>
+<td>Build tool</td>
+</tr>
+<tr>
+<td>React 18</td>
+<td>UI framework</td>
+</tr>
+<tr>
+<td>Framer Motion</td>
+<td>Animations</td>
+</tr>
+</tbody></table></div>
+<h2>Status</h2>
+<ul>
+<li>Merged via PR <span class="tag">#3</span> (<code>claude/optimistic-ptolemy-jpqf1n</code> → main)</li>
+<li>Lives at the repo root — <strong>not</strong> a nocobase plugin</li>
+</ul>
+<h2>Notes</h2>
+<p>This is a standalone marketing site co-located in the monorepo for convenience, not a NocoBase plugin or core package. It doesn&<span class="tag">#x27</span>;t participate in the <code>packages/</code> workspace.</p>
+<h2>Related Notes</h2>
+<ul>
+<li><a class="wikilink" href="<span class="tag">#recent-commits</span>" onclick="showNote('recent-commits');return false;">Recent Commits</a></li>
+<li><a class="wikilink" href="<span class="tag">#architecture-overview</span>" onclick="showNote('architecture-overview');return false;">Architecture Overview</a></li>
+</ul>
+</div></section>
+  </div>
+</main>
+
+<script>
+const root = document.documentElement;
+
+// theme
+function getSystemTheme(){ return matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'; }
+function applyTheme(t){ root.setAttribute('data-theme', t); localStorage.setItem('theme', t); }
+function toggleTheme(){ applyTheme(root.dataset.theme === 'dark' ? 'light' : 'dark'); }
+applyTheme(localStorage.getItem('theme') || getSystemTheme());
+
+// navigation
+function showNote(id) {
+  document.querySelectorAll('#main section').forEach(s => s.style.display = 'none');
+  const el = document.getElementById(id);
+  if (el) { el.style.display = 'block'; document.getElementById('main').scrollTop = 0; }
+  document.querySelectorAll('#nav-list a').forEach(a => a.classList.toggle('active', a.dataset.id === id));
+  location.hash = id;
+}
+
+// hash nav
+function navFromHash() {
+  const h = location.hash.slice(1);
+  if (h && document.getElementById(h)) showNote(h);
+}
+window.addEventListener('hashchange', navFromHash);
+
+// search
+function filterNotes(q) {
+  const term = q.toLowerCase().trim();
+  document.querySelectorAll('#nav-list li').forEach(li => {
+    const a = li.querySelector('a');
+    if (!a) return;
+    li.classList.toggle('hidden', term !== '' && !a.textContent.toLowerCase().includes(term));
+  });
+}
+
+// copy code
+function copyCode(btn) {
+  const code = btn.closest('.code-block').querySelector('code').innerText;
+  navigator.clipboard.writeText(code).then(() => {
+    const orig = btn.textContent;
+    btn.textContent = 'Copied!';
+    setTimeout(() => btn.textContent = orig, 1500);
+  });
+}
+
+// init
+(function() {
+  const first = document.querySelector('#main section');
+  if (first) { first.style.display = 'block'; }
+  const firstLink = document.querySelector('#nav-list a');
+  if (firstLink) firstLink.classList.add('active');
+  navFromHash();
+})();
+</script>
+</body>
+</html>

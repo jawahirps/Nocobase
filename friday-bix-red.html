@@ -1,0 +1,665 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>F.R.I.D.A.Y. · BIX LIVE — RED PROTOCOL · jawahirps</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{width:100vw;height:100vh;overflow:hidden;background:#0E0004;}
+body{font-family:"Courier New",Courier,monospace;color:#00FF88;user-select:none;}
+:root{
+  --pri:#FF1A2E;--pri-dim:rgba(255,26,46,.14);--pri-glow:rgba(255,26,46,.6);
+  --sec:#FF6644;--sec-dim:rgba(255,102,68,.1);
+  --warn:#FF8C00;--warn-dim:rgba(255,140,0,.14);
+  --danger:#FF4466;--danger-dim:rgba(255,68,102,.14);
+  --cyan:#00C8FF;--cyan-dim:rgba(0,200,255,.12);
+  --purple:#A78BFA;--purple-dim:rgba(167,139,250,.12);
+  --bg:#0E0004;--surface:rgba(22,0,6,.9);--border:rgba(255,26,46,.18);
+  --text-muted:rgba(255,26,46,.45);--text-bright:rgba(220,255,240,.92);
+}
+#bgCanvas{position:fixed;inset:0;z-index:0;}
+#scanlines{position:fixed;inset:0;z-index:50;background:repeating-linear-gradient(to bottom,transparent 0,transparent 3px,rgba(255,26,46,.01) 3px,rgba(255,26,46,.01) 4px);pointer-events:none;}
+#vignette{position:fixed;inset:0;z-index:49;background:radial-gradient(ellipse at center,transparent 42%,rgba(14,0,4,.94) 100%);pointer-events:none;}
+.corner{position:fixed;z-index:48;width:34px;height:34px;border-color:var(--pri);border-style:solid;opacity:.38;}
+.corner.tl{top:8px;left:8px;border-width:2px 0 0 2px;}
+.corner.tr{top:8px;right:8px;border-width:2px 2px 0 0;}
+.corner.bl{bottom:8px;left:8px;border-width:0 0 2px 2px;}
+.corner.br{bottom:8px;right:8px;border-width:0 2px 2px 0;}
+
+#hud{position:fixed;inset:0;z-index:1;display:grid;grid-template-rows:50px 1fr 40px;grid-template-columns:300px 1fr 300px;pointer-events:none;}
+
+/* TOP */
+#topbar{grid-column:1/-1;grid-row:1;display:flex;align-items:center;justify-content:space-between;padding:0 16px;border-bottom:1px solid var(--border);background:linear-gradient(180deg,rgba(255,26,46,.04) 0,transparent 100%);}
+.brand{font-size:15px;font-weight:700;letter-spacing:.2em;color:var(--text-bright);text-shadow:0 0 16px var(--pri-glow);}
+.brand em{color:var(--pri);font-style:normal;}
+.brand-sub{font-size:7.5px;color:var(--text-muted);letter-spacing:.12em;margin-top:1px;}
+.pulse{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--pri);animation:pulse 1.4s ease-in-out infinite;margin-right:3px;}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.35;transform:scale(.65)}}
+.chips{display:flex;gap:6px;}
+.chip{padding:2px 8px;border:1px solid var(--border);border-radius:2px;font-size:8px;letter-spacing:.08em;background:var(--pri-dim);color:var(--pri);}
+.chip.warn{border-color:rgba(255,215,0,.3);background:var(--warn-dim);color:var(--warn);}
+.chip.off{border-color:rgba(255,68,102,.3);background:var(--danger-dim);color:var(--danger);}
+.chip.cyan{border-color:rgba(255,26,46,.35);background:var(--cyan-dim);color:var(--pri);}
+.chip.purple{border-color:rgba(167,139,250,.3);background:var(--purple-dim);color:var(--purple);}
+#clk{color:var(--text-bright);font-size:12px;letter-spacing:.09em;text-align:right;}
+#last-sync{font-size:7px;color:var(--text-muted);letter-spacing:.09em;text-align:right;margin-top:1px;}
+
+/* PANELS */
+.panel{background:var(--surface);border:1px solid var(--border);padding:10px;overflow:hidden;position:relative;}
+.panel::after{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--pri-glow),transparent);opacity:.45;}
+.pt{font-size:7.5px;letter-spacing:.17em;color:var(--text-muted);margin-bottom:7px;display:flex;align-items:center;gap:6px;}
+.pt::before{content:'◈';color:var(--pri);}
+.ptb{margin-left:auto;padding:1px 4px;border:1px solid var(--border);border-radius:2px;font-size:7px;background:var(--pri-dim);}
+
+#left{grid-row:2;grid-column:1;display:flex;flex-direction:column;gap:7px;padding:10px;}
+#centre{grid-row:2;grid-column:2;display:flex;flex-direction:column;align-items:center;padding:8px;gap:7px;position:relative;}
+#right{grid-row:2;grid-column:3;display:flex;flex-direction:column;gap:7px;padding:10px;}
+#bottombar{grid-column:1/-1;grid-row:3;display:flex;align-items:center;justify-content:space-between;padding:0 16px;border-top:1px solid var(--border);background:linear-gradient(0deg,rgba(255,26,46,.03),transparent);font-size:8px;}
+#tw{color:var(--pri);letter-spacing:.07em;flex:1;margin:0 14px;}
+
+/* ── BIX PROFILE CARD ── */
+#bix-profile{display:flex;gap:10px;align-items:flex-start;padding:10px;border:1px solid rgba(255,26,46,.28);border-radius:3px;background:rgba(255,26,46,.04);position:relative;overflow:hidden;flex:0 0 auto;}
+#bix-profile::before{content:'BIX';position:absolute;right:-8px;top:-8px;font-size:64px;font-weight:700;color:rgba(0,200,255,.04);letter-spacing:-.02em;pointer-events:none;}
+#bix-avatar-wrap{position:relative;flex-shrink:0;}
+#bix-avatar{width:54px;height:54px;border-radius:50%;border:2px solid var(--cyan);object-fit:cover;display:block;background:rgba(0,200,255,.1);}
+#bix-avatar-ring{position:absolute;inset:-4px;border-radius:50%;border:1px solid rgba(255,26,46,.35);animation:spin 8s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg)}}
+#bix-avatar-pulse{position:absolute;inset:-8px;border-radius:50%;border:1px solid rgba(255,26,46,.18);animation:spin 14s linear infinite reverse;}
+.bix-info{flex:1;min-width:0;}
+.bix-name{font-size:14px;font-weight:700;color:var(--pri);letter-spacing:.06em;margin-bottom:2px;}
+.bix-handle{font-size:9px;color:rgba(0,200,255,.55);letter-spacing:.1em;margin-bottom:4px;}
+.bix-bio{font-size:8px;color:rgba(200,240,255,.65);line-height:1.45;margin-bottom:5px;}
+.bix-badges{display:flex;gap:4px;flex-wrap:wrap;}
+.bix-badge{padding:1px 5px;border-radius:10px;font-size:7px;font-weight:700;}
+.bix-badge.ok{background:rgba(0,255,136,.18);color:var(--pri);border:1px solid rgba(255,26,46,.35);}
+.bix-badge.cyan{background:rgba(255,26,46,.18);color:var(--pri);border:1px solid rgba(255,26,46,.35);}
+.bix-badge.purple{background:rgba(167,139,250,.15);color:var(--purple);border:1px solid rgba(167,139,250,.3);}
+
+/* BIX STATS */
+.bix-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;flex:0 0 auto;}
+.bs-card{text-align:center;padding:5px 3px;border:1px solid var(--border);border-radius:2px;background:rgba(0,255,136,.02);}
+.bs-val{font-size:18px;font-weight:700;color:#fff;line-height:1;}
+.bs-lbl{font-size:7px;color:var(--text-muted);letter-spacing:.08em;margin-top:1px;}
+
+/* ACTIVITY FEED */
+.act-feed{display:flex;flex-direction:column;gap:3px;flex:1;overflow:hidden;}
+.act-row{display:flex;align-items:flex-start;gap:5px;font-size:8px;padding:3px 5px;border:1px solid rgba(0,255,136,.07);border-radius:2px;animation:fi .4s ease;}
+@keyframes fi{from{opacity:0;transform:translateY(-3px)}to{opacity:1}}
+.act-time{color:var(--text-muted);min-width:42px;font-size:7px;flex-shrink:0;}
+.act-tag{padding:0 3px;border-radius:2px;font-size:6.5px;font-weight:700;flex-shrink:0;align-self:flex-start;margin-top:1px;}
+.act-tag.push{background:rgba(255,26,46,.15);color:var(--pri);border:1px solid rgba(255,26,46,.3);}
+.act-tag.pr{background:rgba(167,139,250,.15);color:var(--purple);border:1px solid rgba(167,139,250,.3);}
+.act-tag.issue{background:rgba(255,215,0,.12);color:var(--warn);border:1px solid rgba(255,215,0,.3);}
+.act-tag.create{background:rgba(0,200,255,.12);color:var(--pri);border:1px solid rgba(255,26,46,.35);}
+.act-tag.fork{background:rgba(57,255,176,.12);color:var(--pri);border:1px solid rgba(57,255,176,.3);}
+.act-tag.watch{background:rgba(255,107,0,.12);color:#FF6B00;border:1px solid rgba(255,107,0,.3);}
+.act-msg{color:rgba(200,255,230,.72);flex:1;line-height:1.35;}
+
+/* REPO LIST */
+.repo-list{display:flex;flex-direction:column;gap:3px;flex:1;overflow:hidden;}
+.repo-row{display:flex;align-items:center;gap:6px;font-size:8px;padding:4px 6px;border:1px solid rgba(0,255,136,.09);border-radius:2px;background:rgba(0,255,136,.015);}
+.repo-name{flex:1;color:var(--text-bright);font-size:8.5px;}
+.repo-lang{font-size:7px;padding:1px 4px;border-radius:2px;}
+.repo-stars{color:var(--warn);font-size:7.5px;min-width:28px;text-align:right;}
+.repo-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+
+/* COMMIT STREAM */
+.cs{display:flex;flex-direction:column;gap:3px;overflow:hidden;}
+.cr{display:flex;align-items:flex-start;gap:5px;font-size:8px;padding:3px 0;border-bottom:1px solid rgba(0,255,136,.06);}
+.ch{color:var(--warn);font-size:7px;min-width:46px;flex-shrink:0;}
+.cm{color:rgba(200,255,230,.68);flex:1;line-height:1.35;}
+.ct{font-size:6.5px;padding:1px 3px;border-radius:2px;flex-shrink:0;}
+.ct.feat{background:rgba(255,26,46,.15);color:var(--pri);border:1px solid rgba(255,26,46,.3);}
+.ct.fix{background:rgba(255,215,0,.12);color:var(--warn);border:1px solid rgba(255,215,0,.3);}
+.ct.docs{background:rgba(0,200,255,.1);color:var(--pri);border:1px solid rgba(0,200,255,.25);}
+.ct.chore{background:rgba(167,139,250,.1);color:var(--purple);border:1px solid rgba(167,139,250,.25);}
+
+/* CENTRE */
+#fri-core{position:relative;width:150px;height:150px;flex-shrink:0;}
+#friCanvas{position:absolute;inset:0;}
+.core-lbl{position:absolute;bottom:-17px;left:50%;transform:translateX(-50%);font-size:6.5px;letter-spacing:.18em;color:var(--text-muted);white-space:nowrap;}
+
+.stat3{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;width:94%;}
+.s3c{text-align:center;padding:5px 3px;border:1px solid var(--border);border-radius:2px;background:rgba(0,255,136,.02);}
+.s3v{font-size:18px;font-weight:700;color:#fff;line-height:1;}
+.s3l{font-size:7px;color:var(--text-muted);letter-spacing:.08em;margin-top:1px;}
+
+#wave-wrap{width:94%;height:38px;}
+#waveCanvas{display:block;width:100%;height:100%;}
+
+/* Fetch health */
+.ft{display:flex;flex-direction:column;gap:2px;}
+.fr{display:flex;align-items:center;gap:5px;font-size:8px;padding:2px 0;border-bottom:1px solid rgba(0,255,136,.05);}
+.fd{width:5px;height:5px;border-radius:50%;flex-shrink:0;}
+.fd.ok{background:var(--pri);box-shadow:0 0 7px var(--pri);}
+.fd.warn{background:var(--warn);}
+.fd.off{background:var(--danger);}
+.fe{flex:1;color:rgba(200,255,230,.6);font-size:7.5px;}
+.fm{min-width:38px;text-align:right;font-size:7.5px;}
+.fm.fast{color:var(--pri);}
+.fm.med{color:var(--warn);}
+.fm.slow{color:var(--danger);}
+
+/* rate bar */
+#rate-wrap{width:94%;background:rgba(255,26,46,.08);border-radius:2px;height:4px;}
+#rate-fill{height:100%;border-radius:2px;background:var(--pri);transition:width 1s;}
+
+/* alert */
+#alert{position:fixed;top:60px;left:50%;transform:translateX(-50%);z-index:100;padding:7px 18px;border:1px solid var(--pri);background:rgba(0,255,136,.07);color:var(--pri);font-size:9.5px;letter-spacing:.09em;backdrop-filter:blur(8px);display:none;white-space:nowrap;animation:aIn .3s ease;}
+@keyframes aIn{from{opacity:0;transform:translateX(-50%) scale(.93)}to{opacity:1;transform:translateX(-50%) scale(1)}}
+
+/* lang colors */
+.lang-ts{background:rgba(0,122,204,.2);color:#4FC3F7;border:1px solid rgba(0,122,204,.3);}
+.lang-js{background:rgba(241,224,90,.15);color:#F1E05A;border:1px solid rgba(241,224,90,.3);}
+.lang-py{background:rgba(53,114,165,.15);color:#3572A5;border:1px solid rgba(53,114,165,.3);}
+.lang-html{background:rgba(227,76,38,.15);color:#e34c26;border:1px solid rgba(227,76,38,.3);}
+.lang-other{background:rgba(0,255,136,.1);color:var(--pri);border:1px solid rgba(0,255,136,.25);}
+</style>
+</head>
+<body>
+<canvas id="bgCanvas"></canvas>
+<div id="scanlines"></div>
+<div id="vignette"></div>
+<div class="corner tl"></div><div class="corner tr"></div>
+<div class="corner bl"></div><div class="corner br"></div>
+<div id="alert"></div>
+
+<div id="hud">
+
+  <!-- TOP -->
+  <div id="topbar">
+    <div>
+      <div class="brand"><span class="pulse"></span>F.R.I.D.A.Y. <em style="color:#FF1A2E;text-shadow:0 0 12px rgba(255,26,46,.8)">▸</em> BIX LIVE</div>
+      <div class="brand-sub">BIXPROFILE · GITHUB LIVE · jawahirps@gmail.com · REAL-TIME FETCH ACTIVE</div>
+    </div>
+    <div class="chips" id="top-chips">
+      <div class="chip warn">FETCHING…</div>
+    </div>
+    <div>
+      <div id="clk"></div>
+      <div id="last-sync">LAST SYNC: —</div>
+    </div>
+  </div>
+
+  <!-- LEFT -->
+  <div id="left">
+
+    <!-- BIX Profile -->
+    <div class="panel" style="flex:0 0 auto;">
+      <div class="pt">BIX IDENTITY PROFILE <span class="ptb" id="bix-type">LOADING</span></div>
+      <div id="bix-profile">
+        <div id="bix-avatar-wrap">
+          <img id="bix-avatar" src="" alt="avatar">
+          <div id="bix-avatar-ring"></div>
+          <div id="bix-avatar-pulse"></div>
+        </div>
+        <div class="bix-info">
+          <div class="bix-name" id="bix-name">jawahirps</div>
+          <div class="bix-handle" id="bix-handle">@jawahirps · GitHub</div>
+          <div class="bix-bio" id="bix-bio">Loading profile…</div>
+          <div class="bix-badges" id="bix-badges">
+            <span class="bix-badge ok">CLAUDE CODE</span>
+            <span class="bix-badge cyan">NOCOBASE</span>
+            <span class="bix-badge purple">OPEN SOURCE</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- BIX Stats -->
+    <div class="panel" style="flex:0 0 auto;">
+      <div class="pt">BIX METRICS <span class="ptb" id="bix-joined">LIVE</span></div>
+      <div class="bix-stats">
+        <div class="bs-card"><div class="bs-val" style="color:var(--pri);" id="bs-repos">—</div><div class="bs-lbl">REPOS</div></div>
+        <div class="bs-card"><div class="bs-val" style="color:var(--pri);" id="bs-followers">—</div><div class="bs-lbl">FOLLOWERS</div></div>
+        <div class="bs-card"><div class="bs-val" style="color:var(--purple);" id="bs-following">—</div><div class="bs-lbl">FOLLOWING</div></div>
+        <div class="bs-card"><div class="bs-val" style="color:var(--warn);" id="bs-gists">—</div><div class="bs-lbl">GISTS</div></div>
+      </div>
+    </div>
+
+    <!-- Activity Feed -->
+    <div class="panel" style="flex:1;display:flex;flex-direction:column;overflow:hidden;">
+      <div class="pt">BIX LIVE ACTIVITY <span class="ptb" id="act-count">—</span></div>
+      <div class="act-feed" id="act-feed"></div>
+    </div>
+
+  </div>
+
+  <!-- CENTRE -->
+  <div id="centre">
+
+    <!-- FRIDAY Core -->
+    <div id="fri-core">
+      <canvas id="friCanvas" width="150" height="150"></canvas>
+      <div class="core-lbl">FRIDAY · BIX SYNC ACTIVE</div>
+    </div>
+
+    <!-- Repo / commit stats -->
+    <div class="stat3">
+      <div class="s3c"><div class="s3v" style="color:var(--pri);" id="s-commits">—</div><div class="s3l">COMMITS</div></div>
+      <div class="s3c"><div class="s3v" style="color:var(--warn);" id="s-stars">—</div><div class="s3l">REPO STARS</div></div>
+      <div class="s3c"><div class="s3v" style="color:var(--pri);" id="s-prs">—</div><div class="s3l">OPEN PRs</div></div>
+    </div>
+
+    <!-- Wave -->
+    <div style="width:94%;"><div class="pt" style="margin-bottom:3px;">NETWORK WAVEFORM · BIX PULSE</div>
+    <div id="wave-wrap"><canvas id="waveCanvas" width="300" height="38"></canvas></div></div>
+
+    <!-- Rate limit -->
+    <div class="panel" style="width:94%;flex:0 0 auto;">
+      <div class="pt">GITHUB API RATE <span class="ptb" id="rate-lbl">—</span></div>
+      <div id="rate-wrap"><div id="rate-fill" style="width:0%"></div></div>
+    </div>
+
+    <!-- Fetch Health -->
+    <div class="panel" style="width:94%;flex:0 0 auto;">
+      <div class="pt">FETCH HEALTH <span class="ptb" id="fh-lbl">—</span></div>
+      <div class="ft" id="fetch-table"></div>
+    </div>
+
+    <!-- Sync feed -->
+    <div class="panel" style="width:94%;flex:1;overflow:hidden;display:flex;flex-direction:column;">
+      <div class="pt">SYNC LOG <span class="ptb" id="sync-n">0</span></div>
+      <div class="act-feed" id="sync-feed"></div>
+    </div>
+
+  </div>
+
+  <!-- RIGHT -->
+  <div id="right">
+
+    <!-- Top Repos -->
+    <div class="panel" style="flex:0 0 auto;">
+      <div class="pt">BIX REPOS <span class="ptb" id="repo-count">LIVE</span></div>
+      <div class="repo-list" id="repo-list"></div>
+    </div>
+
+    <!-- Commit stream (branch) -->
+    <div class="panel" style="flex:0 0 auto;">
+      <div class="pt">BRANCH COMMIT STREAM <span class="ptb" id="branch-lbl">—</span></div>
+      <div class="cs" id="commit-stream"></div>
+    </div>
+
+    <!-- Nocobase specific info -->
+    <div class="panel" style="flex:1;overflow:hidden;display:flex;flex-direction:column;">
+      <div class="pt">NOCOBASE LIVE <span class="ptb" id="nc-badge">jawahirps/analytika-rcm</span></div>
+      <div class="cs" id="nc-commits" style="flex:1;overflow:hidden;"></div>
+      <div style="margin-top:6px;display:grid;grid-template-columns:1fr 1fr;gap:4px;" id="nc-stats">
+        <div class="s3c" style="padding:5px;"><div class="s3v" style="font-size:14px;color:var(--pri);" id="nc-stars">—</div><div class="s3l">STARS</div></div>
+        <div class="s3c" style="padding:5px;"><div class="s3v" style="font-size:14px;color:var(--pri);" id="nc-forks">—</div><div class="s3l">FORKS</div></div>
+        <div class="s3c" style="padding:5px;"><div class="s3v" style="font-size:14px;color:var(--warn);" id="nc-issues">—</div><div class="s3l">ISSUES</div></div>
+        <div class="s3c" style="padding:5px;"><div class="s3v" style="font-size:14px;color:var(--purple);" id="nc-size">—</div><div class="s3l">SIZE MB</div></div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- BOTTOM -->
+  <div id="bottombar">
+    <div style="font-size:7px;color:rgba(0,255,136,.32);letter-spacing:.13em;">F.R.I.D.A.Y. · BIX LIVE · CLAUDE CODE · jawahirps@gmail.com</div>
+    <div id="tw">> </div>
+    <div id="clk2" style="color:var(--text-bright);font-size:11px;letter-spacing:.09em;"></div>
+  </div>
+</div>
+
+<script>
+// ════════════════════════════════════════════════════════════════
+// CONFIG
+// ════════════════════════════════════════════════════════════════
+const CFG = {
+  USER:   'jawahirps',
+  REPO:   'analytika-rcm',
+  BRANCH: 'claude/ecstatic-wozniak-cmy6rk',
+  TOKEN:  '',          // optional GitHub PAT for 5000 req/hr
+  MS:     60000,       // refresh interval
+};
+const GHH = CFG.TOKEN
+  ? {Authorization:`Bearer ${CFG.TOKEN}`,Accept:'application/vnd.github+json'}
+  : {Accept:'application/vnd.github+json'};
+const GH = 'https://api.github.com';
+
+// ════════════════════════════════════════════════════════════════
+// CLOCK
+// ════════════════════════════════════════════════════════════════
+function tick(){
+  const t=new Date().toLocaleTimeString('en-US',{hour12:false});
+  document.getElementById('clk').textContent=t;
+  document.getElementById('clk2').textContent=t;
+}
+setInterval(tick,1000); tick();
+
+// ════════════════════════════════════════════════════════════════
+// TYPEWRITER
+// ════════════════════════════════════════════════════════════════
+const MSGS=[
+  "F.R.I.D.A.Y. BIX LIVE — PULLING REAL-TIME GITHUB PROFILE FOR JAWAHIRPS.",
+  "BIX IDENTITY VERIFIED · REPOSITORY INTEL SYNCHRONIZED.",
+  "ACTIVITY FEED STREAMING LIVE FROM GITHUB EVENTS API.",
+  "NOCOBASE REPO STATS REFRESHED · BRANCH COMMIT STREAM ACTIVE.",
+  "ALL FETCH ENDPOINTS NOMINAL · RATE LIMIT MONITORED.",
+  "CLAUDE CODE SESSION SYNCED WITH BIX PROFILE LAYER.",
+];
+let mi=0,ci=0,del=false;
+const tw=document.getElementById('tw');
+function typer(){
+  const m=MSGS[mi];
+  if(!del){tw.textContent='> '+m.slice(0,ci++);if(ci>m.length){del=true;setTimeout(typer,2600);return;}}
+  else{tw.textContent='> '+m.slice(0,ci--);if(ci<0){del=false;ci=0;mi=(mi+1)%MSGS.length;}}
+  setTimeout(typer,del?26:44);
+}
+typer();
+
+// ════════════════════════════════════════════════════════════════
+// FETCH HELPER
+// ════════════════════════════════════════════════════════════════
+const fetchLog=[];
+async function gfetch(path){
+  const url=GH+path, t0=Date.now();
+  try{
+    const r=await fetch(url,{headers:GHH});
+    const ms=Date.now()-t0;
+    const ep=path.split('?')[0].slice(0,40);
+    pushFetchLog(ep,ms,r.ok);
+    if(r.ok){
+      const rem=r.headers.get('x-ratelimit-remaining');
+      const lim=r.headers.get('x-ratelimit-limit');
+      if(rem!=null) updateRate(+rem,+lim);
+    }
+    return {ok:r.ok,data:r.ok?await r.json():null,ms,status:r.status,res:r};
+  }catch(e){
+    pushFetchLog(path.split('?')[0].slice(0,40),null,false);
+    return {ok:false,data:null,ms:null,status:0};
+  }
+}
+function pushFetchLog(ep,ms,ok){
+  fetchLog.unshift({ep,ms,ok});
+  if(fetchLog.length>8)fetchLog.pop();
+  renderFetchTable();
+}
+function renderFetchTable(){
+  const ft=document.getElementById('fetch-table'); ft.innerHTML='';
+  let okN=0;
+  fetchLog.slice(0,6).forEach(e=>{
+    if(e.ok)okN++;
+    const mc=!e.ms?'slow':e.ms<300?'fast':e.ms<800?'med':'slow';
+    const r=document.createElement('div');r.className='fr';
+    r.innerHTML=`<div class="fd ${e.ok?'ok':'off'}"></div><span class="fe">${esc(e.ep)}</span><span class="fm ${mc}">${e.ms!=null?e.ms+'ms':'FAIL'}</span>`;
+    ft.appendChild(r);
+  });
+  const ok=fetchLog.filter(e=>e.ok).length;
+  document.getElementById('fh-lbl').textContent=`${ok}/${fetchLog.length} UP`;
+}
+
+// ════════════════════════════════════════════════════════════════
+// RATE
+// ════════════════════════════════════════════════════════════════
+function updateRate(rem,lim){
+  const pct=(rem/lim)*100;
+  document.getElementById('rate-fill').style.width=pct+'%';
+  document.getElementById('rate-fill').style.background=pct>30?'var(--pri)':pct>10?'var(--warn)':'var(--danger)';
+  document.getElementById('rate-lbl').textContent=`${rem}/${lim} req`;
+}
+
+// ════════════════════════════════════════════════════════════════
+// SYNC LOG
+// ════════════════════════════════════════════════════════════════
+let sn=0;
+function addSync(tag,msg){
+  sn++;
+  const t=new Date().toLocaleTimeString('en-US',{hour12:false,hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  const sf=document.getElementById('sync-feed');
+  const r=document.createElement('div');r.className='act-row';
+  r.innerHTML=`<span class="act-time">${t}</span><span class="act-tag ${tag}">${tag.toUpperCase()}</span><span class="act-msg">${esc(msg)}</span>`;
+  sf.insertBefore(r,sf.firstChild);
+  while(sf.children.length>10)sf.removeChild(sf.lastChild);
+  document.getElementById('sync-n').textContent='#'+sn;
+}
+
+// ════════════════════════════════════════════════════════════════
+// TOP CHIPS
+// ════════════════════════════════════════════════════════════════
+function setChips(githubOk,rateOk){
+  const tc=document.getElementById('top-chips'); tc.innerHTML='';
+  chip(tc,githubOk?'GITHUB ●':'GITHUB ✕',githubOk?'':'off');
+  chip(tc,'BIX PROFILE','cyan');
+  chip(tc,rateOk!==false?'RATE OK':'RATE LOW',rateOk===false?'warn':'');
+  chip(tc,'BRANCH LIVE','');
+}
+function chip(p,l,c){const d=document.createElement('div');d.className='chip'+(c?' '+c:'');d.textContent=l;p.appendChild(d);}
+
+// ════════════════════════════════════════════════════════════════
+// FETCH USER PROFILE (BIX)
+// ════════════════════════════════════════════════════════════════
+async function fetchBixProfile(){
+  addSync('fetch',`Fetching BIX profile: github.com/${CFG.USER}`);
+  const {ok,data}=await gfetch(`/users/${CFG.USER}`);
+  if(!ok){addSync('error','GitHub user fetch failed');return;}
+
+  // avatar
+  const av=document.getElementById('bix-avatar');
+  av.src=data.avatar_url;
+  av.onerror=()=>av.style.background='rgba(255,26,46,.18)';
+
+  // text
+  setText('bix-name',data.name||data.login);
+  setText('bix-handle',`@${data.login} · ${data.company||'GitHub'} · ${data.location||''}`);
+  setText('bix-bio',data.bio||'No bio set. Building the future with Claude Code.');
+  setText('bix-type',data.type.toUpperCase());
+
+  // badges
+  const bd=document.getElementById('bix-badges');
+  bd.innerHTML='';
+  if(data.site_admin) addBadge(bd,'ADMIN','ok');
+  addBadge(bd,'CLAUDE CODE','ok');
+  if(data.company) addBadge(bd,data.company.replace('@','').trim().slice(0,12).toUpperCase(),'cyan');
+  if(data.location) addBadge(bd,data.location.slice(0,12).toUpperCase(),'purple');
+  addBadge(bd,`SINCE ${data.created_at?.slice(0,4)||'?'}`,'');
+
+  // stats
+  setText('bs-repos',data.public_repos);
+  setText('bs-followers',data.followers);
+  setText('bs-following',data.following);
+  setText('bs-gists',data.public_gists);
+  setText('bix-joined',`JOINED ${data.created_at?.slice(0,10)||'?'}`);
+
+  addSync('fetch',`BIX profile loaded: ${data.name||data.login} · ${data.public_repos} repos · ${data.followers} followers`);
+  setChips(true,true);
+}
+
+function addBadge(parent,text,cls){
+  const s=document.createElement('span');
+  s.className='bix-badge '+(cls||'ok');
+  s.textContent=text; parent.appendChild(s);
+}
+
+// ════════════════════════════════════════════════════════════════
+// FETCH ACTIVITY
+// ════════════════════════════════════════════════════════════════
+const EVENT_TAG={
+  PushEvent:'push',PullRequestEvent:'pr',IssuesEvent:'issue',
+  CreateEvent:'create',ForkEvent:'fork',WatchEvent:'watch',
+  DeleteEvent:'create',PublicEvent:'create'
+};
+async function fetchActivity(){
+  addSync('fetch',`Fetching live GitHub activity for ${CFG.USER}…`);
+  const {ok,data}=await gfetch(`/users/${CFG.USER}/events?per_page=15`);
+  if(!ok){addSync('error','Activity feed fetch failed');return;}
+  const af=document.getElementById('act-feed'); af.innerHTML='';
+  let cnt=0;
+  data.slice(0,10).forEach(e=>{
+    const tag=EVENT_TAG[e.type]||'push';
+    const ts=new Date(e.created_at).toLocaleString('en-US',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit',hour12:false});
+    let msg='';
+    if(e.type==='PushEvent'){
+      const c=e.payload?.commits?.[0];
+      msg=`Pushed to ${e.repo.name.split('/')[1]}: ${c?c.message.slice(0,50):'commit'}`;
+    } else if(e.type==='PullRequestEvent'){
+      msg=`PR ${e.payload?.action}: ${e.payload?.pull_request?.title?.slice(0,50)||e.repo.name}`;
+    } else if(e.type==='IssuesEvent'){
+      msg=`Issue ${e.payload?.action}: ${e.payload?.issue?.title?.slice(0,50)||''}`;
+    } else if(e.type==='CreateEvent'){
+      msg=`Created ${e.payload?.ref_type} in ${e.repo.name.split('/')[1]}`;
+    } else if(e.type==='ForkEvent'){
+      msg=`Forked ${e.repo.name}`;
+    } else {
+      msg=`${e.type.replace('Event','')} on ${e.repo.name.split('/').pop()}`;
+    }
+    const r=document.createElement('div');r.className='act-row';
+    r.innerHTML=`<span class="act-time">${ts}</span><span class="act-tag ${tag}">${tag.toUpperCase()}</span><span class="act-msg">${esc(msg)}</span>`;
+    af.appendChild(r); cnt++;
+  });
+  setText('act-count',cnt+' EVENTS');
+  addSync('fetch',`Activity: ${cnt} events loaded for ${CFG.USER}`);
+}
+
+// ════════════════════════════════════════════════════════════════
+// FETCH REPOS
+// ════════════════════════════════════════════════════════════════
+const LANG_CLASS={TypeScript:'lang-ts',JavaScript:'lang-js',Python:'lang-py',HTML:'lang-html'};
+async function fetchRepos(){
+  const {ok,data}=await gfetch(`/users/${CFG.USER}/repos?sort=updated&per_page=12`);
+  if(!ok) return;
+  const sorted=data.sort((a,b)=>b.stargazers_count-a.stargazers_count).slice(0,7);
+  const rl=document.getElementById('repo-list'); rl.innerHTML='';
+  let totalStars=0;
+  sorted.forEach(r=>{
+    totalStars+=r.stargazers_count;
+    const lc=LANG_CLASS[r.language]||'lang-other';
+    const row=document.createElement('div');row.className='repo-row';
+    row.innerHTML=`<div class="repo-dot" style="background:${langColor(r.language)};box-shadow:0 0 4px ${langColor(r.language)};"></div>
+<span class="repo-name">${esc(r.name)}</span>
+<span class="repo-lang ${lc}">${r.language||'—'}</span>
+<span class="repo-stars">⭐${r.stargazers_count}</span>`;
+    rl.appendChild(row);
+  });
+  setText('repo-count',data.length+' TOTAL');
+  setText('s-stars',totalStars);
+  addSync('fetch',`Repos: ${data.length} repos · ${totalStars} total stars`);
+}
+
+function langColor(lang){
+  const m={TypeScript:'#4FC3F7',JavaScript:'#F1E05A',Python:'#3572A5',HTML:'#e34c26'};
+  return m[lang]||'#FF1A2E';
+}
+
+// ════════════════════════════════════════════════════════════════
+// FETCH NOCOBASE REPO
+// ════════════════════════════════════════════════════════════════
+async function fetchNocobase(){
+  addSync('fetch','Fetching Nocobase repo details…');
+  const {ok,data}=await gfetch(`/repos/${CFG.USER}/${CFG.REPO}`);
+  if(ok){
+    setText('nc-stars',data.stargazers_count);
+    setText('nc-forks',data.forks_count);
+    setText('nc-issues',data.open_issues_count);
+    setText('nc-size',(data.size/1024).toFixed(1));
+    addSync('fetch',`Nocobase: ⭐${data.stargazers_count} · 🍴${data.forks_count} · ${data.open_issues_count} issues`);
+  }
+
+  // commits on branch
+  const {ok:ok2,data:commits}=await gfetch(`/repos/${CFG.USER}/${CFG.REPO}/commits?sha=${encodeURIComponent(CFG.BRANCH)}&per_page=6`);
+  const cs=document.getElementById('commit-stream'); cs.innerHTML='';
+  const nc=document.getElementById('nc-commits'); nc.innerHTML='';
+  if(ok2){
+    setText('s-commits',commits.length+'+'  );
+    setText('branch-lbl',CFG.BRANCH.split('/').pop().slice(0,16));
+    commits.slice(0,5).forEach(c=>{
+      const msg=c.commit.message.split('\n')[0];
+      const hash=c.sha.slice(0,7);
+      const type=msg.match(/^(feat|fix|docs|chore|refactor|test)/)?.[1]||'chore';
+      const short=msg.length>50?msg.slice(0,50)+'…':msg;
+      [cs,nc].forEach(el=>{
+        const r=document.createElement('div');r.className='cr';
+        r.innerHTML=`<span class="ch">${hash}</span><span class="cm">${esc(short)}</span><span class="ct ${type}">${type}</span>`;
+        el.appendChild(r);
+      });
+    });
+    addSync('push',`Branch commits loaded: ${commits.length} on ${CFG.BRANCH.split('/').pop()}`);
+  }
+
+  // Open PRs
+  const {ok:ok3,data:prs}=await gfetch(`/repos/${CFG.USER}/${CFG.REPO}/pulls?state=open&per_page=1`);
+  if(ok3){
+    const link=prs; setText('s-prs',Array.isArray(prs)?prs.length:0);
+  }
+}
+
+// ════════════════════════════════════════════════════════════════
+// MAIN SYNC
+// ════════════════════════════════════════════════════════════════
+async function fullSync(){
+  addSync('fetch','=== BIX FULL SYNC CYCLE STARTED ===');
+  await fetchBixProfile();
+  await fetchActivity();
+  await fetchRepos();
+  await fetchNocobase();
+  document.getElementById('last-sync').textContent='LAST SYNC: '+new Date().toLocaleTimeString('en-US',{hour12:false});
+  showAlert('◈ BIX SYNC COMPLETE · ALL PANELS LIVE');
+  addSync('fetch','=== SYNC CYCLE COMPLETE ===');
+}
+
+// ════════════════════════════════════════════════════════════════
+// ALERT
+// ════════════════════════════════════════════════════════════════
+const aEl=document.getElementById('alert');
+function showAlert(msg){
+  aEl.textContent=msg; aEl.style.display='block';
+  setTimeout(()=>aEl.style.display='none',2800);
+}
+const ALERTS=['◈ BIX HEARTBEAT OK','▸ GITHUB SYNC ACTIVE','⬡ RATE LIMIT NOMINAL','◆ BRANCH LIVE'];
+setInterval(()=>showAlert(ALERTS[Math.floor(Date.now()/8000)%ALERTS.length]),9000);
+
+// ════════════════════════════════════════════════════════════════
+// BG CANVAS
+// ════════════════════════════════════════════════════════════════
+const bg=document.getElementById('bgCanvas'),bctx=bg.getContext('2d');
+let W,H,pts=[];
+function resizeBg(){W=bg.width=innerWidth;H=bg.height=innerHeight;pts=Array.from({length:38},()=>({x:Math.random()*W,y:Math.random()*H,vx:(Math.random()-.5)*.2,vy:(Math.random()-.5)*.2,r:Math.random()*1.1+.4}));}
+window.addEventListener('resize',resizeBg);resizeBg();
+function animBg(){
+  bctx.clearRect(0,0,W,H);
+  bctx.strokeStyle='rgba(255,26,46,.032)';bctx.lineWidth=1;
+  for(let x=0;x<W;x+=58){bctx.beginPath();bctx.moveTo(x,0);bctx.lineTo(x,H);bctx.stroke();}
+  for(let y=0;y<H;y+=58){bctx.beginPath();bctx.moveTo(0,y);bctx.lineTo(W,y);bctx.stroke();}
+  pts.forEach(p=>{p.x+=p.vx;p.y+=p.vy;if(p.x<0)p.x=W;if(p.x>W)p.x=0;if(p.y<0)p.y=H;if(p.y>H)p.y=0;bctx.beginPath();bctx.arc(p.x,p.y,p.r,0,Math.PI*2);bctx.fillStyle='rgba(255,26,46,.35)';bctx.fill();});
+  pts.forEach((p,i)=>pts.slice(i+1).forEach(q=>{const d=Math.hypot(p.x-q.x,p.y-q.y);if(d<80){bctx.beginPath();bctx.moveTo(p.x,p.y);bctx.lineTo(q.x,q.y);bctx.strokeStyle=`rgba(255,26,46,${.08*(1-d/80)})`;bctx.lineWidth=.5;bctx.stroke();}}));
+}
+
+// FRIDAY core spinner
+const fc=document.getElementById('friCanvas'),fctx=fc.getContext('2d');let fA=0;
+function drawCore(t){
+  fctx.clearRect(0,0,150,150);const cx=75,cy=75;fA+=.02;
+  [[60,'rgba(0,255,136,.1)',1.5],[46,'rgba(0,255,136,.18)',1],[32,'rgba(57,255,176,.28)',1]].forEach(([r,c,w])=>{fctx.beginPath();fctx.arc(cx,cy,r,0,Math.PI*2);fctx.strokeStyle=c;fctx.lineWidth=w;fctx.stroke();});
+  for(let i=0;i<12;i++){const a=fA+i*(Math.PI*2/12),r0=56,r1=i%3===0?50:53;fctx.beginPath();fctx.moveTo(cx+r0*Math.cos(a),cy+r0*Math.sin(a));fctx.lineTo(cx+r1*Math.cos(a),cy+r1*Math.sin(a));fctx.strokeStyle=i%3===0?'rgba(255,26,46,.7)':'rgba(255,26,46,.2)';fctx.lineWidth=i%3===0?1.5:1;fctx.stroke();}
+  for(let i=0;i<6;i++){const a=fA*1.3+i*(Math.PI*2/6),rx=cx+38*Math.cos(a),ry=cy+38*Math.sin(a);fctx.save();fctx.translate(rx,ry);fctx.rotate(fA*2);fctx.strokeStyle='rgba(255,26,46,.4)';fctx.lineWidth=1;fctx.strokeRect(-3,-3,6,6);fctx.restore();}
+  for(let i=0;i<4;i++){const a=-fA*.8+i*(Math.PI*2/4),rx=cx+22*Math.cos(a),ry=cy+22*Math.sin(a);fctx.save();fctx.translate(rx,ry);fctx.rotate(-fA*3);fctx.beginPath();fctx.moveTo(0,-4);fctx.lineTo(3,0);fctx.lineTo(0,4);fctx.lineTo(-3,0);fctx.closePath();fctx.strokeStyle='rgba(255,102,68,.5)';fctx.lineWidth=1;fctx.stroke();fctx.restore();}
+  const p=0.6+0.4*Math.sin(t*.0025);
+  const cg=fctx.createRadialGradient(cx,cy,0,cx,cy,14);cg.addColorStop(0,`rgba(255,255,255,${p})`);cg.addColorStop(.5,`rgba(0,255,136,${p*.7})`);cg.addColorStop(1,'transparent');fctx.beginPath();fctx.arc(cx,cy,14,0,Math.PI*2);fctx.fillStyle=cg;fctx.fill();
+  fctx.beginPath();fctx.arc(cx,cy,6,0,Math.PI*2);fctx.fillStyle=`rgba(255,180,180,${p*.9})`;fctx.fill();
+}
+
+// WAVE
+const wc=document.getElementById('waveCanvas'),wctx=wc.getContext('2d');
+function drawWave(t){
+  const W2=wc.width,H2=wc.height;wctx.clearRect(0,0,W2,H2);
+  wctx.beginPath();
+  for(let x=0;x<W2;x++){const p=x/W2;const y=H2/2+Math.sin(p*10+t*.0012)*7+Math.sin(p*5-t*.0018)*4+Math.sin(p*20+t*.002)*2;x===0?wctx.moveTo(x,y):wctx.lineTo(x,y);}
+  const g=wctx.createLinearGradient(0,0,W2,0);g.addColorStop(0,'rgba(255,26,46,0)');g.addColorStop(.35,'rgba(255,26,46,.8)');g.addColorStop(.65,'rgba(255,102,68,.8)');g.addColorStop(1,'rgba(255,26,46,0)');wctx.strokeStyle=g;wctx.lineWidth=1.5;wctx.stroke();
+}
+
+// MAIN LOOP
+function loop(t){animBg();drawCore(t);drawWave(t);requestAnimationFrame(loop);}
+requestAnimationFrame(loop);
+
+// UTILS
+function setText(id,val){const el=document.getElementById(id);if(el)el.textContent=val;}
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+
+// BOOT
+addSync('fetch','F.R.I.D.A.Y. BIX LIVE — initializing…');
+fullSync();
+setInterval(fullSync, CFG.MS);
+</script>
+</body>
+</html>

@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>J.A.R.V.I.S. — jawahirps Intelligence Layer</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{width:100%;height:100%;overflow:hidden;background:#020B18;}
+body{font-family:"Courier New",Courier,monospace;color:#00C8FF;user-select:none;}
+
+#bgCanvas{position:fixed;inset:0;z-index:0;opacity:.3;}
+#scanlines{position:fixed;inset:0;z-index:50;background:repeating-linear-gradient(to bottom,transparent 0,transparent 3px,rgba(0,200,255,.015) 3px,rgba(0,200,255,.015) 4px);pointer-events:none;}
+#vignette{position:fixed;inset:0;z-index:49;background:radial-gradient(ellipse at center,transparent 50%,rgba(2,11,24,.9) 100%);pointer-events:none;}
+
+/* corner brackets */
+.corner{position:fixed;z-index:48;width:40px;height:40px;border-color:#00C8FF;border-style:solid;opacity:.5;}
+.corner.tl{top:8px;left:8px;border-width:2px 0 0 2px;}
+.corner.tr{top:8px;right:8px;border-width:2px 2px 0 0;}
+.corner.bl{bottom:8px;left:8px;border-width:0 0 2px 2px;}
+.corner.br{bottom:8px;right:8px;border-width:0 2px 2px 0;}
+
+/* HUD grid */
+#hud{position:fixed;inset:0;z-index:1;display:grid;grid-template-rows:56px 1fr 44px;grid-template-columns:310px 1fr 310px;pointer-events:none;}
+
+/* TOP BAR */
+#topbar{grid-column:1/-1;grid-row:1;display:flex;align-items:center;justify-content:space-between;padding:0 20px;border-bottom:1px solid rgba(0,200,255,.2);background:linear-gradient(180deg,rgba(0,200,255,.06) 0,transparent 100%);}
+.hud-brand{font-size:18px;font-weight:700;letter-spacing:.25em;color:#fff;text-shadow:0 0 20px #00C8FF;}
+.hud-brand span{color:#FF6B00;text-shadow:0 0 16px #FF6B00;}
+.top-stats{display:flex;gap:24px;font-size:10px;letter-spacing:.12em;}
+.top-stat{display:flex;flex-direction:column;align-items:center;gap:2px;}
+.top-stat label{color:rgba(0,200,255,.5);}
+.top-stat value{color:#fff;font-size:13px;font-weight:700;}
+.top-stat value.ok{color:#00FF88;}
+.top-stat value.warn{color:#FF6B00;}
+#live-clock{font-size:13px;color:#fff;letter-spacing:.1em;}
+#live-date{font-size:10px;color:rgba(0,200,255,.5);letter-spacing:.12em;text-align:right;}
+
+/* PANELS */
+.panel{background:rgba(0,10,26,.7);border:1px solid rgba(0,200,255,.18);backdrop-filter:blur(4px);padding:14px;overflow:hidden;position:relative;}
+.panel::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(0,200,255,.4),transparent);}
+.panel-title{font-size:9px;letter-spacing:.2em;color:rgba(0,200,255,.55);margin-bottom:10px;display:flex;align-items:center;gap:8px;}
+.panel-title::before{content:'◈';color:#00C8FF;}
+.panel-title .badge{margin-left:auto;background:rgba(0,200,255,.1);border:1px solid rgba(0,200,255,.3);padding:1px 6px;border-radius:2px;font-size:8px;}
+
+/* LEFT PANEL */
+#left{grid-row:2;grid-column:1;display:flex;flex-direction:column;gap:10px;padding:14px;}
+
+/* CENTRE */
+#centre{grid-row:2;grid-column:2;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;position:relative;}
+
+/* RIGHT PANEL */
+#right{grid-row:2;grid-column:3;display:flex;flex-direction:column;gap:10px;padding:14px;}
+
+/* BOTTOM BAR */
+#bottombar{grid-column:1/-1;grid-row:3;display:flex;align-items:center;justify-content:space-between;padding:0 20px;border-top:1px solid rgba(0,200,255,.2);background:linear-gradient(0deg,rgba(0,200,255,.04) 0,transparent 100%);font-size:10px;}
+#typewriter{color:#00FF88;letter-spacing:.08em;min-width:0;flex:1;margin:0 20px;}
+.gps{color:rgba(0,200,255,.5);letter-spacing:.1em;}
+.stark-label{color:rgba(255,107,0,.6);letter-spacing:.18em;font-size:9px;}
+
+/* ── SECTION: SESSION MISSIONS ── */
+.mission-list{display:flex;flex-direction:column;gap:5px;flex:1;overflow:hidden;}
+.mission-item{display:flex;align-items:flex-start;gap:7px;padding:5px 7px;border:1px solid rgba(0,200,255,.1);border-radius:2px;font-size:9px;line-height:1.35;background:rgba(0,200,255,.03);transition:background .3s;}
+.mission-item.active{border-color:rgba(0,255,136,.4);background:rgba(0,255,136,.06);}
+.mission-item.active .m-icon{color:#00FF88;}
+.m-icon{font-size:11px;margin-top:1px;flex-shrink:0;color:rgba(0,200,255,.4);}
+.m-text{color:rgba(255,255,255,.75);}
+.m-tag{display:inline-block;padding:0 4px;border-radius:2px;font-size:8px;margin-top:2px;background:rgba(255,107,0,.15);color:#FF6B00;border:1px solid rgba(255,107,0,.3);}
+
+/* ── SECTION: DEPLOYED ASSETS ── */
+.asset-grid{display:grid;grid-template-columns:1fr 1fr;gap:5px;flex:1;}
+.asset-card{border:1px solid rgba(0,200,255,.18);padding:7px;border-radius:2px;font-size:9px;position:relative;overflow:hidden;background:rgba(0,200,255,.03);}
+.asset-card::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--ac,#00C8FF),transparent);}
+.asset-name{color:#fff;font-weight:700;font-size:9px;margin-bottom:3px;}
+.asset-meta{color:rgba(0,200,255,.55);font-size:8px;line-height:1.4;}
+.asset-size{color:#00FF88;font-size:8px;margin-top:3px;}
+
+/* ── SECTION: VAULT INTEL ── */
+.vault-nodes{display:flex;flex-direction:column;gap:3px;flex:1;overflow:hidden;}
+.vault-node{display:flex;align-items:center;gap:6px;font-size:9px;padding:3px 5px;border-left:2px solid rgba(0,200,255,.15);color:rgba(255,255,255,.6);}
+.vault-node .vn-folder{color:rgba(255,107,0,.7);font-size:8px;letter-spacing:.08em;min-width:70px;}
+.vault-node .vn-file{flex:1;color:rgba(255,255,255,.75);}
+.vault-node .vn-links{color:rgba(0,200,255,.5);font-size:8px;}
+
+/* ── SECTION: COMMIT STREAM ── */
+.commit-stream{display:flex;flex-direction:column;gap:4px;flex:1;overflow:hidden;}
+.commit-row{display:flex;align-items:flex-start;gap:6px;font-size:9px;padding:4px 0;border-bottom:1px solid rgba(0,200,255,.07);}
+.commit-hash{color:#FF6B00;font-size:8px;font-weight:700;min-width:54px;}
+.commit-msg{color:rgba(255,255,255,.72);flex:1;line-height:1.35;}
+.commit-type{font-size:7px;padding:1px 4px;border-radius:2px;flex-shrink:0;margin-top:1px;}
+.commit-type.feat{background:rgba(0,255,136,.15);color:#00FF88;border:1px solid rgba(0,255,136,.3);}
+.commit-type.fix{background:rgba(255,107,0,.15);color:#FF6B00;border:1px solid rgba(255,107,0,.3);}
+.commit-type.docs{background:rgba(0,200,255,.12);color:#00C8FF;border:1px solid rgba(0,200,255,.3);}
+.commit-type.chore{background:rgba(167,139,250,.12);color:#A78BFA;border:1px solid rgba(167,139,250,.3);}
+
+/* ── SECTION: PACKAGE RADAR (right top) ── */
+.pkg-stats{display:grid;grid-template-columns:1fr 1fr;gap:5px;}
+.pkg-stat{text-align:center;padding:6px 4px;border:1px solid rgba(0,200,255,.15);border-radius:2px;}
+.pkg-stat .ps-val{font-size:20px;font-weight:700;color:#fff;line-height:1;}
+.pkg-stat .ps-lbl{font-size:8px;color:rgba(0,200,255,.5);letter-spacing:.1em;margin-top:2px;}
+
+/* ── SECTION: NEURAL STATUS ── */
+.diag-bars{display:flex;flex-direction:column;gap:6px;flex:1;}
+.diag-row{display:flex;align-items:center;gap:8px;font-size:9px;}
+.diag-label{min-width:80px;color:rgba(0,200,255,.7);}
+.diag-track{flex:1;height:5px;background:rgba(0,200,255,.1);border-radius:2px;overflow:hidden;}
+.diag-fill{height:100%;border-radius:2px;transition:width 2s ease;}
+.diag-val{min-width:30px;text-align:right;color:#fff;font-size:9px;}
+
+/* ── SECTION: ALERT OVERLAY ── */
+#alert-box{position:fixed;top:70px;left:50%;transform:translateX(-50%);z-index:100;padding:10px 24px;border:1px solid #FF6B00;background:rgba(255,107,0,.1);color:#FF6B00;font-size:11px;letter-spacing:.1em;text-align:center;backdrop-filter:blur(8px);display:none;animation:alertPulse 0.4s ease;}
+@keyframes alertPulse{from{opacity:0;transform:translateX(-50%) scale(.95)}to{opacity:1;transform:translateX(-50%) scale(1)}}
+
+/* ── ARC REACTOR centre ── */
+#arc-wrap{position:relative;width:200px;height:200px;flex-shrink:0;}
+#arcCanvas{position:absolute;inset:0;}
+.arc-label{position:absolute;bottom:-22px;left:50%;transform:translateX(-50%);font-size:8px;letter-spacing:.2em;color:rgba(0,200,255,.5);}
+
+/* mini canvases */
+#radar-wrap{position:relative;width:120px;height:120px;}
+#radarCanvas{position:absolute;inset:0;}
+#wave-wrap{width:100%;height:50px;position:relative;}
+#waveCanvas{display:block;width:100%;height:100%;}
+
+/* scrolling ticker right */
+.ticker-wrap{overflow:hidden;flex:1;font-size:8px;color:rgba(0,200,255,.45);letter-spacing:.1em;}
+.ticker-inner{white-space:nowrap;animation:tickScroll 30s linear infinite;}
+@keyframes tickScroll{from{transform:translateX(100%)}to{transform:translateX(-100%)}}
+
+/* mini progress rings */
+.ring-row{display:flex;gap:12px;align-items:center;justify-content:center;margin-top:4px;}
+.ring-item{display:flex;flex-direction:column;align-items:center;gap:3px;font-size:8px;color:rgba(0,200,255,.5);}
+.ring-item svg{display:block;}
+</style>
+</head>
+<body>
+<canvas id="bgCanvas"></canvas>
+<div id="scanlines"></div>
+<div id="vignette"></div>
+<div class="corner tl"></div>
+<div class="corner tr"></div>
+<div class="corner bl"></div>
+<div class="corner br"></div>
+
+<!-- ALERT -->
+<div id="alert-box"></div>
+
+<!-- HUD GRID -->
+<div id="hud">
+
+  <!-- TOP BAR -->
+  <div id="topbar">
+    <div>
+      <div class="hud-brand">J.A.R.V.I.S. <span>▸</span> JAWAHIRPS</div>
+      <div style="font-size:9px;color:rgba(0,200,255,.4);letter-spacing:.15em;margin-top:2px;">CLAUDE CODE INTELLIGENCE LAYER · SESSION ACTIVE</div>
+    </div>
+    <div class="top-stats">
+      <div class="top-stat"><label>MISSIONS</label><value class="ok">7</value></div>
+      <div class="top-stat"><label>ARTIFACTS</label><value class="ok">3</value></div>
+      <div class="top-stat"><label>COMMITS</label><value class="ok">4</value></div>
+      <div class="top-stat"><label>VAULT NOTES</label><value class="ok">14</value></div>
+      <div class="top-stat"><label>PACKAGES</label><value>133</value></div>
+      <div class="top-stat"><label>SESSION</label><value class="warn">LIVE</value></div>
+    </div>
+    <div style="text-align:right;">
+      <div id="live-clock"></div>
+      <div id="live-date"></div>
+    </div>
+  </div>
+
+  <!-- LEFT PANEL -->
+  <div id="left">
+
+    <!-- Session Missions -->
+    <div class="panel" style="flex:0 0 auto;">
+      <div class="panel-title">SESSION MISSIONS <span class="badge">7 TASKS</span></div>
+      <div class="mission-list">
+        <div class="mission-item active">
+          <span class="m-icon">✦</span>
+          <div><div class="m-text">Build Obsidian Knowledge Brain</div><span class="m-tag">COMPLETE</span></div>
+        </div>
+        <div class="mission-item active">
+          <span class="m-icon">✦</span>
+          <div><div class="m-text">Export Vault → HTML (Catppuccin)</div><span class="m-tag">COMPLETE</span></div>
+        </div>
+        <div class="mission-item active">
+          <span class="m-icon">✦</span>
+          <div><div class="m-text">Configure Obsidian MCP Server</div><span class="m-tag">COMPLETE</span></div>
+        </div>
+        <div class="mission-item active">
+          <span class="m-icon">✦</span>
+          <div><div class="m-text">Redesign Brain → Claude Visual</div><span class="m-tag">COMPLETE</span></div>
+        </div>
+        <div class="mission-item active">
+          <span class="m-icon">✦</span>
+          <div><div class="m-text">Build JARVIS HUD Replica</div><span class="m-tag">COMPLETE</span></div>
+        </div>
+        <div class="mission-item active">
+          <span class="m-icon">✦</span>
+          <div><div class="m-text">JARVIS v2 → Session Data Layer</div><span class="m-tag">ACTIVE</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Deployed Assets -->
+    <div class="panel" style="flex:1;">
+      <div class="panel-title">DEPLOYED ARTIFACTS <span class="badge">3 FILES</span></div>
+      <div class="asset-grid">
+        <div class="asset-card" style="--ac:#00C8FF;">
+          <div class="asset-name">obsidian-brain-export.html</div>
+          <div class="asset-meta">Catppuccin dark theme<br>14 notes · wiki-links</div>
+          <div class="asset-size">~57 KB</div>
+        </div>
+        <div class="asset-card" style="--ac:#D97757;">
+          <div class="asset-name">obsidian-brain-claude.html</div>
+          <div class="asset-meta">Claude.ai visual system<br>Orange accent · dual-theme</div>
+          <div class="asset-size">~76 KB</div>
+        </div>
+        <div class="asset-card" style="--ac:#00FF88;">
+          <div class="asset-name">jarvis-hud.html</div>
+          <div class="asset-meta">Iron Man HUD · Canvas<br>Arc reactor · radar · wave</div>
+          <div class="asset-size">~48 KB</div>
+        </div>
+        <div class="asset-card" style="--ac:#A78BFA;">
+          <div class="asset-name">jarvis-v2.html</div>
+          <div class="asset-meta">Session intelligence layer<br>Live data · this file</div>
+          <div class="asset-size">ACTIVE</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- CENTRE PANEL -->
+  <div id="centre">
+    <!-- Arc Reactor -->
+    <div id="arc-wrap">
+      <canvas id="arcCanvas" width="200" height="200"></canvas>
+      <div class="arc-label">ARC REACTOR · MARK IV</div>
+    </div>
+
+    <!-- Ring stats -->
+    <div class="ring-row">
+      <div class="ring-item">
+        <svg width="48" height="48" viewBox="0 0 48 48">
+          <circle cx="24" cy="24" r="20" fill="none" stroke="rgba(0,200,255,.12)" stroke-width="4"/>
+          <circle id="ring-commits" cx="24" cy="24" r="20" fill="none" stroke="#00C8FF" stroke-width="4" stroke-dasharray="125.6" stroke-dashoffset="75" stroke-linecap="round" transform="rotate(-90 24 24)"/>
+          <text x="24" y="28" text-anchor="middle" fill="#fff" font-size="11" font-family="Courier New">4</text>
+        </svg>
+        COMMITS
+      </div>
+      <div class="ring-item">
+        <svg width="48" height="48" viewBox="0 0 48 48">
+          <circle cx="24" cy="24" r="20" fill="none" stroke="rgba(0,255,136,.12)" stroke-width="4"/>
+          <circle cx="24" cy="24" r="20" fill="none" stroke="#00FF88" stroke-width="4" stroke-dasharray="125.6" stroke-dashoffset="30" stroke-linecap="round" transform="rotate(-90 24 24)"/>
+          <text x="24" y="28" text-anchor="middle" fill="#fff" font-size="11" font-family="Courier New">14</text>
+        </svg>
+        NOTES
+      </div>
+      <div class="ring-item">
+        <svg width="48" height="48" viewBox="0 0 48 48">
+          <circle cx="24" cy="24" r="20" fill="none" stroke="rgba(255,107,0,.12)" stroke-width="4"/>
+          <circle cx="24" cy="24" r="20" fill="none" stroke="#FF6B00" stroke-width="4" stroke-dasharray="125.6" stroke-dashoffset="88" stroke-linecap="round" transform="rotate(-90 24 24)"/>
+          <text x="24" y="28" text-anchor="middle" fill="#fff" font-size="11" font-family="Courier New">3</text>
+        </svg>
+        ARTIFACTS
+      </div>
+      <div class="ring-item">
+        <svg width="48" height="48" viewBox="0 0 48 48">
+          <circle cx="24" cy="24" r="20" fill="none" stroke="rgba(167,139,250,.12)" stroke-width="4"/>
+          <circle cx="24" cy="24" r="20" fill="none" stroke="#A78BFA" stroke-width="4" stroke-dasharray="125.6" stroke-dashoffset="5" stroke-linecap="round" transform="rotate(-90 24 24)"/>
+          <text x="24" y="28" text-anchor="middle" fill="#fff" font-size="9" font-family="Courier New">133</text>
+        </svg>
+        PKGS
+      </div>
+    </div>
+
+    <!-- Radar -->
+    <div style="display:flex;gap:16px;align-items:center;">
+      <div id="radar-wrap">
+        <canvas id="radarCanvas" width="120" height="120"></canvas>
+      </div>
+      <div style="flex:1;">
+        <div class="panel-title" style="margin-bottom:6px;">NEURAL WAVEFORM</div>
+        <div id="wave-wrap"><canvas id="waveCanvas" width="300" height="50"></canvas></div>
+        <div style="font-size:8px;color:rgba(0,200,255,.4);margin-top:4px;letter-spacing:.1em;">
+          BRANCH: claude/ecstatic-wozniak-cmy6rk
+        </div>
+        <div style="font-size:8px;color:rgba(0,255,136,.5);margin-top:2px;letter-spacing:.1em;">
+          REPO: jawahirps/Nocobase · v2.0.57
+        </div>
+      </div>
+    </div>
+
+    <!-- Session neural diagnostics -->
+    <div class="panel" style="width:90%;align-self:stretch;">
+      <div class="panel-title">SESSION NEURAL DIAGNOSTICS</div>
+      <div class="diag-bars">
+        <div class="diag-row"><span class="diag-label">VAULT COVERAGE</span><div class="diag-track"><div class="diag-fill" style="width:100%;background:linear-gradient(90deg,#00FF88,#00C8FF);"></div></div><span class="diag-val">100%</span></div>
+        <div class="diag-row"><span class="diag-label">HTML ARTIFACTS</span><div class="diag-track"><div class="diag-fill" style="width:85%;background:linear-gradient(90deg,#00C8FF,#A78BFA);"></div></div><span class="diag-val">3/4</span></div>
+        <div class="diag-row"><span class="diag-label">MCP SERVERS</span><div class="diag-track"><div class="diag-fill" style="width:50%;background:linear-gradient(90deg,#FF6B00,#ffb347);"></div></div><span class="diag-val">PARTIAL</span></div>
+        <div class="diag-row"><span class="diag-label">BRANCH SYNC</span><div class="diag-track"><div class="diag-fill" style="width:100%;background:linear-gradient(90deg,#00FF88,#00FF88);"></div></div><span class="diag-val">CLEAN</span></div>
+        <div class="diag-row"><span class="diag-label">JARVIS ACTIVE</span><div class="diag-track"><div class="diag-fill" id="jarvis-bar" style="width:0%;background:linear-gradient(90deg,#00C8FF,#fff);"></div></div><span class="diag-val" id="jarvis-val">0%</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT PANEL -->
+  <div id="right">
+
+    <!-- Repo Package Stats -->
+    <div class="panel" style="flex:0 0 auto;">
+      <div class="panel-title">NOCOBASE PACKAGE GRID <span class="badge">v2.0.57</span></div>
+      <div class="pkg-stats">
+        <div class="pkg-stat"><div class="ps-val" style="color:#00C8FF;">27</div><div class="ps-lbl">CORE PKGS</div></div>
+        <div class="pkg-stat"><div class="ps-val" style="color:#00FF88;">106</div><div class="ps-lbl">PLUGINS</div></div>
+        <div class="pkg-stat"><div class="ps-val" style="color:#FF6B00;">2</div><div class="ps-lbl">RUNTIMES</div></div>
+        <div class="pkg-stat"><div class="ps-val" style="color:#A78BFA;">23</div><div class="ps-lbl">WFLOW NODES</div></div>
+      </div>
+    </div>
+
+    <!-- Vault Intel -->
+    <div class="panel" style="flex:1;">
+      <div class="panel-title">VAULT INTEL MAP <span class="badge">14 NODES</span></div>
+      <div class="vault-nodes">
+        <div class="vault-node"><span class="vn-folder">00-HOME</span><span class="vn-file">🏠 Home (Index)</span><span class="vn-links">13↗</span></div>
+        <div class="vault-node"><span class="vn-folder">01-ARCH</span><span class="vn-file">Architecture Overview</span><span class="vn-links">5↗</span></div>
+        <div class="vault-node"><span class="vn-folder">01-ARCH</span><span class="vn-file">Client v1 vs v2</span><span class="vn-links">3↗</span></div>
+        <div class="vault-node"><span class="vn-folder">01-ARCH</span><span class="vn-file">Tech Stack</span><span class="vn-links">4↗</span></div>
+        <div class="vault-node"><span class="vn-folder">02-CORE</span><span class="vn-file">Core Packages</span><span class="vn-links">7↗</span></div>
+        <div class="vault-node"><span class="vn-folder">03-PLUGINS</span><span class="vn-file">Plugin Catalog</span><span class="vn-links">6↗</span></div>
+        <div class="vault-node"><span class="vn-folder">04-WORKFLOW</span><span class="vn-file">Workflow Engine</span><span class="vn-links">5↗</span></div>
+        <div class="vault-node"><span class="vn-folder">05-DEV</span><span class="vn-file">Code Conventions</span><span class="vn-links">4↗</span></div>
+        <div class="vault-node"><span class="vn-folder">05-DEV</span><span class="vn-file">Database Guide</span><span class="vn-links">3↗</span></div>
+        <div class="vault-node"><span class="vn-folder">05-DEV</span><span class="vn-file">Dev Workflow</span><span class="vn-links">5↗</span></div>
+        <div class="vault-node"><span class="vn-folder">05-DEV</span><span class="vn-file">Internationalization</span><span class="vn-links">2↗</span></div>
+        <div class="vault-node"><span class="vn-folder">05-DEV</span><span class="vn-file">Testing Guide</span><span class="vn-links">3↗</span></div>
+        <div class="vault-node"><span class="vn-folder">06-RECENT</span><span class="vn-file">Recent Commits</span><span class="vn-links">4↗</span></div>
+        <div class="vault-node"><span class="vn-folder">06-RECENT</span><span class="vn-file">TopGearAuto Website</span><span class="vn-links">2↗</span></div>
+      </div>
+    </div>
+
+    <!-- Commit Stream -->
+    <div class="panel" style="flex:0 0 auto;">
+      <div class="panel-title">COMMIT STREAM <span class="badge">jawahirps/Nocobase</span></div>
+      <div class="commit-stream">
+        <div class="commit-row"><span class="commit-hash">20f12d1</span><span class="commit-msg">add Iron Man JARVIS HUD interface</span><span class="commit-type feat">feat</span></div>
+        <div class="commit-row"><span class="commit-hash">0ff19d5</span><span class="commit-msg">add Claude-styled knowledge brain HTML</span><span class="commit-type docs">docs</span></div>
+        <div class="commit-row"><span class="commit-hash">56d4fc6</span><span class="commit-msg">add HTML export of Obsidian vault</span><span class="commit-type docs">docs</span></div>
+        <div class="commit-row"><span class="commit-hash">69b98b2</span><span class="commit-msg">add Obsidian knowledge brain</span><span class="commit-type docs">docs</span></div>
+        <div class="commit-row"><span class="commit-hash">8fb74f3</span><span class="commit-msg">add TopGear Auto marketing site</span><span class="commit-type feat">feat</span></div>
+        <div class="commit-row"><span class="commit-hash">95e5e31</span><span class="commit-msg">improve PDF preview diagnostics</span><span class="commit-type fix">fix</span></div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- BOTTOM BAR -->
+  <div id="bottombar">
+    <div class="gps">GPS 37.7749°N 122.4194°W · SESSION ACTIVE</div>
+    <div id="typewriter"></div>
+    <div class="stark-label">CLAUDE CODE · ANTHROPIC INTELLIGENCE</div>
+  </div>
+
+</div>
+
+<script>
+// ── DATA ────────────────────────────────────────────────────────────────────
+const MESSAGES = [
+  "GOOD MORNING, JAWAHIRPS. ALL SYSTEMS NOMINAL.",
+  "OBSIDIAN VAULT: 14 NOTES, 7 FOLDERS. CROSS-LINKS INTACT.",
+  "3 HTML ARTIFACTS DEPLOYED TO REPOSITORY.",
+  "BRANCH claude/ecstatic-wozniak-cmy6rk IS CLEAN AND PUSHED.",
+  "NOCOBASE v2.0.57 · 27 CORE PACKAGES · 106 PLUGINS INDEXED.",
+  "JARVIS INTELLIGENCE LAYER SYNCHRONIZED WITH SESSION DATA.",
+  "MCP SERVER CONFIGURED. AWAITING OBSIDIAN API KEY AUTHORIZATION.",
+  "ALL MISSION OBJECTIVES ACHIEVED. STANDING BY FOR NEW DIRECTIVES.",
+];
+
+const ALERTS = [
+  "⚠ NEW COMMIT DETECTED ON BRANCH",
+  "◈ ARTIFACT PUBLISHED TO ARTIFACT GALLERY",
+  "⬡ VAULT NODE CROSS-LINK RESOLVED",
+  "▸ CLAUDE CODE SESSION DATA SYNCHRONIZED",
+  "◆ PACKAGE DEPENDENCY SCAN COMPLETE",
+];
+
+// ── CLOCK ────────────────────────────────────────────────────────────────────
+function updateClock() {
+  const now = new Date();
+  document.getElementById('live-clock').textContent =
+    now.toLocaleTimeString('en-US',{hour12:false});
+  document.getElementById('live-date').textContent =
+    now.toLocaleDateString('en-US',{weekday:'short',year:'numeric',month:'short',day:'numeric'}).toUpperCase();
+}
+setInterval(updateClock, 1000);
+updateClock();
+
+// ── TYPEWRITER ───────────────────────────────────────────────────────────────
+let msgIdx = 0, charIdx = 0, deleting = false;
+const tw = document.getElementById('typewriter');
+function tick() {
+  const msg = MESSAGES[msgIdx];
+  if (!deleting) {
+    tw.textContent = '> ' + msg.slice(0, charIdx++);
+    if (charIdx > msg.length) { deleting = true; setTimeout(tick, 2800); return; }
+  } else {
+    tw.textContent = '> ' + msg.slice(0, charIdx--);
+    if (charIdx < 0) { deleting = false; charIdx = 0; msgIdx = (msgIdx+1)%MESSAGES.length; }
+  }
+  setTimeout(tick, deleting ? 28 : 45);
+}
+tick();
+
+// ── ALERTS ──────────────────────────────────────────────────────────────────
+const alertBox = document.getElementById('alert-box');
+function showAlert() {
+  const msg = ALERTS[Math.floor(Date.now() / 10000) % ALERTS.length];
+  alertBox.textContent = msg;
+  alertBox.style.display = 'block';
+  setTimeout(() => alertBox.style.display = 'none', 3200);
+  setTimeout(showAlert, 7000 + (Date.now() % 4000));
+}
+setTimeout(showAlert, 4000);
+
+// ── JARVIS BOOT BAR ──────────────────────────────────────────────────────────
+let jv = 0;
+const jbar = document.getElementById('jarvis-bar');
+const jval = document.getElementById('jarvis-val');
+const jInterval = setInterval(() => {
+  jv = Math.min(100, jv + 1);
+  jbar.style.width = jv + '%';
+  jval.textContent = jv + '%';
+  if (jv >= 100) clearInterval(jInterval);
+}, 30);
+
+// ── BG CANVAS ────────────────────────────────────────────────────────────────
+const bg = document.getElementById('bgCanvas');
+const bgCtx = bg.getContext('2d');
+let W, H, particles = [], hexes = [];
+
+function resizeBg() {
+  W = bg.width = window.innerWidth;
+  H = bg.height = window.innerHeight;
+  particles = Array.from({length: 60}, () => ({
+    x: Math.random()*W, y: Math.random()*H,
+    vx: (Math.random()-.5)*.3, vy: (Math.random()-.5)*.3,
+    r: Math.random()*1.5+.5, a: Math.random()
+  }));
+  buildHex();
+}
+
+function buildHex() {
+  hexes = [];
+  const s = 40, dx = s*Math.sqrt(3), dy = s*1.5;
+  for (let row = -1; row < H/dy+2; row++) {
+    for (let col = -1; col < W/dx+2; col++) {
+      hexes.push({ x: col*dx + (row%2)*dx/2, y: row*dy });
+    }
+  }
+}
+
+function drawHex(x, y, s, ctx) {
+  ctx.beginPath();
+  for (let i = 0; i < 6; i++) {
+    const a = Math.PI/180*(60*i-30);
+    const px = x + s*Math.cos(a), py = y + s*Math.sin(a);
+    i===0 ? ctx.moveTo(px,py) : ctx.lineTo(px,py);
+  }
+  ctx.closePath();
+}
+
+function animBg(t) {
+  bgCtx.clearRect(0,0,W,H);
+  bgCtx.strokeStyle = 'rgba(0,200,255,0.04)';
+  bgCtx.lineWidth = 1;
+  hexes.forEach(h => { drawHex(h.x,h.y,38,bgCtx); bgCtx.stroke(); });
+
+  particles.forEach(p => {
+    p.x += p.vx; p.y += p.vy;
+    if (p.x<0) p.x=W; if (p.x>W) p.x=0;
+    if (p.y<0) p.y=H; if (p.y>H) p.y=0;
+    bgCtx.beginPath();
+    bgCtx.arc(p.x,p.y,p.r,0,Math.PI*2);
+    bgCtx.fillStyle = `rgba(0,200,255,${p.a*.6})`;
+    bgCtx.fill();
+  });
+
+  particles.forEach((p,i) => {
+    for (let j = i+1; j < particles.length; j++) {
+      const q = particles[j];
+      const d = Math.hypot(p.x-q.x,p.y-q.y);
+      if (d < 80) {
+        bgCtx.beginPath();
+        bgCtx.moveTo(p.x,p.y); bgCtx.lineTo(q.x,q.y);
+        bgCtx.strokeStyle = `rgba(0,200,255,${.15*(1-d/80)})`;
+        bgCtx.lineWidth = .5;
+        bgCtx.stroke();
+      }
+    }
+  });
+}
+
+window.addEventListener('resize', resizeBg);
+resizeBg();
+
+// ── ARC REACTOR ─────────────────────────────────────────────────────────────
+const arc = document.getElementById('arcCanvas');
+const actx = arc.getContext('2d');
+let arcAngle = 0;
+
+function drawArc(t) {
+  actx.clearRect(0,0,200,200);
+  const cx=100,cy=100;
+  arcAngle += .012;
+
+  // outer rings
+  [[88,'rgba(0,200,255,0.15)',2],[72,'rgba(0,200,255,0.2)',1.5],[58,'rgba(0,200,255,0.3)',1]].forEach(([r,c,w])=>{
+    actx.beginPath(); actx.arc(cx,cy,r,0,Math.PI*2);
+    actx.strokeStyle=c; actx.lineWidth=w; actx.stroke();
+  });
+
+  // tick marks
+  for (let i=0;i<24;i++){
+    const a=arcAngle*.5+i*(Math.PI*2/24);
+    const r0=84,r1=i%6===0?76:80;
+    actx.beginPath();
+    actx.moveTo(cx+r0*Math.cos(a),cy+r0*Math.sin(a));
+    actx.lineTo(cx+r1*Math.cos(a),cy+r1*Math.sin(a));
+    actx.strokeStyle=i%6===0?'rgba(0,200,255,.6)':'rgba(0,200,255,.25)';
+    actx.lineWidth=i%6===0?1.5:1; actx.stroke();
+  }
+
+  // rotating triangle ring 1 (CW)
+  for (let i=0;i<6;i++){
+    const a=arcAngle+i*(Math.PI*2/6);
+    const rx=cx+52*Math.cos(a), ry=cy+52*Math.sin(a);
+    actx.save(); actx.translate(rx,ry); actx.rotate(a+arcAngle*2);
+    actx.beginPath();
+    actx.moveTo(0,-7); actx.lineTo(6,5); actx.lineTo(-6,5); actx.closePath();
+    actx.strokeStyle='rgba(0,200,255,.5)'; actx.lineWidth=1; actx.stroke();
+    actx.restore();
+  }
+
+  // rotating triangle ring 2 (CCW)
+  for (let i=0;i<4;i++){
+    const a=-arcAngle*1.4+i*(Math.PI*2/4);
+    const rx=cx+36*Math.cos(a), ry=cy+36*Math.sin(a);
+    actx.save(); actx.translate(rx,ry); actx.rotate(-arcAngle*3);
+    actx.beginPath();
+    actx.moveTo(0,-5); actx.lineTo(4,3); actx.lineTo(-4,3); actx.closePath();
+    actx.strokeStyle='rgba(255,107,0,.45)'; actx.lineWidth=1; actx.stroke();
+    actx.restore();
+  }
+
+  // inner circle + glow
+  const bloom = 0.6 + 0.4*Math.sin(t*.002);
+  const g = actx.createRadialGradient(cx,cy,0,cx,cy,22);
+  g.addColorStop(0,`rgba(255,255,255,${bloom})`);
+  g.addColorStop(.4,`rgba(0,200,255,${bloom*.8})`);
+  g.addColorStop(1,'transparent');
+  actx.beginPath(); actx.arc(cx,cy,22,0,Math.PI*2);
+  actx.fillStyle=g; actx.fill();
+
+  actx.beginPath(); actx.arc(cx,cy,12,0,Math.PI*2);
+  actx.fillStyle=`rgba(200,240,255,${bloom*.9})`; actx.fill();
+
+  // outer glow
+  const og = actx.createRadialGradient(cx,cy,60,cx,cy,95);
+  og.addColorStop(0,`rgba(0,200,255,${.06*bloom})`);
+  og.addColorStop(1,'transparent');
+  actx.beginPath(); actx.arc(cx,cy,95,0,Math.PI*2);
+  actx.fillStyle=og; actx.fill();
+}
+
+// ── RADAR ─────────────────────────────────────────────────────────────────
+const radar = document.getElementById('radarCanvas');
+const rctx = radar.getContext('2d');
+let radarAngle = 0;
+// blips based on session data (commits, artifacts, notes)
+const BLIPS = [
+  {angle:0.4,dist:.4,label:'vault'},{angle:1.2,dist:.65,label:'commits'},
+  {angle:2.1,dist:.3,label:'artifacts'},{angle:3.5,dist:.7,label:'jarvis'},
+  {angle:4.8,dist:.5,label:'brain'},{angle:5.6,dist:.55,label:'mcp'},
+];
+
+function drawRadar(t) {
+  rctx.clearRect(0,0,120,120);
+  const cx=60,cy=60;
+  radarAngle += .025;
+
+  // rings
+  [15,28,42,56].forEach(r=>{
+    rctx.beginPath(); rctx.arc(cx,cy,r,0,Math.PI*2);
+    rctx.strokeStyle='rgba(0,200,255,.15)'; rctx.lineWidth=.8; rctx.stroke();
+  });
+
+  // crosshairs
+  rctx.strokeStyle='rgba(0,200,255,.12)'; rctx.lineWidth=.5;
+  rctx.beginPath(); rctx.moveTo(cx,4); rctx.lineTo(cx,116); rctx.stroke();
+  rctx.beginPath(); rctx.moveTo(4,cy); rctx.lineTo(116,cy); rctx.stroke();
+
+  // sweep gradient
+  const sweep = rctx.createConicalGradient ? null : null; // fallback
+  rctx.save();
+  rctx.translate(cx,cy);
+  rctx.rotate(radarAngle);
+  const sg = rctx.createLinearGradient(0,-56,0,0);
+  sg.addColorStop(0,'transparent');
+  sg.addColorStop(1,'rgba(0,255,136,.25)');
+  rctx.beginPath();
+  rctx.moveTo(0,0);
+  rctx.arc(0,0,58,-Math.PI/2,-Math.PI/2+1.2);
+  rctx.closePath();
+  rctx.fillStyle='rgba(0,255,136,.12)';
+  rctx.fill();
+  rctx.beginPath(); rctx.moveTo(0,0); rctx.lineTo(0,-58);
+  rctx.strokeStyle='rgba(0,255,136,.6)'; rctx.lineWidth=1.5; rctx.stroke();
+  rctx.restore();
+
+  // blips
+  BLIPS.forEach(b => {
+    const a = b.angle;
+    const diff = ((radarAngle - a) % (Math.PI*2) + Math.PI*2) % (Math.PI*2);
+    const fade = diff < 1.5 ? 1 - diff/1.5 : 0;
+    if (fade > 0) {
+      const bx = cx + Math.cos(a)*b.dist*56;
+      const by = cy + Math.sin(a)*b.dist*56;
+      rctx.beginPath(); rctx.arc(bx,by,3,0,Math.PI*2);
+      rctx.fillStyle=`rgba(255,107,0,${fade})`;
+      rctx.fill();
+      rctx.beginPath(); rctx.arc(bx,by,6,0,Math.PI*2);
+      rctx.strokeStyle=`rgba(255,107,0,${fade*.4})`;
+      rctx.lineWidth=1; rctx.stroke();
+    }
+  });
+}
+
+// ── WAVEFORM ──────────────────────────────────────────────────────────────
+const wc = document.getElementById('waveCanvas');
+const wctx = wc.getContext('2d');
+
+function drawWave(t) {
+  const W2=wc.width,H2=wc.height;
+  wctx.clearRect(0,0,W2,H2);
+  wctx.beginPath();
+  for (let x=0;x<W2;x++){
+    const progress = x/W2;
+    const y = H2/2
+      + Math.sin(progress*12+t*.001)*8
+      + Math.sin(progress*6.5-t*.0015)*5
+      + Math.sin(progress*20+t*.002)*3;
+    x===0 ? wctx.moveTo(x,y) : wctx.lineTo(x,y);
+  }
+  const wg = wctx.createLinearGradient(0,0,W2,0);
+  wg.addColorStop(0,'rgba(0,200,255,0)');
+  wg.addColorStop(.3,'rgba(0,200,255,.8)');
+  wg.addColorStop(.7,'rgba(0,255,136,.8)');
+  wg.addColorStop(1,'rgba(0,200,255,0)');
+  wctx.strokeStyle=wg; wctx.lineWidth=1.5; wctx.stroke();
+}
+
+// ── MAIN LOOP ────────────────────────────────────────────────────────────────
+function loop(t) {
+  animBg(t);
+  drawArc(t);
+  drawRadar(t);
+  drawWave(t);
+  requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>

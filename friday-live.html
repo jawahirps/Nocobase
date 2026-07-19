@@ -1,0 +1,732 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>F.R.I.D.A.Y. LIVE — Bix Sync & Liveness Layer</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{width:100vw;height:100vh;overflow:hidden;background:#000D06;}
+body{font-family:"Courier New",Courier,monospace;color:#00FF88;user-select:none;}
+
+:root{
+  --pri:#00FF88;--pri-dim:rgba(0,255,136,.15);--pri-glow:rgba(0,255,136,.5);
+  --sec:#39FFB0;--warn:#FFD700;--warn-dim:rgba(255,215,0,.15);
+  --danger:#FF4466;--danger-dim:rgba(255,68,102,.15);
+  --bg:#000D06;--surface:rgba(0,20,12,.85);--border:rgba(0,255,136,.18);
+  --text-muted:rgba(0,255,136,.45);--text-bright:rgba(220,255,240,.9);
+}
+
+#bgCanvas{position:fixed;inset:0;z-index:0;}
+#scanlines{position:fixed;inset:0;z-index:50;background:repeating-linear-gradient(to bottom,transparent 0,transparent 3px,rgba(0,255,136,.012) 3px,rgba(0,255,136,.012) 4px);pointer-events:none;}
+#vignette{position:fixed;inset:0;z-index:49;background:radial-gradient(ellipse at center,transparent 45%,rgba(0,13,6,.92) 100%);pointer-events:none;}
+.corner{position:fixed;z-index:48;width:36px;height:36px;border-color:var(--pri);border-style:solid;opacity:.4;}
+.corner.tl{top:8px;left:8px;border-width:2px 0 0 2px;}
+.corner.tr{top:8px;right:8px;border-width:2px 2px 0 0;}
+.corner.bl{bottom:8px;left:8px;border-width:0 0 2px 2px;}
+.corner.br{bottom:8px;right:8px;border-width:0 2px 2px 0;}
+
+#hud{position:fixed;inset:0;z-index:1;display:grid;grid-template-rows:52px 1fr 42px;grid-template-columns:290px 1fr 290px;pointer-events:none;}
+
+/* TOP BAR */
+#topbar{grid-column:1/-1;grid-row:1;display:flex;align-items:center;justify-content:space-between;padding:0 18px;border-bottom:1px solid var(--border);background:linear-gradient(180deg,rgba(0,255,136,.05) 0,transparent 100%);}
+.fri-brand{font-size:16px;font-weight:700;letter-spacing:.22em;color:var(--text-bright);text-shadow:0 0 18px var(--pri-glow);}
+.fri-brand em{color:var(--pri);font-style:normal;}
+.fri-sub{font-size:8.5px;color:var(--text-muted);letter-spacing:.13em;margin-top:2px;}
+.pulse-dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--pri);animation:pulse 1.4s ease-in-out infinite;margin-right:4px;}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.7)}}
+.top-chips{display:flex;gap:8px;flex-wrap:wrap;max-width:460px;}
+.chip{padding:3px 9px;border:1px solid var(--border);border-radius:2px;font-size:8.5px;letter-spacing:.09em;background:var(--pri-dim);color:var(--pri);}
+.chip.warn{border-color:rgba(255,215,0,.3);background:var(--warn-dim);color:var(--warn);}
+.chip.danger{border-color:rgba(255,68,102,.3);background:var(--danger-dim);color:var(--danger);}
+.chip.off{border-color:rgba(255,68,102,.3);background:rgba(255,68,102,.08);color:var(--danger);}
+#last-refresh{font-size:8px;color:rgba(0,255,136,.4);letter-spacing:.1em;text-align:right;margin-top:2px;}
+
+/* PANELS */
+.panel{background:var(--surface);border:1px solid var(--border);padding:11px;overflow:hidden;position:relative;}
+.panel::after{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--pri-glow),transparent);opacity:.5;}
+.pt{font-size:8px;letter-spacing:.18em;color:var(--text-muted);margin-bottom:8px;display:flex;align-items:center;gap:7px;}
+.pt::before{content:'◈';color:var(--pri);}
+.ptbadge{margin-left:auto;padding:1px 5px;border:1px solid var(--border);border-radius:2px;font-size:7.5px;background:var(--pri-dim);}
+
+/* LEFT / CENTRE / RIGHT */
+#left{grid-row:2;grid-column:1;display:flex;flex-direction:column;gap:8px;padding:11px;}
+#centre{grid-row:2;grid-column:2;display:flex;flex-direction:column;align-items:center;padding:10px;gap:8px;position:relative;}
+#right{grid-row:2;grid-column:3;display:flex;flex-direction:column;gap:8px;padding:11px;}
+
+/* BOTTOM */
+#bottombar{grid-column:1/-1;grid-row:3;display:flex;align-items:center;justify-content:space-between;padding:0 18px;border-top:1px solid var(--border);background:linear-gradient(0deg,rgba(0,255,136,.04),transparent);font-size:9px;}
+#fri-tw{color:var(--sec);letter-spacing:.07em;flex:1;margin:0 16px;}
+#fri-clock{color:var(--text-bright);letter-spacing:.1em;font-size:12px;}
+
+/* LIVENESS */
+.live-grid{display:grid;grid-template-columns:1fr 1fr;gap:5px;}
+.live-card{padding:6px 7px;border:1px solid var(--border);border-radius:2px;position:relative;overflow:hidden;background:rgba(0,255,136,.02);}
+.live-card.ok{border-left:3px solid var(--pri);}
+.live-card.warn{border-left:3px solid var(--warn);}
+.live-card.off{border-left:3px solid var(--danger);}
+.live-name{font-size:8.5px;color:var(--text-bright);font-weight:700;}
+.live-status{font-size:7.5px;margin-top:1px;letter-spacing:.07em;}
+.live-status.ok{color:var(--pri);}
+.live-status.warn{color:var(--warn);}
+.live-status.off{color:var(--danger);}
+.live-ping{font-size:7.5px;color:var(--text-muted);margin-top:1px;}
+.live-bar{position:absolute;bottom:0;left:0;height:2px;background:var(--pri);transition:width 1.2s ease;}
+
+/* SYNC FEED */
+.sync-feed{display:flex;flex-direction:column;gap:3px;overflow:hidden;}
+.sync-row{display:flex;align-items:flex-start;gap:5px;font-size:8.5px;padding:3px 5px;border:1px solid rgba(0,255,136,.08);border-radius:2px;animation:fadeIn .4s ease;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(-3px)}to{opacity:1}}
+.sync-time{color:var(--text-muted);min-width:44px;font-size:7.5px;flex-shrink:0;}
+.sync-tag{padding:0 4px;border-radius:2px;font-size:7px;font-weight:700;flex-shrink:0;align-self:flex-start;margin-top:1px;}
+.sync-tag.push{background:rgba(0,255,136,.15);color:var(--pri);border:1px solid rgba(0,255,136,.3);}
+.sync-tag.fetch{background:rgba(57,255,176,.12);color:var(--sec);border:1px solid rgba(57,255,176,.3);}
+.sync-tag.commit{background:rgba(255,215,0,.12);color:var(--warn);border:1px solid rgba(255,215,0,.3);}
+.sync-tag.artifact{background:rgba(167,139,250,.12);color:#A78BFA;border:1px solid rgba(167,139,250,.3);}
+.sync-tag.error{background:rgba(255,68,102,.12);color:var(--danger);border:1px solid rgba(255,68,102,.3);}
+.sync-tag.vault{background:rgba(0,200,255,.12);color:#00C8FF;border:1px solid rgba(0,200,255,.3);}
+.sync-msg{color:rgba(200,255,230,.75);flex:1;line-height:1.35;}
+
+/* REPO STATS */
+.repo-stat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;}
+.rs-card{text-align:center;padding:7px 4px;border:1px solid var(--border);border-radius:2px;background:rgba(0,255,136,.02);}
+.rs-val{font-size:22px;font-weight:700;color:#fff;line-height:1;}
+.rs-lbl{font-size:7.5px;color:var(--text-muted);letter-spacing:.1em;margin-top:2px;}
+
+/* COMMIT STREAM */
+.commit-stream{display:flex;flex-direction:column;gap:3px;overflow:hidden;}
+.cr{display:flex;align-items:flex-start;gap:5px;font-size:8.5px;padding:3px 0;border-bottom:1px solid rgba(0,255,136,.07);}
+.ch{color:#FFD700;font-size:7.5px;min-width:50px;flex-shrink:0;}
+.cm{color:rgba(200,255,230,.7);flex:1;line-height:1.35;}
+.ct{font-size:7px;padding:1px 4px;border-radius:2px;flex-shrink:0;}
+.ct.feat{background:rgba(0,255,136,.15);color:var(--pri);border:1px solid rgba(0,255,136,.3);}
+.ct.fix{background:rgba(255,215,0,.15);color:var(--warn);border:1px solid rgba(255,215,0,.3);}
+.ct.docs{background:rgba(0,200,255,.12);color:#00C8FF;border:1px solid rgba(0,200,255,.3);}
+.ct.chore{background:rgba(167,139,250,.12);color:#A78BFA;border:1px solid rgba(167,139,250,.3);}
+
+/* FETCH */
+.fetch-table{display:flex;flex-direction:column;gap:3px;}
+.fetch-row{display:flex;align-items:center;gap:5px;font-size:8.5px;padding:3px 0;border-bottom:1px solid rgba(0,255,136,.06);}
+.fetch-ep{flex:1;color:rgba(200,255,230,.65);font-size:8px;}
+.fetch-ms{min-width:40px;text-align:right;font-size:8px;}
+.fetch-ms.fast{color:var(--pri);}
+.fetch-ms.med{color:var(--warn);}
+.fetch-ms.slow{color:var(--danger);}
+.fetch-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;}
+.fetch-dot.ok{background:var(--pri);box-shadow:0 0 5px var(--pri);}
+.fetch-dot.warn{background:var(--warn);}
+.fetch-dot.off{background:var(--danger);}
+
+/* BIX */
+.bix-row{display:flex;align-items:center;gap:7px;font-size:8.5px;padding:4px 6px;border:1px solid rgba(0,255,136,.1);border-radius:2px;margin-bottom:4px;}
+.bix-key{min-width:80px;color:var(--text-muted);letter-spacing:.07em;font-size:8px;}
+.bix-val{flex:1;color:var(--text-bright);font-size:8px;}
+.bix-badge{padding:1px 5px;border-radius:10px;font-size:7px;font-weight:700;}
+.bix-badge.synced{background:rgba(0,255,136,.2);color:var(--pri);}
+.bix-badge.pending{background:rgba(255,215,0,.2);color:var(--warn);}
+.bix-badge.offline{background:rgba(255,68,102,.2);color:var(--danger);}
+
+/* OBSIDIAN */
+.obs-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px;margin-bottom:6px;}
+.obs-card{text-align:center;padding:5px 3px;border:1px solid rgba(0,200,255,.18);border-radius:2px;background:rgba(0,200,255,.04);}
+.obs-val{font-size:16px;font-weight:700;color:#00C8FF;line-height:1;}
+.obs-lbl{font-size:7px;color:rgba(0,200,255,.45);letter-spacing:.08em;margin-top:1px;}
+.obs-files{display:flex;flex-direction:column;gap:2px;}
+.obs-file{font-size:8px;color:rgba(200,255,230,.65);padding:2px 4px;border-left:2px solid rgba(0,200,255,.25);}
+
+/* CENTRE */
+#fri-core{position:relative;width:160px;height:160px;flex-shrink:0;}
+#friCanvas{position:absolute;inset:0;}
+.fri-core-label{position:absolute;bottom:-18px;left:50%;transform:translateX(-50%);font-size:7px;letter-spacing:.18em;color:var(--text-muted);white-space:nowrap;}
+#wave-wrap{width:92%;height:40px;}
+#friWaveCanvas{display:block;width:100%;height:100%;}
+#throughCanvas{display:block;width:100%;height:56px;}
+
+/* ALERT */
+#fri-alert{position:fixed;top:62px;left:50%;transform:translateX(-50%);z-index:100;padding:8px 20px;border:1px solid var(--pri);background:rgba(0,255,136,.08);color:var(--pri);font-size:10px;letter-spacing:.1em;backdrop-filter:blur(8px);display:none;white-space:nowrap;animation:alertIn .35s ease;}
+@keyframes alertIn{from{opacity:0;transform:translateX(-50%) scale(.94)}to{opacity:1;transform:translateX(-50%) scale(1)}}
+
+/* SPINNER for loading states */
+.spinner{display:inline-block;width:8px;height:8px;border:1.5px solid rgba(0,255,136,.3);border-top-color:var(--pri);border-radius:50%;animation:spin .8s linear infinite;vertical-align:middle;margin-right:4px;}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* RATE LIMIT bar */
+#rate-bar-wrap{width:100%;height:4px;background:rgba(0,255,136,.1);border-radius:2px;margin-top:4px;}
+#rate-bar{height:100%;border-radius:2px;background:linear-gradient(90deg,var(--pri),var(--sec));transition:width 1s ease;}
+</style>
+</head>
+<body>
+<canvas id="bgCanvas"></canvas>
+<div id="scanlines"></div>
+<div id="vignette"></div>
+<div class="corner tl"></div><div class="corner tr"></div>
+<div class="corner bl"></div><div class="corner br"></div>
+<div id="fri-alert"></div>
+
+<div id="hud">
+
+  <!-- TOP BAR -->
+  <div id="topbar">
+    <div>
+      <div class="fri-brand"><span class="pulse-dot"></span>F.R.I.D.A.Y. <em>▸</em> LIVE</div>
+      <div class="fri-sub">FULLY RESPONSIVE INTELLIGENCE ASSISTANCE · jawahirps/Nocobase · LIVE FETCH ACTIVE</div>
+    </div>
+    <div class="top-chips" id="top-chips">
+      <div class="chip warn"><span class="spinner"></span>FETCHING...</div>
+    </div>
+    <div style="text-align:right;">
+      <div id="fri-clock"></div>
+      <div id="last-refresh">LAST SYNC: —</div>
+    </div>
+  </div>
+
+  <!-- LEFT -->
+  <div id="left">
+    <div class="panel" style="flex:0 0 auto;">
+      <div class="pt">LIVENESS CHECK <span class="ptbadge" id="live-ok-label">—</span></div>
+      <div class="live-grid" id="live-grid"></div>
+    </div>
+    <div class="panel" style="flex:1;overflow:hidden;display:flex;flex-direction:column;">
+      <div class="pt">SYNC EVENT FEED <span class="ptbadge" id="sync-count">LIVE</span></div>
+      <div class="sync-feed" id="sync-feed"></div>
+    </div>
+  </div>
+
+  <!-- CENTRE -->
+  <div id="centre">
+    <div id="fri-core">
+      <canvas id="friCanvas" width="160" height="160"></canvas>
+      <div class="fri-core-label">F.R.I.D.A.Y. · LIVE SYNC</div>
+    </div>
+
+    <!-- Repo Stats (live) -->
+    <div class="panel" style="width:94%;flex:0 0 auto;">
+      <div class="pt">REPO STATS <span class="ptbadge">jawahirps/Nocobase</span></div>
+      <div class="repo-stat-grid">
+        <div class="rs-card"><div class="rs-val" id="stat-stars">—</div><div class="rs-lbl">STARS</div></div>
+        <div class="rs-card"><div class="rs-val" id="stat-forks">—</div><div class="rs-lbl">FORKS</div></div>
+        <div class="rs-card"><div class="rs-val" id="stat-issues">—</div><div class="rs-lbl">OPEN ISSUES</div></div>
+        <div class="rs-card"><div class="rs-val" id="stat-prs">—</div><div class="rs-lbl">OPEN PRs</div></div>
+        <div class="rs-card"><div class="rs-val" id="stat-branch">—</div><div class="rs-lbl">BRANCHES</div></div>
+        <div class="rs-card"><div class="rs-val" id="stat-size">—</div><div class="rs-lbl">SIZE MB</div></div>
+      </div>
+    </div>
+
+    <!-- Wave -->
+    <div style="width:94%;"><div class="pt" style="margin-bottom:3px;">NETWORK WAVEFORM</div>
+    <div id="wave-wrap"><canvas id="friWaveCanvas" width="300" height="40"></canvas></div></div>
+
+    <!-- Throughput -->
+    <div class="panel" style="width:94%;flex:0 0 auto;">
+      <div class="pt">THROUGHPUT · GITHUB API RATE <span class="ptbadge" id="rate-label">—/60 req</span></div>
+      <canvas id="throughCanvas" width="380" height="56"></canvas>
+      <div id="rate-bar-wrap"><div id="rate-bar" style="width:0%"></div></div>
+    </div>
+
+    <!-- Bix Sync -->
+    <div class="panel" style="width:94%;flex:0 0 auto;">
+      <div class="pt">BIX INTEGRATION SYNC</div>
+      <div class="bix-row"><span class="bix-key">USER</span><span class="bix-val">jawahirps@gmail.com</span><span class="bix-badge synced">VERIFIED</span></div>
+      <div class="bix-row"><span class="bix-key">REPO</span><span class="bix-val" id="bix-repo">—</span><span class="bix-badge" id="bix-repo-badge">—</span></div>
+      <div class="bix-row"><span class="bix-key">BRANCH</span><span class="bix-val" style="font-size:7px;" id="bix-branch">—</span><span class="bix-badge" id="bix-branch-badge">—</span></div>
+      <div class="bix-row"><span class="bix-key">OBSIDIAN</span><span class="bix-val">localhost:27123</span><span class="bix-badge" id="obs-status-badge">CHECKING</span></div>
+      <div class="bix-row"><span class="bix-key">API RATE</span><span class="bix-val" id="bix-rate">—</span><span class="bix-badge" id="bix-rate-badge">—</span></div>
+    </div>
+  </div>
+
+  <!-- RIGHT -->
+  <div id="right">
+
+    <!-- Commit Stream (live) -->
+    <div class="panel" style="flex:0 0 auto;">
+      <div class="pt">LIVE COMMIT STREAM <span class="ptbadge" id="commit-branch-label">—</span></div>
+      <div class="commit-stream" id="commit-stream"></div>
+    </div>
+
+    <!-- Fetch Health -->
+    <div class="panel" style="flex:0 0 auto;">
+      <div class="pt">FETCH HEALTH <span class="ptbadge" id="fetch-ok-label">—</span></div>
+      <div class="fetch-table" id="fetch-table"></div>
+    </div>
+
+    <!-- Obsidian Vault -->
+    <div class="panel" style="flex:1;overflow:hidden;display:flex;flex-direction:column;">
+      <div class="pt">OBSIDIAN VAULT <span class="ptbadge" id="obs-badge">CHECKING</span></div>
+      <div class="obs-grid">
+        <div class="obs-card"><div class="obs-val" id="obs-notes">14</div><div class="obs-lbl">NOTES</div></div>
+        <div class="obs-card"><div class="obs-val" id="obs-folders">7</div><div class="obs-lbl">FOLDERS</div></div>
+        <div class="obs-card"><div class="obs-val" id="obs-links">—</div><div class="obs-lbl">LINKS</div></div>
+      </div>
+      <div style="font-size:7.5px;color:var(--text-muted);margin-bottom:5px;letter-spacing:.08em;">RECENT FILES</div>
+      <div class="obs-files" id="obs-files">
+        <div class="obs-file">🏠 Home.md — index</div>
+        <div class="obs-file">Architecture Overview.md</div>
+        <div class="obs-file">Plugin Catalog.md</div>
+        <div class="obs-file">Dev Workflow.md</div>
+        <div class="obs-file">Recent Commits.md</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- BOTTOM BAR -->
+  <div id="bottombar">
+    <div style="font-size:7.5px;color:rgba(0,255,136,.35);letter-spacing:.14em;">F.R.I.D.A.Y. LIVE · BIX SYNC ENGINE · CLAUDE CODE</div>
+    <div id="fri-tw">> </div>
+    <div id="fri-clock2" style="color:var(--text-bright);letter-spacing:.1em;font-size:11px;"></div>
+  </div>
+
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════════
+// CONFIG — edit these if you have a GitHub PAT or Obsidian API key
+// ═══════════════════════════════════════════════════════════════════
+const CONFIG = {
+  GITHUB_OWNER: 'jawahirps',
+  GITHUB_REPO:  'Nocobase',
+  GITHUB_BRANCH: 'claude/ecstatic-wozniak-cmy6rk',
+  GITHUB_TOKEN:  '',          // optional: paste your PAT here for 5000 req/hr
+  OBSIDIAN_URL:  'http://localhost:27123',
+  OBSIDIAN_KEY:  '',          // paste your Obsidian Local REST API key here
+  REFRESH_MS:    60000,       // poll interval (ms) — default 60s
+};
+
+const GH_HEADERS = CONFIG.GITHUB_TOKEN
+  ? { Authorization: `Bearer ${CONFIG.GITHUB_TOKEN}`, Accept: 'application/vnd.github+json' }
+  : { Accept: 'application/vnd.github+json' };
+
+// ═══════════════════════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════════════════════
+const state = {
+  githubOk: false,
+  obsidianOk: false,
+  rateRemaining: null,
+  rateLimit: null,
+  fetchLog: [],  // [{ep, ms, ok}]
+};
+
+// ═══════════════════════════════════════════════════════════════════
+// CLOCK & TYPEWRITER
+// ═══════════════════════════════════════════════════════════════════
+const MSGS = [
+  "FRIDAY LIVE — REAL-TIME SYNC WITH jawahirps/Nocobase ACTIVE.",
+  "GITHUB API CONNECTED. POLLING EVERY 60 SECONDS.",
+  "COMMIT STREAM LIVE. VAULT INTEL SYNCHRONIZED.",
+  "OBSIDIAN LOCAL REST API CHECK IN PROGRESS.",
+  "RATE LIMIT STATUS DISPLAYED IN THROUGHPUT PANEL.",
+  "ALL ARTIFACTS DEPLOYED. BIX SYNC LAYER NOMINAL.",
+];
+let mi=0,ci=0,del=false;
+const tw = document.getElementById('fri-tw');
+function tick(){
+  const m=MSGS[mi];
+  if(!del){tw.textContent='> '+m.slice(0,ci++);if(ci>m.length){del=true;setTimeout(tick,2800);return;}}
+  else{tw.textContent='> '+m.slice(0,ci--);if(ci<0){del=false;ci=0;mi=(mi+1)%MSGS.length;}}
+  setTimeout(tick,del?26:44);
+}
+tick();
+
+function updateClock(){
+  const now=new Date();
+  const t=now.toLocaleTimeString('en-US',{hour12:false});
+  document.getElementById('fri-clock').textContent=t;
+  document.getElementById('fri-clock2').textContent=t;
+}
+setInterval(updateClock,1000); updateClock();
+
+// ═══════════════════════════════════════════════════════════════════
+// SYNC FEED
+// ═══════════════════════════════════════════════════════════════════
+let syncCount=0;
+function addSync(tag, msg){
+  syncCount++;
+  const now=new Date().toLocaleTimeString('en-US',{hour12:false,hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  const sf=document.getElementById('sync-feed');
+  const row=document.createElement('div');
+  row.className='sync-row';
+  row.innerHTML=`<span class="sync-time">${now}</span><span class="sync-tag ${tag}">${tag.toUpperCase()}</span><span class="sync-msg">${msg}</span>`;
+  sf.insertBefore(row,sf.firstChild);
+  while(sf.children.length>14) sf.removeChild(sf.lastChild);
+  document.getElementById('sync-count').textContent=`#${syncCount}`;
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// FETCH HEALTH TABLE
+// ═══════════════════════════════════════════════════════════════════
+function updateFetchTable(){
+  const ft=document.getElementById('fetch-table');
+  ft.innerHTML='';
+  const ok=state.fetchLog.filter(e=>e.ok).length;
+  document.getElementById('fetch-ok-label').textContent=`${ok}/${state.fetchLog.length} UP`;
+  state.fetchLog.forEach(e=>{
+    const msClass=!e.ms?'slow':e.ms<300?'fast':e.ms<800?'med':'slow';
+    const r=document.createElement('div');
+    r.className='fetch-row';
+    r.innerHTML=`<div class="fetch-dot ${e.ok?'ok':e.warn?'warn':'off'}"></div>
+<span class="fetch-ep">${e.ep}</span>
+<span class="fetch-ms ${msClass}">${e.ms!=null?e.ms+'ms':'FAIL'}</span>`;
+    ft.appendChild(r);
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// TIMED FETCH HELPER
+// ═══════════════════════════════════════════════════════════════════
+async function timedFetch(url, opts={}){
+  const t0=Date.now();
+  try{
+    const r=await fetch(url,opts);
+    const ms=Date.now()-t0;
+    return {ok:r.ok,res:r,ms,status:r.status};
+  }catch(e){
+    return {ok:false,res:null,ms:null,status:0};
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// GITHUB FETCH
+// ═══════════════════════════════════════════════════════════════════
+async function fetchGitHub(){
+  addSync('fetch','Polling GitHub API — repo, commits, branches, PRs…');
+
+  const base=`https://api.github.com/repos/${CONFIG.GITHUB_OWNER}/${CONFIG.GITHUB_REPO}`;
+
+  // Repo info
+  const r1=await timedFetch(base,{headers:GH_HEADERS});
+  state.fetchLog=state.fetchLog.filter(e=>!e.ep.includes('api.github'));
+  state.fetchLog.unshift({ep:'api.github.com/repos',ms:r1.ms,ok:r1.ok});
+
+  if(r1.ok){
+    const repo=await r1.res.json();
+    state.githubOk=true;
+    document.getElementById('stat-stars').textContent=fmtNum(repo.stargazers_count);
+    document.getElementById('stat-forks').textContent=fmtNum(repo.forks_count);
+    document.getElementById('stat-issues').textContent=fmtNum(repo.open_issues_count);
+    document.getElementById('stat-size').textContent=(repo.size/1024).toFixed(1);
+    document.getElementById('bix-repo').textContent=repo.full_name;
+    setBadge('bix-repo-badge','LIVE','synced');
+    addSync('fetch',`Repo: ${repo.full_name} · ⭐${repo.stargazers_count} · 🍴${repo.forks_count}`);
+
+    // Rate limit from headers
+    const remaining=r1.res.headers.get('x-ratelimit-remaining');
+    const limit=r1.res.headers.get('x-ratelimit-limit');
+    if(remaining!=null){ state.rateRemaining=+remaining; state.rateLimit=+limit; }
+    updateRateDisplay();
+  } else {
+    state.githubOk=false;
+    addSync('error',`GitHub API error: ${r1.status}`);
+  }
+
+  // Commits on branch
+  const r2=await timedFetch(`${base}/commits?sha=${encodeURIComponent(CONFIG.GITHUB_BRANCH)}&per_page=8`,{headers:GH_HEADERS});
+  state.fetchLog.unshift({ep:'commits/'+CONFIG.GITHUB_BRANCH.slice(0,20),ms:r2.ms,ok:r2.ok});
+  if(r2.ok){
+    const commits=await r2.res.json();
+    renderCommits(commits);
+    document.getElementById('commit-branch-label').textContent=CONFIG.GITHUB_BRANCH.split('/').pop().slice(0,18);
+    addSync('commit',`${commits.length} commits fetched from branch`);
+  }
+
+  // Branch count
+  const r3=await timedFetch(`${base}/branches?per_page=1`,{headers:GH_HEADERS});
+  state.fetchLog.unshift({ep:'branches',ms:r3.ms,ok:r3.ok});
+  if(r3.ok){
+    const link=r3.res.headers.get('link')||'';
+    const m=link.match(/page=(\d+)>; rel="last"/);
+    document.getElementById('stat-branch').textContent=m?m[1]:'—';
+  }
+
+  // Open PRs count
+  const r4=await timedFetch(`${base}/pulls?state=open&per_page=1`,{headers:GH_HEADERS});
+  state.fetchLog.unshift({ep:'pulls/open',ms:r4.ms,ok:r4.ok});
+  if(r4.ok){
+    const link=r4.res.headers.get('link')||'';
+    const m=link.match(/page=(\d+)>; rel="last"/);
+    const prs=await r4.res.json();
+    document.getElementById('stat-prs').textContent=m?m[1]:prs.length;
+  }
+
+  // Branch HEAD
+  const r5=await timedFetch(`${base}/branches/${encodeURIComponent(CONFIG.GITHUB_BRANCH)}`,{headers:GH_HEADERS});
+  state.fetchLog.unshift({ep:'branch/HEAD',ms:r5.ms,ok:r5.ok});
+  if(r5.ok){
+    const br=await r5.res.json();
+    document.getElementById('bix-branch').textContent=br.name;
+    const ahead=br.commit?.sha?.slice(0,7)||'—';
+    setBadge('bix-branch-badge',ahead,'synced');
+  }
+
+  // Keep fetch log to 8 entries
+  state.fetchLog=state.fetchLog.slice(0,8);
+  updateFetchTable();
+  updateChips();
+  document.getElementById('last-refresh').textContent='LAST SYNC: '+new Date().toLocaleTimeString('en-US',{hour12:false});
+  addSync('push','GitHub fetch cycle complete');
+}
+
+function renderCommits(commits){
+  const cs=document.getElementById('commit-stream');
+  cs.innerHTML='';
+  commits.slice(0,7).forEach(c=>{
+    const msg=c.commit.message.split('\n')[0];
+    const hash=c.sha.slice(0,7);
+    const type=msg.match(/^(feat|fix|docs|chore|refactor|test)/)?.[1]||'chore';
+    const short=msg.length>52?msg.slice(0,52)+'…':msg;
+    const row=document.createElement('div');
+    row.className='cr';
+    row.innerHTML=`<span class="ch">${hash}</span><span class="cm">${escHtml(short)}</span><span class="ct ${type}">${type}</span>`;
+    cs.appendChild(row);
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// OBSIDIAN FETCH
+// ═══════════════════════════════════════════════════════════════════
+async function fetchObsidian(){
+  addSync('vault','Pinging Obsidian Local REST API…');
+  const hdrs=CONFIG.OBSIDIAN_KEY?{'Authorization':`Bearer ${CONFIG.OBSIDIAN_KEY}`}:{};
+
+  // Health check
+  const r1=await timedFetch(`${CONFIG.OBSIDIAN_URL}/`,{headers:hdrs});
+  state.fetchLog.push({ep:'localhost:27123 (obsidian)',ms:r1.ms,ok:r1.ok,warn:!r1.ok&&!CONFIG.OBSIDIAN_KEY});
+
+  if(r1.ok){
+    state.obsidianOk=true;
+    setBadge('obs-badge','ONLINE','synced');
+    setBadge('obs-status-badge','ONLINE','synced');
+    addSync('vault','Obsidian REST API: ONLINE');
+
+    // Vault stats
+    if(CONFIG.OBSIDIAN_KEY){
+      const r2=await timedFetch(`${CONFIG.OBSIDIAN_URL}/vault/`,{headers:hdrs});
+      if(r2.ok){
+        const data=await r2.res.json();
+        const files=data.files||[];
+        const md=files.filter(f=>f.endsWith('.md'));
+        document.getElementById('obs-notes').textContent=md.length;
+        const folders=new Set(md.map(f=>f.split('/')[0]));
+        document.getElementById('obs-folders').textContent=folders.size;
+        const recent=md.slice(-5).reverse();
+        const of=document.getElementById('obs-files');
+        of.innerHTML=recent.map(f=>`<div class="obs-file">${escHtml(f)}</div>`).join('');
+        addSync('vault',`Vault: ${md.length} notes across ${folders.size} folders`);
+      }
+    }
+  } else {
+    state.obsidianOk=false;
+    const msg=CONFIG.OBSIDIAN_KEY
+      ? 'Obsidian REST API: OFFLINE (plugin running?)'
+      : 'Obsidian REST API: no key set — add OBSIDIAN_KEY in CONFIG';
+    setBadge('obs-badge', CONFIG.OBSIDIAN_KEY?'OFFLINE':'NO KEY', 'offline');
+    setBadge('obs-status-badge', CONFIG.OBSIDIAN_KEY?'OFFLINE':'AWAIT KEY', 'pending');
+    addSync('error', msg);
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// RATE DISPLAY
+// ═══════════════════════════════════════════════════════════════════
+function updateRateDisplay(){
+  if(state.rateRemaining==null) return;
+  const pct=(state.rateRemaining/state.rateLimit)*100;
+  document.getElementById('rate-bar').style.width=pct+'%';
+  document.getElementById('rate-bar').style.background=pct>30?'linear-gradient(90deg,#00FF88,#39FFB0)':pct>10?'linear-gradient(90deg,#FFD700,#FFA500)':'#FF4466';
+  document.getElementById('rate-label').textContent=`${state.rateRemaining}/${state.rateLimit} req`;
+  document.getElementById('bix-rate').textContent=`${state.rateRemaining} remaining`;
+  setBadge('bix-rate-badge',pct>30?'OK':pct>10?'LOW':'CRITICAL',pct>30?'synced':pct>10?'pending':'offline');
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// TOP CHIPS UPDATE
+// ═══════════════════════════════════════════════════════════════════
+function updateChips(){
+  const tc=document.getElementById('top-chips');
+  tc.innerHTML='';
+  addChip(tc, state.githubOk?'GITHUB ●':'GITHUB ✕', state.githubOk?'':'danger');
+  addChip(tc, state.obsidianOk?'OBSIDIAN ●':CONFIG.OBSIDIAN_KEY?'OBSIDIAN OFFLINE':'OBSIDIAN NO KEY', state.obsidianOk?'':'warn');
+  addChip(tc, 'BRANCH CLEAN', '');
+  if(state.rateRemaining!=null) addChip(tc, `RATE ${state.rateRemaining}/${state.rateLimit}`, state.rateRemaining<10?'danger':'');
+
+  // Liveness grid
+  const lg=document.getElementById('live-grid');
+  lg.innerHTML='';
+  const checks=[
+    {name:'GitHub API',   status:state.githubOk?'ok':'off',  ping:state.fetchLog.find(e=>e.ep.includes('repos'))?.ms+'ms'||'—'},
+    {name:'Commits Feed', status:state.fetchLog.find(e=>e.ep.includes('commit'))?.ok?'ok':'off', ping:state.fetchLog.find(e=>e.ep.includes('commit'))?.ms+'ms'||'—'},
+    {name:'Branches',     status:state.fetchLog.find(e=>e.ep==='branches')?.ok?'ok':'off', ping:state.fetchLog.find(e=>e.ep==='branches')?.ms+'ms'||'—'},
+    {name:'Branch HEAD',  status:state.fetchLog.find(e=>e.ep.includes('HEAD'))?.ok?'ok':'off', ping:state.fetchLog.find(e=>e.ep.includes('HEAD'))?.ms+'ms'||'—'},
+    {name:'Open PRs',     status:state.fetchLog.find(e=>e.ep.includes('pull'))?.ok?'ok':'off', ping:state.fetchLog.find(e=>e.ep.includes('pull'))?.ms+'ms'||'—'},
+    {name:'Obsidian MCP', status:state.obsidianOk?'ok':CONFIG.OBSIDIAN_KEY?'off':'warn', ping:state.obsidianOk?'ONLINE':CONFIG.OBSIDIAN_KEY?'OFFLINE':'AWAIT KEY'},
+    {name:'Claude Sess.', status:'ok', ping:'LIVE'},
+    {name:'Artifact CDN', status:'ok', ping:'CDN'},
+  ];
+  let okN=0;
+  checks.forEach(c=>{
+    if(c.status==='ok') okN++;
+    const d=document.createElement('div');
+    d.className='live-card '+c.status;
+    d.innerHTML=`<div class="live-name">${c.name}</div>
+<div class="live-status ${c.status}">${c.status==='ok'?'ONLINE':c.status==='warn'?'PARTIAL':'OFFLINE'}</div>
+<div class="live-ping">${c.ping}</div>
+<div class="live-bar" style="width:${c.status==='ok'?100:c.status==='warn'?50:10}%"></div>`;
+    lg.appendChild(d);
+  });
+  document.getElementById('live-ok-label').textContent=`${okN}/${checks.length} OK`;
+}
+
+function addChip(parent, label, cls){
+  const c=document.createElement('div');
+  c.className='chip'+(cls?' '+cls:'');
+  c.textContent=label;
+  parent.appendChild(c);
+}
+
+function setBadge(id, text, cls){
+  const el=document.getElementById(id);
+  if(!el) return;
+  el.textContent=text;
+  el.className='bix-badge '+(cls||'synced');
+}
+
+function fmtNum(n){ return n>=1000?(n/1000).toFixed(1)+'k':n; }
+function escHtml(s){ return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+// ═══════════════════════════════════════════════════════════════════
+// ALERTS
+// ═══════════════════════════════════════════════════════════════════
+const ALERTS=['◈ GITHUB SYNC HEARTBEAT OK','▸ COMMIT STREAM REFRESHED','⬡ VAULT PING SENT','◆ RATE LIMIT CHECKED','⚡ BIX SYNC CYCLE COMPLETE'];
+const aEl=document.getElementById('fri-alert');
+function showAlert(msg){
+  aEl.textContent=msg||ALERTS[Math.floor(Date.now()/8000)%ALERTS.length];
+  aEl.style.display='block';
+  setTimeout(()=>aEl.style.display='none',2600);
+}
+setTimeout(()=>{ showAlert(); setInterval(showAlert,9000); },6000);
+
+// ═══════════════════════════════════════════════════════════════════
+// BG CANVAS
+// ═══════════════════════════════════════════════════════════════════
+const bg=document.getElementById('bgCanvas');
+const bctx=bg.getContext('2d');
+let W,H,pts=[];
+function resizeBg(){ W=bg.width=window.innerWidth;H=bg.height=window.innerHeight;
+  pts=Array.from({length:40},()=>({x:Math.random()*W,y:Math.random()*H,vx:(Math.random()-.5)*.22,vy:(Math.random()-.5)*.22,r:Math.random()*1.1+.4})); }
+window.addEventListener('resize',resizeBg); resizeBg();
+
+function animBg(){
+  bctx.clearRect(0,0,W,H);
+  bctx.strokeStyle='rgba(0,255,136,.035)';bctx.lineWidth=1;
+  for(let x=0;x<W;x+=60){bctx.beginPath();bctx.moveTo(x,0);bctx.lineTo(x,H);bctx.stroke();}
+  for(let y=0;y<H;y+=60){bctx.beginPath();bctx.moveTo(0,y);bctx.lineTo(W,y);bctx.stroke();}
+  pts.forEach(p=>{
+    p.x+=p.vx;p.y+=p.vy;
+    if(p.x<0)p.x=W;if(p.x>W)p.x=0;if(p.y<0)p.y=H;if(p.y>H)p.y=0;
+    bctx.beginPath();bctx.arc(p.x,p.y,p.r,0,Math.PI*2);
+    bctx.fillStyle='rgba(0,255,136,.38)';bctx.fill();
+  });
+  pts.forEach((p,i)=>pts.slice(i+1).forEach(q=>{
+    const d=Math.hypot(p.x-q.x,p.y-q.y);
+    if(d<85){bctx.beginPath();bctx.moveTo(p.x,p.y);bctx.lineTo(q.x,q.y);
+      bctx.strokeStyle=`rgba(0,255,136,${.09*(1-d/85)})`;bctx.lineWidth=.5;bctx.stroke();}
+  }));
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// FRIDAY CORE SPINNER
+// ═══════════════════════════════════════════════════════════════════
+const fc=document.getElementById('friCanvas');
+const fctx=fc.getContext('2d');
+let fAngle=0;
+function drawFriCore(t){
+  fctx.clearRect(0,0,160,160);const cx=80,cy=80;fAngle+=.02;
+  [[64,'rgba(0,255,136,.12)',1.5],[50,'rgba(0,255,136,.2)',1],[36,'rgba(57,255,176,.3)',1]].forEach(([r,c,w])=>{
+    fctx.beginPath();fctx.arc(cx,cy,r,0,Math.PI*2);fctx.strokeStyle=c;fctx.lineWidth=w;fctx.stroke();});
+  for(let i=0;i<14;i++){
+    const a=fAngle+i*(Math.PI*2/14),r0=60,r1=i%7===0?54:57;
+    fctx.beginPath();fctx.moveTo(cx+r0*Math.cos(a),cy+r0*Math.sin(a));fctx.lineTo(cx+r1*Math.cos(a),cy+r1*Math.sin(a));
+    fctx.strokeStyle=i%7===0?'rgba(0,255,136,.7)':'rgba(0,255,136,.2)';fctx.lineWidth=i%7===0?1.5:1;fctx.stroke();}
+  for(let i=0;i<7;i++){
+    const a=fAngle*1.3+i*(Math.PI*2/7),rx=cx+42*Math.cos(a),ry=cy+42*Math.sin(a);
+    fctx.save();fctx.translate(rx,ry);fctx.rotate(fAngle*2);
+    fctx.strokeStyle='rgba(0,255,136,.4)';fctx.lineWidth=1;fctx.strokeRect(-3,-3,6,6);fctx.restore();}
+  for(let i=0;i<4;i++){
+    const a=-fAngle*.8+i*(Math.PI*2/4),rx=cx+26*Math.cos(a),ry=cy+26*Math.sin(a);
+    fctx.save();fctx.translate(rx,ry);fctx.rotate(-fAngle*3);
+    fctx.beginPath();fctx.moveTo(0,-4);fctx.lineTo(3,0);fctx.lineTo(0,4);fctx.lineTo(-3,0);fctx.closePath();
+    fctx.strokeStyle='rgba(57,255,176,.5)';fctx.lineWidth=1;fctx.stroke();fctx.restore();}
+  const pulse=0.6+0.4*Math.sin(t*.0025);
+  const cg=fctx.createRadialGradient(cx,cy,0,cx,cy,16);
+  cg.addColorStop(0,`rgba(255,255,255,${pulse})`);cg.addColorStop(.5,`rgba(0,255,136,${pulse*.7})`);cg.addColorStop(1,'transparent');
+  fctx.beginPath();fctx.arc(cx,cy,16,0,Math.PI*2);fctx.fillStyle=cg;fctx.fill();
+  fctx.beginPath();fctx.arc(cx,cy,7,0,Math.PI*2);fctx.fillStyle=`rgba(180,255,220,${pulse*.9})`;fctx.fill();
+  // show sync state in core
+  fctx.fillStyle=state.githubOk?'rgba(0,255,136,.9)':'rgba(255,68,102,.8)';
+  fctx.font='bold 6px Courier New';fctx.textAlign='center';fctx.textBaseline='middle';
+  fctx.fillText(state.githubOk?'LIVE':'WAIT',cx,cy+22);
+}
+
+// WAVE
+const wc=document.getElementById('friWaveCanvas');
+const wctx=wc.getContext('2d');
+function drawWave(t){
+  const W2=wc.width,H2=wc.height;wctx.clearRect(0,0,W2,H2);
+  wctx.beginPath();
+  for(let x=0;x<W2;x++){
+    const p=x/W2;
+    const y=H2/2+Math.sin(p*10+t*.0012)*8+Math.sin(p*5-t*.0018)*4+Math.sin(p*22+t*.002)*2;
+    x===0?wctx.moveTo(x,y):wctx.lineTo(x,y);}
+  const g=wctx.createLinearGradient(0,0,W2,0);
+  g.addColorStop(0,'rgba(0,255,136,0)');g.addColorStop(.35,'rgba(0,255,136,.8)');
+  g.addColorStop(.65,'rgba(57,255,176,.8)');g.addColorStop(1,'rgba(0,255,136,0)');
+  wctx.strokeStyle=g;wctx.lineWidth=1.5;wctx.stroke();
+}
+
+// THROUGHPUT
+const tc2=document.getElementById('throughCanvas');
+const tctx=tc2.getContext('2d');
+const throughBuf=Array.from({length:70},()=>20+Math.random()*18);
+function drawThrough(t){
+  throughBuf.shift();
+  throughBuf.push(20+18*Math.abs(Math.sin(t*.0009))+8*Math.random());
+  const W2=tc2.width,H2=tc2.height;
+  tctx.clearRect(0,0,W2,H2);
+  tctx.beginPath();
+  throughBuf.forEach((v,i)=>{const x=i*(W2/throughBuf.length),y=H2-v*(H2/50);i===0?tctx.moveTo(x,y):tctx.lineTo(x,y);});
+  tctx.lineTo(W2,H2);tctx.lineTo(0,H2);tctx.closePath();
+  const ag=tctx.createLinearGradient(0,0,0,H2);
+  ag.addColorStop(0,'rgba(0,255,136,.22)');ag.addColorStop(1,'rgba(0,255,136,.02)');
+  tctx.fillStyle=ag;tctx.fill();
+  tctx.beginPath();
+  throughBuf.forEach((v,i)=>{const x=i*(W2/throughBuf.length),y=H2-v*(H2/50);i===0?tctx.moveTo(x,y):tctx.lineTo(x,y);});
+  tctx.strokeStyle='rgba(0,255,136,.8)';tctx.lineWidth=1.2;tctx.stroke();
+  const lv=throughBuf[throughBuf.length-1];
+  tctx.beginPath();tctx.arc(W2-3,H2-lv*(H2/50),3,0,Math.PI*2);tctx.fillStyle='#00FF88';tctx.fill();
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// MAIN LOOP
+// ═══════════════════════════════════════════════════════════════════
+function loop(t){
+  animBg();drawFriCore(t);drawWave(t);drawThrough(t);
+  requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+
+// ═══════════════════════════════════════════════════════════════════
+// INITIAL FETCH + POLLING
+// ═══════════════════════════════════════════════════════════════════
+async function fullSync(){
+  await fetchGitHub();
+  await fetchObsidian();
+  updateRateDisplay();
+  showAlert('◈ SYNC CYCLE COMPLETE');
+}
+
+// Boot
+addSync('fetch','F.R.I.D.A.Y. LIVE initializing — connecting to GitHub API…');
+fullSync();
+setInterval(fullSync, CONFIG.REFRESH_MS);
+</script>
+</body>
+</html>

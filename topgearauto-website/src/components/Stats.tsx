@@ -1,12 +1,12 @@
 import { animate, motion, useInView } from 'framer-motion';
 import { useEffect, useRef, useState } from 'react';
-import { staggerContainer, fadeUp, viewportOnce } from '../animations';
+import { fadeUp, stagger, viewport } from '../animations';
 
 const stats = [
-  { value: 15, suffix: '+', label: 'Years in Business' },
-  { value: 8500, suffix: '+', label: 'Cars Sold' },
-  { value: 150, suffix: '-pt', label: 'Inspection on Every Car' },
-  { value: 98, suffix: '%', label: 'Customer Satisfaction' },
+  { value: 15, suffix: '+', label: 'Years Experience' },
+  { value: 8500, suffix: '+', label: 'Vehicles Sold' },
+  { value: 150, suffix: '-pt', label: 'Inspection Standard' },
+  { value: 98, suffix: '%', label: 'Satisfaction Rate' },
 ];
 
 function Counter({ value, suffix }: { value: number; suffix: string }) {
@@ -17,15 +17,15 @@ function Counter({ value, suffix }: { value: number; suffix: string }) {
   useEffect(() => {
     if (!inView) return;
     const controls = animate(0, value, {
-      duration: 1.6,
-      ease: 'easeOut',
-      onUpdate: (latest) => setDisplay(Math.round(latest)),
+      duration: 2,
+      ease: [0.25, 0.46, 0.45, 0.94],
+      onUpdate: (v) => setDisplay(Math.round(v)),
     });
     return () => controls.stop();
   }, [inView, value]);
 
   return (
-    <span ref={ref}>
+    <span ref={ref} className="stat-number">
       {display.toLocaleString()}
       {suffix}
     </span>
@@ -34,20 +34,18 @@ function Counter({ value, suffix }: { value: number; suffix: string }) {
 
 export default function Stats() {
   return (
-    <section className="stats" aria-label="TopGear Auto by the numbers">
+    <section className="stats-bar" aria-label="Key figures">
       <motion.div
         className="container stats-grid"
-        variants={staggerContainer}
+        variants={stagger}
         initial="hidden"
         whileInView="visible"
-        viewport={viewportOnce}
+        viewport={viewport}
       >
-        {stats.map((stat) => (
-          <motion.div key={stat.label} variants={fadeUp}>
-            <div className="stat-value">
-              <Counter value={stat.value} suffix={stat.suffix} />
-            </div>
-            <div className="stat-label">{stat.label}</div>
+        {stats.map((s) => (
+          <motion.div key={s.label} className="stat-item" variants={fadeUp}>
+            <Counter value={s.value} suffix={s.suffix} />
+            <div className="stat-label">{s.label}</div>
           </motion.div>
         ))}
       </motion.div>

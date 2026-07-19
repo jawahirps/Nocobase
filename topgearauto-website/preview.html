@@ -1,0 +1,509 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="TopGear Auto — premium pre-owned vehicles, expert service and financing." />
+    <title>TopGear Auto | Premium Pre-Owned Vehicles &amp; Service</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <style>
+      :root{--bg:#050507;--bg-elevated:#0c0e14;--surface:rgba(255,255,255,.04);--surface-hover:rgba(255,255,255,.07);--glass:rgba(255,255,255,.06);--glass-border:rgba(255,255,255,.1);--text:#eef0f4;--text-secondary:#7d8590;--accent:#ff3d3d;--accent-glow:rgba(255,61,61,.25);--accent-2:#3d7dff;--gradient-hero:linear-gradient(135deg,#ff3d3d 0%,#ff6b35 50%,#3d7dff 100%);--radius-sm:10px;--radius:16px;--radius-lg:24px;--radius-xl:32px}
+      *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+      html{scroll-behavior:smooth;scroll-padding-top:80px}
+      body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--text);line-height:1.65;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+      a{color:inherit;text-decoration:none}img{max-width:100%;display:block}
+      .container{width:min(1200px,90%);margin:0 auto}.section{position:relative;padding:120px 0}
+      .section-eyebrow{display:inline-flex;align-items:center;gap:8px;color:var(--accent);font-size:.78rem;font-weight:700;letter-spacing:.2em;text-transform:uppercase;margin-bottom:16px}
+      .section-eyebrow::before{content:'';width:24px;height:2px;background:var(--accent);border-radius:1px}
+      .section-heading{font-size:clamp(2rem,4.5vw,3rem);font-weight:800;line-height:1.15;letter-spacing:-.035em;margin-bottom:16px}
+      .gradient-text{background:var(--gradient-hero);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+      .section-desc{color:var(--text-secondary);font-size:1.05rem;max-width:520px;margin-bottom:56px}
+      .btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;padding:15px 30px;border-radius:999px;font-weight:600;font-size:.92rem;border:none;cursor:pointer;transition:all .25s;white-space:nowrap;font-family:inherit}
+      .btn-primary{background:var(--accent);color:#fff;box-shadow:0 0 24px var(--accent-glow)}
+      .btn-primary:hover{background:#e63535;box-shadow:0 0 40px var(--accent-glow);transform:translateY(-1px)}
+      .btn-secondary{background:var(--surface);color:var(--text);border:1px solid var(--glass-border);backdrop-filter:blur(12px)}
+      .btn-secondary:hover{background:var(--surface-hover)}
+      /* Navbar */
+      .navbar{position:fixed;inset:0 0 auto 0;z-index:100;transition:background .3s,border-color .3s}
+      .navbar.scrolled{background:rgba(5,5,7,.82);backdrop-filter:blur(20px);border-bottom:1px solid var(--glass-border)}
+      .navbar-inner{display:flex;align-items:center;justify-content:space-between;height:76px}
+      .logo{display:flex;align-items:center;gap:10px;font-size:1.25rem;font-weight:800;letter-spacing:-.02em}
+      .logo-mark{display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:10px;background:var(--accent);color:#fff;font-weight:900;font-size:.95rem}
+      .nav-links{display:flex;align-items:center;gap:36px;list-style:none}
+      .nav-links a{font-size:.88rem;font-weight:500;color:var(--text-secondary);transition:color .2s}
+      .nav-links a:hover{color:var(--text)}.nav-cta{padding:10px 24px!important;font-size:.85rem!important}
+      @media(max-width:860px){.nav-links{display:none}}
+      /* Hero */
+      .hero{position:relative;min-height:100vh;display:flex;align-items:center;overflow:hidden}
+      .hero-bg{position:absolute;inset:0;z-index:0}
+      .orb{position:absolute;border-radius:50%;filter:blur(120px)}
+      .orb-1{width:600px;height:600px;background:var(--accent);top:-15%;right:-5%;opacity:.18}
+      .orb-2{width:500px;height:500px;background:var(--accent-2);bottom:-20%;left:-10%;opacity:.12}
+      .orb-3{width:300px;height:300px;background:#ff6b35;top:40%;left:30%;opacity:.08}
+      .hero-content{position:relative;z-index:1;display:grid;grid-template-columns:1fr 1fr;gap:64px;align-items:center;padding-top:76px}
+      .hero-text h1{font-size:clamp(2.8rem,6.5vw,4.5rem);font-weight:800;line-height:1.05;letter-spacing:-.04em;margin-bottom:24px}
+      .hero-text p{color:var(--text-secondary);font-size:1.12rem;max-width:440px;margin-bottom:36px;line-height:1.7}
+      .hero-actions{display:flex;flex-wrap:wrap;gap:14px;margin-bottom:48px}
+      .hero-trust{display:flex;align-items:center;gap:16px;padding-top:8px}
+      .trust-avatars{display:flex}
+      .trust-avatars span{display:inline-flex;align-items:center;justify-content:center;width:38px;height:38px;border-radius:50%;background:var(--surface);border:2px solid var(--bg);font-size:.85rem;margin-right:-10px}
+      .trust-text{font-size:.85rem;color:var(--text-secondary)}
+      .trust-text strong{color:var(--text);font-weight:700}
+      .hero-visual{position:relative}
+      .hero-image-wrapper{position:relative;border-radius:var(--radius-lg);overflow:hidden;border:1px solid var(--glass-border);aspect-ratio:4/3}
+      .hero-image-wrapper img{width:100%;height:100%;object-fit:cover}
+      .hero-image-wrapper::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,transparent 50%,rgba(5,5,7,.6));pointer-events:none}
+      .hero-floating-card{position:absolute;background:rgba(12,14,20,.85);backdrop-filter:blur(16px);border:1px solid var(--glass-border);border-radius:var(--radius);padding:16px 22px}
+      .floating-rating{bottom:-16px;left:24px;display:flex;align-items:center;gap:12px}
+      .floating-rating .stars{color:#facc15;font-size:1rem;letter-spacing:1px}
+      .rating-info{font-size:.82rem;color:var(--text-secondary)}.rating-info strong{color:var(--text);font-size:1.05rem;display:block}
+      .floating-price{top:24px;right:-20px}.floating-price .label{font-size:.72rem;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.1em}
+      .floating-price .value{font-size:1.3rem;font-weight:800;color:var(--accent)}
+      @media(max-width:860px){.hero-content{grid-template-columns:1fr;padding-top:120px;padding-bottom:80px}.floating-price{display:none}}
+      /* Stats */
+      .stats-bar{border-top:1px solid var(--glass-border);border-bottom:1px solid var(--glass-border);background:var(--bg-elevated)}
+      .stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:32px;padding:56px 0}
+      .stat-item{text-align:center;position:relative}
+      .stat-item:not(:last-child)::after{content:'';position:absolute;right:0;top:15%;height:70%;width:1px;background:var(--glass-border)}
+      .stat-number{font-size:2.8rem;font-weight:800;letter-spacing:-.03em;background:var(--gradient-hero);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+      .stat-label{color:var(--text-secondary);font-size:.88rem;margin-top:4px}
+      @media(max-width:760px){.stats-grid{grid-template-columns:repeat(2,1fr)}.stat-item::after{display:none}}
+      /* Cars */
+      .cars-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px}
+      .car-card{background:var(--glass);backdrop-filter:blur(12px);border:1px solid var(--glass-border);border-radius:var(--radius-lg);overflow:hidden;transition:border-color .3s,transform .3s}
+      .car-card:hover{border-color:rgba(255,61,61,.3);transform:translateY(-8px)}
+      .car-card-image{position:relative;overflow:hidden}
+      .car-card-image img{width:100%;aspect-ratio:16/10;object-fit:cover;transition:transform .5s}
+      .car-card:hover .car-card-image img{transform:scale(1.05)}
+      .car-badge{position:absolute;top:14px;left:14px;background:rgba(5,5,7,.75);backdrop-filter:blur(8px);border:1px solid var(--glass-border);border-radius:999px;padding:6px 14px;font-size:.75rem;font-weight:600;color:var(--accent)}
+      .car-card-body{padding:24px}.car-card-body h3{font-size:1.1rem;font-weight:700;margin-bottom:6px}
+      .car-specs{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:18px}
+      .car-specs span{background:var(--surface);border-radius:6px;padding:4px 10px;font-size:.78rem;color:var(--text-secondary)}
+      .car-year{font-size:.78rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);margin-bottom:4px}
+      .car-tagline{font-size:.85rem;color:var(--text-secondary);margin-bottom:12px}
+      .car-footer{display:flex;align-items:center;justify-content:space-between}
+      .car-price-block{display:flex;align-items:baseline;gap:4px}
+      .car-currency{font-size:.78rem;font-weight:700;color:var(--text-secondary)}
+      .car-price{font-size:1.3rem;font-weight:800;color:var(--accent)}
+      .car-cta{display:inline-flex;align-items:center;gap:6px;background:none;border:none;color:var(--accent);font-size:.85rem;font-weight:600;cursor:pointer;padding:0;font-family:inherit;transition:opacity .2s}
+      .car-cta:hover{opacity:.75}
+      @media(max-width:860px){.cars-grid{grid-template-columns:1fr}}
+      /* Modal */
+      .modal-overlay{position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.7);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;padding:24px;animation:fadeIn .2s ease}
+      @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+      .modal-box{background:#0c0e14;border:1px solid var(--glass-border);border-radius:var(--radius-lg);width:min(760px,100%);max-height:90vh;overflow-y:auto;display:grid;grid-template-columns:1fr 1fr;animation:slideUp .25s cubic-bezier(.25,.46,.45,.94)}
+      @keyframes slideUp{from{opacity:0;transform:translateY(24px) scale(.95)}to{opacity:1;transform:none}}
+      @media(max-width:640px){.modal-box{grid-template-columns:1fr}}
+      .modal-image{position:relative}.modal-image img{width:100%;height:100%;object-fit:cover;border-radius:var(--radius-lg) 0 0 var(--radius-lg);min-height:260px}
+      @media(max-width:640px){.modal-image img{border-radius:var(--radius-lg) var(--radius-lg) 0 0;min-height:220px;max-height:220px}}
+      .modal-close{position:absolute;top:14px;right:14px;background:rgba(5,5,7,.75);backdrop-filter:blur(8px);border:1px solid var(--glass-border);border-radius:50%;width:34px;height:34px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text);font-size:1rem;z-index:1;transition:background .2s}
+      .modal-close:hover{background:rgba(255,61,61,.2)}
+      .modal-body{padding:28px 24px;display:flex;flex-direction:column;gap:16px}
+      .modal-year{font-size:.75rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--accent)}
+      .modal-title{font-size:1.4rem;font-weight:800;line-height:1.2;margin:4px 0}
+      .modal-tagline{font-size:.88rem;color:var(--text-secondary)}
+      .modal-price-block{margin-left:auto;text-align:right}
+      .modal-currency{font-size:.78rem;font-weight:700;color:var(--text-secondary);display:block}
+      .modal-price{font-size:1.6rem;font-weight:800;color:var(--accent)}
+      .modal-header{display:flex;align-items:flex-start;gap:12px}
+      .modal-header-left{flex:1}
+      .modal-specs-row{display:flex;flex-wrap:wrap;gap:6px}
+      .car-specs-pill{background:var(--surface);border-radius:6px;padding:4px 10px;font-size:.78rem;color:var(--text-secondary)}
+      .modal-highlight{font-size:.83rem;font-weight:600;color:#22c55e;background:rgba(34,197,94,.1);padding:8px 14px;border-radius:8px;border:1px solid rgba(34,197,94,.2)}
+      .modal-features-title{font-size:.83rem;font-weight:700;color:var(--text-secondary);letter-spacing:.08em;text-transform:uppercase;margin-bottom:10px}
+      .features-list{list-style:none;display:grid;grid-template-columns:1fr 1fr;gap:6px}
+      @media(max-width:480px){.features-list{grid-template-columns:1fr}}
+      .feature-item{display:flex;align-items:flex-start;gap:8px;font-size:.82rem;color:var(--text-secondary)}
+      .feature-check{display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:50%;background:rgba(34,197,94,.15);color:#22c55e;flex-shrink:0;margin-top:1px;font-size:.65rem}
+      .modal-actions{display:flex;gap:10px;margin-top:auto}
+      .modal-actions .btn{flex:1;padding:12px 16px;font-size:.85rem}
+      /* Services */
+      .services-section{background:radial-gradient(600px 400px at 10% 80%,rgba(61,125,255,.06),transparent),radial-gradient(600px 400px at 90% 20%,rgba(255,61,61,.05),transparent)}
+      .services-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+      .service-card{background:var(--glass);backdrop-filter:blur(8px);border:1px solid var(--glass-border);border-radius:var(--radius);padding:32px 28px;transition:border-color .3s,background .3s,transform .3s}
+      .service-card:hover{border-color:rgba(255,255,255,.18);background:var(--surface-hover);transform:translateY(-6px)}
+      .service-icon-wrap{width:52px;height:52px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:1.5rem;margin-bottom:20px}
+      .service-icon-wrap.red{background:rgba(255,61,61,.12)}.service-icon-wrap.blue{background:rgba(61,125,255,.12)}
+      .service-icon-wrap.orange{background:rgba(255,107,53,.12)}.service-icon-wrap.green{background:rgba(34,197,94,.12)}
+      .service-icon-wrap.purple{background:rgba(168,85,247,.12)}.service-icon-wrap.teal{background:rgba(20,184,166,.12)}
+      .service-card h3{font-size:1.05rem;font-weight:700;margin-bottom:8px}
+      .service-card p{color:var(--text-secondary);font-size:.9rem;line-height:1.65}
+      @media(max-width:860px){.services-grid{grid-template-columns:1fr}}
+      /* Testimonials */
+      .testimonials-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px}
+      .testimonial-card{background:var(--glass);backdrop-filter:blur(8px);border:1px solid var(--glass-border);border-radius:var(--radius);padding:32px 28px;display:flex;flex-direction:column;gap:20px}
+      .testimonial-stars{color:#facc15;font-size:.95rem;letter-spacing:3px}
+      .testimonial-card blockquote{color:var(--text-secondary);font-size:.95rem;line-height:1.7;flex:1}
+      .testimonial-footer{display:flex;align-items:center;gap:12px}
+      .testimonial-avatar{width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1rem;font-weight:700;flex-shrink:0}
+      .testimonial-avatar.m{background:rgba(255,61,61,.15);color:var(--accent)}
+      .testimonial-avatar.p{background:rgba(61,125,255,.15);color:var(--accent-2)}
+      .testimonial-avatar.d{background:rgba(34,197,94,.15);color:#22c55e}
+      .testimonial-meta strong{display:block;font-size:.9rem}.testimonial-meta span{color:var(--text-secondary);font-size:.8rem}
+      @media(max-width:860px){.testimonials-grid{grid-template-columns:1fr}}
+      /* CTA */
+      .cta-section{position:relative;overflow:hidden}
+      .cta-box{position:relative;border-radius:var(--radius-xl);padding:clamp(48px,8vw,80px) clamp(32px,6vw,64px);text-align:center;overflow:hidden;border:1px solid var(--glass-border)}
+      .cta-box::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(255,61,61,.12),rgba(61,125,255,.1));z-index:0}
+      .cta-box>*{position:relative;z-index:1}
+      .cta-box h2{font-size:clamp(1.8rem,4.5vw,2.8rem);font-weight:800;letter-spacing:-.03em;margin-bottom:14px}
+      .cta-box p{color:var(--text-secondary);max-width:480px;margin:0 auto 36px;font-size:1.05rem}
+      .cta-actions{display:flex;flex-wrap:wrap;gap:14px;justify-content:center}
+      /* Footer */
+      .footer{border-top:1px solid var(--glass-border);padding:40px 0;color:var(--text-secondary);font-size:.85rem}
+      .footer-inner{display:flex;flex-wrap:wrap;gap:24px;align-items:center;justify-content:space-between}
+      .footer-links{display:flex;gap:28px;list-style:none}.footer-links a:hover{color:var(--text)}
+      /* Scroll animation helper */
+      .reveal{opacity:0;transform:translateY(32px);transition:opacity .65s cubic-bezier(.25,.46,.45,.94),transform .65s cubic-bezier(.25,.46,.45,.94)}
+      .reveal.visible{opacity:1;transform:none}
+      .reveal-delay-1{transition-delay:.1s}.reveal-delay-2{transition-delay:.2s}.reveal-delay-3{transition-delay:.3s}
+    </style>
+  </head>
+  <body>
+    <!-- Navbar -->
+    <header class="navbar scrolled" id="navbar">
+      <div class="container navbar-inner">
+        <a href="#top" class="logo" aria-label="TopGear Auto home">
+          <span class="logo-mark">TG</span>TopGear Auto
+        </a>
+        <nav aria-label="Main navigation">
+          <ul class="nav-links">
+            <li><a href="#inventory">Inventory</a></li>
+            <li><a href="#services">Services</a></li>
+            <li><a href="#reviews">Reviews</a></li>
+            <li><a href="#contact">Contact</a></li>
+            <li><a href="#contact" class="btn btn-primary nav-cta">Get Started</a></li>
+          </ul>
+        </nav>
+      </div>
+    </header>
+
+    <main>
+      <!-- Hero -->
+      <section class="hero" id="top">
+        <div class="hero-bg" aria-hidden="true">
+          <div class="orb orb-1"></div>
+          <div class="orb orb-2"></div>
+          <div class="orb orb-3"></div>
+        </div>
+        <div class="container hero-content">
+          <div class="hero-text">
+            <h1 class="reveal">Find Your Perfect<br><span class="gradient-text">Ride Today</span></h1>
+            <p class="reveal reveal-delay-1">Hand-picked premium vehicles. 150-point inspections. Same-day financing. TopGear Auto makes buying your dream car effortless.</p>
+            <div class="hero-actions reveal reveal-delay-2">
+              <a href="#inventory" class="btn btn-primary">Browse Inventory →</a>
+              <a href="#services" class="btn btn-secondary">Our Services</a>
+            </div>
+            <div class="hero-trust reveal reveal-delay-3">
+              <div class="trust-avatars" aria-hidden="true">
+                <span>JK</span><span>AL</span><span>PS</span><span>MT</span>
+              </div>
+              <div class="trust-text"><strong>2,300+</strong> happy drivers this year</div>
+            </div>
+          </div>
+          <div class="hero-visual reveal reveal-delay-1">
+            <div class="hero-image-wrapper">
+              <img src="https://images.unsplash.com/photo-1503376780353-7e6692767b70?auto=format&fit=crop&w=1200&q=80" alt="Sleek sports car at TopGear Auto showroom" loading="eager" />
+            </div>
+            <div class="hero-floating-card floating-rating">
+              <div class="stars" aria-label="4.9 stars">★★★★★</div>
+              <div class="rating-info"><strong>4.9 / 5</strong>Google Reviews</div>
+            </div>
+            <div class="hero-floating-card floating-price">
+              <div class="label">Starting From</div>
+              <div class="value">$19,900</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Stats -->
+      <section class="stats-bar" aria-label="Key figures">
+        <div class="container stats-grid">
+          <div class="stat-item reveal"><span class="stat-number">15+</span><div class="stat-label">Years Experience</div></div>
+          <div class="stat-item reveal reveal-delay-1"><span class="stat-number">8,500+</span><div class="stat-label">Vehicles Sold</div></div>
+          <div class="stat-item reveal reveal-delay-2"><span class="stat-number">150-pt</span><div class="stat-label">Inspection Standard</div></div>
+          <div class="stat-item reveal reveal-delay-3"><span class="stat-number">98%</span><div class="stat-label">Satisfaction Rate</div></div>
+        </div>
+      </section>
+
+      <!-- Featured Inventory -->
+      <section class="section" id="inventory">
+        <div class="container">
+          <span class="section-eyebrow reveal">Current Listings</span>
+          <h2 class="section-heading reveal reveal-delay-1">Available <span class="gradient-text">Now</span></h2>
+          <p class="section-desc reveal reveal-delay-2">Every vehicle is GCC-specified, inspected and comes with full history. Prices in AED — financing available.</p>
+          <div class="cars-grid">
+            <article class="car-card reveal" data-car="civic">
+              <div class="car-card-image">
+                <img src="/cars/civic-rs-main.jpg" alt="Honda Civic RS 2019 Crystal Black — side view" loading="lazy"
+                  onerror="this.src='https://images.unsplash.com/photo-1617469767053-d3b523a0b982?auto=format&fit=crop&w=900&q=80'" />
+                <span class="car-badge">GCC Spec</span>
+              </div>
+              <div class="car-card-body">
+                <div class="car-year">2019</div>
+                <h3>Honda Civic RS</h3>
+                <p class="car-tagline">1.5L VTEC Turbo · Crystal Black · Single Owner</p>
+                <div class="car-specs"><span>92,000 km</span><span>Auto</span><span>Petrol Turbo</span><span>GCC Spec</span></div>
+                <div class="car-footer">
+                  <div class="car-price-block"><span class="car-currency">AED</span><span class="car-price">54,000</span></div>
+                  <button class="car-cta" onclick="openModal('civic')">View Details ›</button>
+                </div>
+              </div>
+            </article>
+            <article class="car-card reveal reveal-delay-1" data-car="pegas">
+              <div class="car-card-image">
+                <img src="/cars/kia-pegas-main.jpg" alt="Kia Pegas 2023 GCC Full Option" loading="lazy"
+                  onerror="this.src='https://images.unsplash.com/photo-1580274455191-1c62238fa333?auto=format&fit=crop&w=900&q=80'" />
+                <span class="car-badge">Full Option</span>
+              </div>
+              <div class="car-card-body">
+                <div class="car-year">2023</div>
+                <h3>Kia Pegas</h3>
+                <p class="car-tagline">4-Cyl · GCC Spec · 64k km</p>
+                <div class="car-specs"><span>64,000 km</span><span>Auto</span><span>Petrol</span><span>GCC Spec</span></div>
+                <div class="car-footer">
+                  <div class="car-price-block"><span class="car-currency">AED</span><span class="car-price">35,000</span></div>
+                  <button class="car-cta" onclick="openModal('pegas')">View Details ›</button>
+                </div>
+              </div>
+            </article>
+            <article class="car-card reveal reveal-delay-2" data-car="yukon">
+              <div class="car-card-image">
+                <img src="/cars/gmc-yukon-interior.jpg" alt="GMC Yukon interior cockpit view" loading="lazy"
+                  onerror="this.src='https://images.unsplash.com/photo-1519641471654-76ce0107ad1b?auto=format&fit=crop&w=900&q=80'" />
+                <span class="car-badge">Just In</span>
+              </div>
+              <div class="car-card-body">
+                <div class="car-year">2020</div>
+                <h3>GMC Yukon</h3>
+                <p class="car-tagline">V8 · Crystal Black · Full Option</p>
+                <div class="car-specs"><span>110,000 km</span><span>Auto</span><span>V8</span><span>GCC Spec</span></div>
+                <div class="car-footer">
+                  <div class="car-price-block"><span class="car-price" style="font-size:1rem">Call for Price</span></div>
+                  <button class="car-cta" onclick="openModal('yukon')">View Details ›</button>
+                </div>
+              </div>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <!-- Car Detail Modal -->
+      <div id="carModal" class="modal-overlay" style="display:none" role="dialog" aria-modal="true" aria-label="Car details">
+        <div class="modal-box" id="modalBox">
+          <div class="modal-image" style="position:relative">
+            <img id="modalImg" src="" alt="" style="border-radius:var(--radius-lg) 0 0 var(--radius-lg)" />
+            <button class="modal-close" onclick="closeModal()" aria-label="Close">✕</button>
+            <span id="modalBadge" class="car-badge"></span>
+          </div>
+          <div class="modal-body">
+            <div class="modal-header">
+              <div class="modal-header-left">
+                <span id="modalYear" class="modal-year"></span>
+                <h2 id="modalTitle" class="modal-title"></h2>
+                <p id="modalTagline" class="modal-tagline"></p>
+              </div>
+              <div class="modal-price-block">
+                <span id="modalCurrency" class="modal-currency"></span>
+                <span id="modalPrice" class="modal-price"></span>
+              </div>
+            </div>
+            <div id="modalSpecs" class="modal-specs-row"></div>
+            <p id="modalHighlight" class="modal-highlight" style="display:none"></p>
+            <div class="modal-features">
+              <h3 class="modal-features-title">Features &amp; Highlights</h3>
+              <ul id="modalFeatures" class="features-list"></ul>
+            </div>
+            <div class="modal-actions">
+              <a href="#contact" class="btn btn-primary" onclick="closeModal()">Enquire Now</a>
+              <a href="tel:+971-000-000-0000" class="btn btn-secondary">Call Now</a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Services -->
+      <section class="section services-section" id="services">
+        <div class="container">
+          <span class="section-eyebrow reveal">What We Do</span>
+          <h2 class="section-heading reveal reveal-delay-1">Everything Your Car Needs,<br><span class="gradient-text">Under One Roof</span></h2>
+          <p class="section-desc reveal reveal-delay-2">From the day you buy to every mile after — TopGear Auto keeps you moving.</p>
+          <div class="services-grid">
+            <div class="service-card reveal"><div class="service-icon-wrap red" aria-hidden="true">🚗</div><h3>Buy &amp; Sell</h3><p>Browse hand-picked pre-owned vehicles or get an instant, fair offer for your current car — paid out the same day.</p></div>
+            <div class="service-card reveal reveal-delay-1"><div class="service-icon-wrap blue" aria-hidden="true">💳</div><h3>Fast Financing</h3><p>Get pre-approved online in under 5 minutes. We work with 20+ lenders to find rates that fit your budget.</p></div>
+            <div class="service-card reveal reveal-delay-2"><div class="service-icon-wrap orange" aria-hidden="true">🔧</div><h3>Service &amp; Repair</h3><p>Factory-trained technicians, genuine parts, and transparent pricing — from oil changes to full engine work.</p></div>
+            <div class="service-card reveal"><div class="service-icon-wrap green" aria-hidden="true">🛡️</div><h3>Extended Warranty</h3><p>Drive worry-free with coverage plans up to 5 years, honored at certified shops nationwide.</p></div>
+            <div class="service-card reveal reveal-delay-1"><div class="service-icon-wrap purple" aria-hidden="true">🔄</div><h3>Trade-In Program</h3><p>Upgrade without the hassle. Apply your trade-in value directly to any vehicle on our lot.</p></div>
+            <div class="service-card reveal reveal-delay-2"><div class="service-icon-wrap teal" aria-hidden="true">🚚</div><h3>Home Delivery</h3><p>Buy online and we deliver to your driveway within 3 business days, with a 7-day return policy.</p></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Testimonials -->
+      <section class="section" id="reviews">
+        <div class="container">
+          <span class="section-eyebrow reveal">Testimonials</span>
+          <h2 class="section-heading reveal reveal-delay-1">What Our <span class="gradient-text">Drivers Say</span></h2>
+          <p class="section-desc reveal reveal-delay-2">Real stories from real customers — no scripts, no edits.</p>
+          <div class="testimonials-grid">
+            <figure class="testimonial-card reveal">
+              <span class="testimonial-stars" aria-label="5 stars">★★★★★</span>
+              <blockquote>"Found my dream M4 here. The whole process — test drive, financing, paperwork — took one afternoon. Unreal service."</blockquote>
+              <figcaption class="testimonial-footer">
+                <span class="testimonial-avatar m" aria-hidden="true">MT</span>
+                <div class="testimonial-meta"><strong>Marcus T.</strong><span>Bought a 2022 BMW M4</span></div>
+              </figcaption>
+            </figure>
+            <figure class="testimonial-card reveal reveal-delay-1">
+              <span class="testimonial-stars" aria-label="5 stars">★★★★★</span>
+              <blockquote>"They gave me $2,000 more for my trade-in than the dealership across town, and the new car was spotless."</blockquote>
+              <figcaption class="testimonial-footer">
+                <span class="testimonial-avatar p" aria-hidden="true">PS</span>
+                <div class="testimonial-meta"><strong>Priya S.</strong><span>Trade-in customer</span></div>
+              </figcaption>
+            </figure>
+            <figure class="testimonial-card reveal reveal-delay-2">
+              <span class="testimonial-stars" aria-label="5 stars">★★★★★</span>
+              <blockquote>"Their service center has looked after both our family cars for three years. Honest quotes, zero surprises."</blockquote>
+              <figcaption class="testimonial-footer">
+                <span class="testimonial-avatar d" aria-hidden="true">DK</span>
+                <div class="testimonial-meta"><strong>Dave &amp; Karen L.</strong><span>Service customers since 2023</span></div>
+              </figcaption>
+            </figure>
+          </div>
+        </div>
+      </section>
+
+      <!-- CTA -->
+      <section class="section cta-section" id="contact">
+        <div class="container">
+          <div class="cta-box reveal">
+            <h2>Ready for Your Next<br>Set of Wheels?</h2>
+            <p>Book a no-pressure test drive or get your free trade-in valuation today. Our team replies within the hour, seven days a week.</p>
+            <div class="cta-actions">
+              <a href="tel:+1-555-867-5309" class="btn btn-primary">Call (555) 867-5309</a>
+              <a href="mailto:sales@topgearauto.com" class="btn btn-secondary">sales@topgearauto.com</a>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <div class="container footer-inner">
+        <span>&copy; 2026 TopGear Auto. All rights reserved.</span>
+        <nav aria-label="Footer navigation">
+          <ul class="footer-links">
+            <li><a href="#inventory">Inventory</a></li>
+            <li><a href="#services">Services</a></li>
+            <li><a href="#reviews">Reviews</a></li>
+            <li><a href="#contact">Contact</a></li>
+          </ul>
+        </nav>
+      </div>
+    </footer>
+
+    <script>
+      // Scroll-aware navbar
+      const navbar = document.getElementById('navbar');
+      window.addEventListener('scroll', () => {
+        navbar.classList.toggle('scrolled', window.scrollY > 40);
+      }, { passive: true });
+
+      // Reveal on scroll
+      const revealEls = document.querySelectorAll('.reveal');
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); observer.unobserve(e.target); } });
+      }, { threshold: 0.15 });
+      revealEls.forEach(el => observer.observe(el));
+
+      // Trigger hero reveals immediately
+      document.querySelectorAll('.hero .reveal, .hero-visual .reveal').forEach(el => {
+        setTimeout(() => el.classList.add('visible'), 100);
+      });
+
+      // Car modal data
+      const CAR_DATA = {
+        civic: {
+          badge: 'GCC Spec', year: '2019', name: 'Honda Civic RS',
+          tagline: '1.5L VTEC Turbo · Crystal Black · Single Owner',
+          specs: ['92,000 km', 'Auto', 'Petrol Turbo', 'GCC Spec'],
+          highlight: 'Single Owner · Accident Free',
+          currency: 'AED', price: '54,000',
+          image: '/cars/civic-rs-main.jpg',
+          fallback: 'https://images.unsplash.com/photo-1617469767053-d3b523a0b982?auto=format&fit=crop&w=900&q=80',
+          alt: 'Honda Civic RS 2019 Crystal Black — side view',
+          features: ['Full Option','4-Cyl Turbo 1.5L VTEC','Crystal Black Pearl','Leather Seats',
+            'Keyless Entry & Remote Start','Sunroof','Cruise Control','Reverse Camera',
+            'Touch Screen','Bluetooth','Alloy Wheels','Accident Free · Original Paint',
+            'Perfect Mechanical Condition','Well Maintained Interior & Exterior'],
+        },
+        pegas: {
+          badge: 'Full Option', year: '2023', name: 'Kia Pegas',
+          tagline: '4-Cyl · GCC Spec · 64k km',
+          specs: ['64,000 km', 'Auto', 'Petrol', 'GCC Spec'],
+          highlight: 'Single Owner · Full Option',
+          currency: 'AED', price: '35,000',
+          image: '/cars/kia-pegas-main.jpg',
+          fallback: 'https://images.unsplash.com/photo-1580274455191-1c62238fa333?auto=format&fit=crop&w=900&q=80',
+          alt: 'Kia Pegas 2023 GCC Full Option',
+          features: ['Full Option with Sunroof','4-Cylinder Engine','Fully Automatic Transmission',
+            'Cruise Control','Parking Sensors','Touch Screen','Bluetooth','Reverse Camera',
+            'Accident Free','Single Owner','Perfect Mechanical Condition',
+            'Well Maintained Interior & Exterior'],
+        },
+        yukon: {
+          badge: 'Just In', year: '2020', name: 'GMC Yukon',
+          tagline: 'V8 · Crystal Black · Full Option',
+          specs: ['110,000 km', 'Auto', 'V8', 'GCC Spec'],
+          highlight: '',
+          currency: '', price: 'Call for Price',
+          image: '/cars/gmc-yukon-interior.jpg',
+          fallback: 'https://images.unsplash.com/photo-1519641471654-76ce0107ad1b?auto=format&fit=crop&w=900&q=80',
+          alt: 'GMC Yukon interior cockpit view',
+          features: ['5.3L V8 Engine','GCC Specification','Full Option','Leather Seats',
+            'Touch Screen','Bluetooth & Apple CarPlay','Reverse Camera','Alloy Wheels',
+            'Well Maintained'],
+        },
+      };
+
+      function openModal(id) {
+        const c = CAR_DATA[id]; if (!c) return;
+        document.getElementById('modalImg').src = c.image;
+        document.getElementById('modalImg').alt = c.alt;
+        document.getElementById('modalImg').onerror = function(){ this.src = c.fallback; };
+        document.getElementById('modalBadge').textContent = c.badge;
+        document.getElementById('modalYear').textContent = c.year;
+        document.getElementById('modalTitle').textContent = c.name;
+        document.getElementById('modalTagline').textContent = c.tagline;
+        document.getElementById('modalCurrency').textContent = c.currency;
+        document.getElementById('modalPrice').textContent = c.price;
+        const specsEl = document.getElementById('modalSpecs');
+        specsEl.innerHTML = c.specs.map(s => `<span class="car-specs-pill">${s}</span>`).join('');
+        const hlEl = document.getElementById('modalHighlight');
+        if (c.highlight) { hlEl.textContent = c.highlight; hlEl.style.display = ''; }
+        else { hlEl.style.display = 'none'; }
+        document.getElementById('modalFeatures').innerHTML =
+          c.features.map(f => `<li class="feature-item"><span class="feature-check">✓</span>${f}</li>`).join('');
+        const modal = document.getElementById('carModal');
+        modal.style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+        setTimeout(() => modal.classList.add('open'), 10);
+      }
+
+      function closeModal() {
+        const modal = document.getElementById('carModal');
+        modal.style.display = 'none';
+        document.body.style.overflow = '';
+      }
+
+      document.getElementById('carModal').addEventListener('click', function(e) {
+        if (e.target === this) closeModal();
+      });
+      document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+    </script>
+  </body>
+</html>

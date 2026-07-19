@@ -220,7 +220,7 @@ body::after {
         <div class="node-item">
           <div class="node-dot" style="background:var(--warn);box-shadow:0 0 5px var(--warn)"></div>
           <div class="node-info">
-            <div class="node-name">RAILWAY · PRIMARY</div>
+            <div class="node-name">BIX · bix.ghafservices.com</div>
             <div class="node-meta" id="node-railway-geo">PROBING...</div>
           </div>
           <div class="node-ping" id="node-railway-ping">—</div>
@@ -358,8 +358,8 @@ body::after {
 <div id="cfg-overlay" class="hidden">
   <div class="cfg-box">
     <div class="cfg-title">◈ UPLINK CONFIGURATION</div>
-    <div class="cfg-sub">Enter your Railway URL to connect J.A.R.V.I.S to the live analytika-rcm system. Stored in localStorage only.</div>
-    <div class="cfg-row"><div class="cfg-label">RAILWAY URL</div><input class="cfg-input" id="cfg-url" type="text" placeholder="https://xxx.up.railway.app" autocomplete="off" spellcheck="false"></div>
+    <div class="cfg-sub">BIX tunnelled via Cloudflare to <b style="color:var(--pri)">bix.ghafservices.com</b> — office Windows PC running .NET 10. Credentials stored in localStorage only.</div>
+    <div class="cfg-row"><div class="cfg-label">RAILWAY URL</div><input class="cfg-input" id="cfg-url" type="text" placeholder="https://bix.ghafservices.com" autocomplete="off" spellcheck="false"></div>
     <div class="cfg-row"><div class="cfg-label">ADMIN EMAIL</div><input class="cfg-input" id="cfg-email" type="text" placeholder="admin@ghafbi.ae" autocomplete="off"></div>
     <div class="cfg-row"><div class="cfg-label">PASSWORD</div><input class="cfg-input" id="cfg-pass" type="password" placeholder="Admin@123" autocomplete="off"></div>
     <button class="cfg-btn" onclick="saveConfig()">◈ ESTABLISH UPLINK</button>
@@ -369,7 +369,7 @@ body::after {
 
 <script>
 /* ── CONFIG — localStorage-backed ───────────────────────────────── */
-const DEFAULTS = { APP_URL:'', RENDER_URL:'https://analytika-rcm.onrender.com', EMAIL:'admin@ghafbi.ae', PASSWORD:'Admin@123', POLL_MS:60000 };
+const DEFAULTS = { APP_URL:'https://bix.ghafservices.com', RENDER_URL:'', EMAIL:'admin@ghafbi.ae', PASSWORD:'Admin@123', POLL_MS:30000 };
 const stored = JSON.parse(localStorage.getItem('jarvis_cfg')||'{}');
 const CFG = {...DEFAULTS,...stored};
 
@@ -837,7 +837,7 @@ async function poll() {
     await fetch(CFG.APP_URL + '/healthz', {mode:'no-cors'});
     const ms = Date.now() - t0;
     document.getElementById('node-railway-ping').textContent = ms + 'ms';
-    document.getElementById('node-railway-geo').textContent = 'US-WEST · RAILWAY CLOUD';
+    document.getElementById('node-railway-geo').textContent = 'CLOUDFLARE TUNNEL · WINDOWS · .NET 10';
     railwayOk = true;
     document.getElementById('h-status').textContent = 'ONLINE';
     document.getElementById('h-status').className = 'health-val ok';

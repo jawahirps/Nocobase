@@ -225,7 +225,7 @@ body::after {
         <div class="node-item">
           <div class="node-dot" style="background:var(--warn);box-shadow:0 0 5px var(--warn)"></div>
           <div class="node-info">
-            <div class="node-name">RAILWAY · PRIMARY</div>
+            <div class="node-name">BIX · bix.ghafservices.com</div>
             <div class="node-meta" id="node-railway-geo">PROBING...</div>
           </div>
           <div class="node-ping" id="node-railway-ping">—</div>
@@ -328,12 +328,12 @@ body::after {
     <div class="ticker-track">
       <div class="ticker-inner" id="ticker-inner">
         <div class="ticker-item">ANALYTIKA-RCM · UAE HEALTHCARE RCM · <span>DHA</span> + <span>RHA</span> PORTALS</div>
-        <div class="ticker-item">DEPLOYMENT: <span>RAILWAY (PRIMARY)</span> · <span>RENDER-SG (STANDBY)</span></div>
-        <div class="ticker-item">KEEPALIVE: <span>BIX SERVICE ACTIVE</span> · PING /healthz EVERY 60s</div>
+        <div class="ticker-item">DEPLOYMENT: <span>bix.ghafservices.com</span> · CLOUDFLARE TUNNEL → OFFICE WINDOWS PC</div>
+        <div class="ticker-item">KEEPALIVE: <span>BIX SERVICE ACTIVE</span> · PING /healthz EVERY 30s</div>
         <div class="ticker-item">TECH STACK: <span>.NET 10</span> · ASP CORE MVC · SQLITE / POSTGRES</div>
         <div class="ticker-item">ANALYTIKA-RCM · UAE HEALTHCARE RCM · <span>DHA</span> + <span>RHA</span> PORTALS</div>
-        <div class="ticker-item">DEPLOYMENT: <span>RAILWAY (PRIMARY)</span> · <span>RENDER-SG (STANDBY)</span></div>
-        <div class="ticker-item">KEEPALIVE: <span>BIX SERVICE ACTIVE</span> · PING /healthz EVERY 60s</div>
+        <div class="ticker-item">DEPLOYMENT: <span>bix.ghafservices.com</span> · CLOUDFLARE TUNNEL → OFFICE WINDOWS PC</div>
+        <div class="ticker-item">KEEPALIVE: <span>BIX SERVICE ACTIVE</span> · PING /healthz EVERY 30s</div>
         <div class="ticker-item">TECH STACK: <span>.NET 10</span> · ASP CORE MVC · SQLITE / POSTGRES</div>
       </div>
     </div>
@@ -379,10 +379,10 @@ body::after {
 <div id="cfg-overlay" class="hidden">
   <div class="cfg-box">
     <div class="cfg-title">◈ UPLINK CONFIGURATION</div>
-    <div class="cfg-sub">Enter your Railway deployment URL to connect J.A.R.V.I.S to the live analytika-rcm system. Credentials are stored in localStorage only.</div>
+    <div class="cfg-sub">BIX tunnelled via Cloudflare to <b style="color:var(--pri)">bix.ghafservices.com</b> — office Windows PC running .NET 10. Credentials stored in localStorage only.</div>
     <div class="cfg-row">
       <div class="cfg-label">RAILWAY URL</div>
-      <input class="cfg-input" id="cfg-url" type="text" placeholder="https://xxx.up.railway.app" autocomplete="off" spellcheck="false">
+      <input class="cfg-input" id="cfg-url" type="text" placeholder="https://bix.ghafservices.com" autocomplete="off" spellcheck="false">
     </div>
     <div class="cfg-row">
       <div class="cfg-label">ADMIN EMAIL</div>
@@ -400,11 +400,11 @@ body::after {
 <script>
 /* ── CONFIG — loads from localStorage, falls back to defaults ────── */
 const DEFAULTS = {
-  APP_URL:    '',
-  RENDER_URL: 'https://analytika-rcm.onrender.com',
+  APP_URL:    'https://bix.ghafservices.com',  // Cloudflare tunnel → office Windows PC
+  RENDER_URL: '',
   EMAIL:      'admin@ghafbi.ae',
   PASSWORD:   'Admin@123',
-  POLL_MS:    60000,
+  POLL_MS:    30000,
 };
 const stored = JSON.parse(localStorage.getItem('jarvis_cfg') || '{}');
 const CFG = { ...DEFAULTS, ...stored };
@@ -898,7 +898,7 @@ async function poll() {
     await fetch(CFG.APP_URL + '/healthz', {mode:'no-cors'});
     const ms = Date.now() - t0;
     document.getElementById('node-railway-ping').textContent = ms + 'ms';
-    document.getElementById('node-railway-geo').textContent = 'US-WEST · RAILWAY CLOUD';
+    document.getElementById('node-railway-geo').textContent = 'CLOUDFLARE TUNNEL · WINDOWS · .NET 10';
     railwayOk = true;
     document.getElementById('h-status').textContent = 'ONLINE';
     document.getElementById('h-status').className = 'health-val ok';

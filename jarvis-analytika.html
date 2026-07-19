@@ -747,6 +747,40 @@ function applyDashboard(data) {
   document.getElementById('conn-status').className = 'conn-dot';
 }
 
+/* ── DEMO MODE ───────────────────────────────────────────────────── */
+function loadDemo() {
+  const currentCount = 14_820 + Math.floor(Math.random()*600);
+  const previousCount = 13_250 + Math.floor(Math.random()*400);
+  const downloaded = Math.floor(currentCount * 0.87);
+  const trend = +(((currentCount-previousCount)/previousCount)*100).toFixed(1);
+  const today = new Date();
+  const daily = Array.from({length:30},(_,i)=>{
+    const d=new Date(today); d.setDate(d.getDate()-(29-i));
+    return {date:`${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')}`,count:350+Math.floor(Math.sin(i*.4)*120+Math.random()*180)};
+  });
+  const byType=[
+    {type:'DHA-Claim',count:Math.floor(currentCount*.52)},
+    {type:'RHA-Claim',count:Math.floor(currentCount*.28)},
+    {type:'Remittance',count:Math.floor(currentCount*.09)},
+    {type:'Resubmit',count:Math.floor(currentCount*.06)},
+    {type:'Denial',count:Math.floor(currentCount*.03)},
+    {type:'Other',count:Math.floor(currentCount*.02)},
+  ];
+  applyDashboard({kpi:{currentCount,previousCount,trend,downloaded},daily,byType});
+  document.getElementById('sync-status').textContent='RUNNING';
+  document.getElementById('sync-status').className='health-val ok';
+  document.getElementById('sync-facility').textContent='AL ZAHRA HOSPITAL';
+  document.getElementById('sync-month').textContent='JUN 2025';
+  document.getElementById('sync-records').textContent=(8340+Math.floor(Math.random()*200)).toLocaleString();
+  document.getElementById('sync-files').textContent=(1920+Math.floor(Math.random()*80)).toLocaleString();
+  const pct=40+Math.floor(Math.random()*55);
+  document.getElementById('sync-bar').style.width=pct+'%';
+  document.getElementById('sync-pct').textContent=`SYNC ${pct}%`;
+  document.getElementById('arc-state').textContent='◈ DEMO — SET APP_URL TO CONNECT';
+  document.getElementById('conn-status').className='conn-dot warn';
+  log('DEMO MODE: Set CFG.APP_URL to connect to live app','warn');
+}
+
 /* ── HEALTH POLL ─────────────────────────────────────────────────── */
 async function poll() {
   const t0 = Date.now();
@@ -766,12 +800,10 @@ async function poll() {
     document.getElementById('h-db').className = 'health-val ok';
   } catch {
     document.getElementById('node-railway-ping').textContent = 'TIMEOUT';
-    document.getElementById('h-status').textContent = 'UNREACHABLE';
-    document.getElementById('h-status').className = 'health-val err';
-    document.getElementById('arc-state').textContent = '◈ SIGNAL LOST';
-    appOnline = false;
-    document.getElementById('conn-status').className = 'conn-dot err';
-    log('HEALTH: Primary node unreachable', 'err');
+    if (!appOnline) loadDemo();
+    document.getElementById('h-status').textContent = 'DEMO MODE';
+    document.getElementById('h-status').className = 'health-val warn';
+    log('HEALTH: Primary unreachable — demo mode active','warn');
   }
 
   // Probe Render (standby)

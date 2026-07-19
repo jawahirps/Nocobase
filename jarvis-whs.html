@@ -749,6 +749,52 @@ function applyDashboard(data) {
   document.getElementById('conn-status').className = 'conn-dot';
 }
 
+/* ── DEMO MODE (fires when real app unreachable) ─────────────────── */
+function loadDemo() {
+  const seed = Date.now();
+  const rng = (min, max) => min + Math.floor((seed % 97331 * (max-min)) / 97331 + Math.random() * (max-min));
+
+  // Simulated growing totals based on a healthcare RCM context
+  const currentCount = 14_820 + rng(0, 600);
+  const previousCount = 13_250 + rng(0, 400);
+  const downloaded    = Math.floor(currentCount * 0.87);
+  const trend         = +(((currentCount - previousCount) / previousCount) * 100).toFixed(1);
+
+  const today = new Date();
+  const daily = Array.from({length:30}, (_,i) => {
+    const d = new Date(today); d.setDate(d.getDate() - (29-i));
+    const mm = String(d.getMonth()+1).padStart(2,'0');
+    const dd = String(d.getDate()).padStart(2,'0');
+    return { date:`${mm}/${dd}`, count: 350 + Math.floor(Math.sin(i*0.4)*120 + Math.random()*180) };
+  });
+
+  const byType = [
+    {type:'DHA-Claim',   count: Math.floor(currentCount * 0.52)},
+    {type:'RHA-Claim',   count: Math.floor(currentCount * 0.28)},
+    {type:'Remittance',  count: Math.floor(currentCount * 0.09)},
+    {type:'Resubmit',    count: Math.floor(currentCount * 0.06)},
+    {type:'Denial',      count: Math.floor(currentCount * 0.03)},
+    {type:'Other',       count: Math.floor(currentCount * 0.02)},
+  ];
+
+  applyDashboard({ kpi:{ currentCount, previousCount, trend, downloaded }, daily, byType });
+
+  // Sync state
+  document.getElementById('sync-status').textContent = 'RUNNING';
+  document.getElementById('sync-status').className   = 'health-val ok';
+  document.getElementById('sync-facility').textContent = 'AL ZAHRA HOSPITAL';
+  document.getElementById('sync-month').textContent    = 'JUN 2025';
+  document.getElementById('sync-records').textContent  = (8_340 + rng(0,200)).toLocaleString();
+  document.getElementById('sync-files').textContent    = (1_920 + rng(0,80)).toLocaleString();
+  const pct = 40 + rng(0, 55);
+  document.getElementById('sync-bar').style.width = pct + '%';
+  document.getElementById('sync-pct').textContent  = `SYNC ${pct}%`;
+
+  document.getElementById('arc-state').textContent = '◈ DEMO — SET APP_URL TO CONNECT';
+  document.getElementById('conn-status').className = 'conn-dot warn';
+  log('DEMO MODE: Set CFG.APP_URL to connect to live app', 'warn');
+}
+
 /* ── HEALTH POLL ─────────────────────────────────────────────────── */
 async function poll() {
   const t0 = Date.now();
@@ -768,12 +814,10 @@ async function poll() {
     document.getElementById('h-db').className = 'health-val ok';
   } catch {
     document.getElementById('node-railway-ping').textContent = 'TIMEOUT';
-    document.getElementById('h-status').textContent = 'UNREACHABLE';
-    document.getElementById('h-status').className = 'health-val err';
-    document.getElementById('arc-state').textContent = '◈ SIGNAL LOST';
-    appOnline = false;
-    document.getElementById('conn-status').className = 'conn-dot err';
-    log('HEALTH: Primary node unreachable', 'err');
+    if (!appOnline) loadDemo();  // show demo data instead of blank
+    document.getElementById('h-status').textContent = 'DEMO MODE';
+    document.getElementById('h-status').className = 'health-val warn';
+    log('HEALTH: Primary unreachable — demo mode active', 'warn');
   }
 
   // Probe Render (standby)
